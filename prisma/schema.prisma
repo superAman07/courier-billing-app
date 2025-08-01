@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customer {
+model CustomerMaster {
   id                    String    @id @default(cuid())
   customerCode          String    @unique
   customerName          String

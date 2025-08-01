@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-type RouteParams = {
-  params: {
-    id: string;
-  };
-};
-
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: {params: Promise<{ id: string }>}) {
   try {
-    const customer = await prisma.customer.findUnique({
-      where: { id: params.id },
+    const customer = await prisma.customerMaster.findUnique({
+      where: { id: (await params).id },
     });
     if (!customer) {
       return NextResponse.json(
@@ -28,11 +22,11 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: {params: Promise<{id: string}>}) {
   try {
     const body = await request.json();
-    const updatedCustomer = await prisma.customer.update({
-      where: { id: params.id },
+    const updatedCustomer = await prisma.customerMaster.update({
+      where: { id: (await params).id },
       data: body,
     });
     return NextResponse.json(updatedCustomer);
@@ -45,10 +39,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(request: Request, { params }: {params: Promise<{id: string}>}) {
   try {
-    await prisma.customer.delete({
-      where: { id: params.id },
+    await prisma.customerMaster.delete({
+      where: { id: (await params).id },
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
