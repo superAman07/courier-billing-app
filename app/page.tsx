@@ -1,9 +1,9 @@
-
+import CustomerForm from "./components/CustomerForm";
 
 export default function Home() {
   return (
-    <div className="flex justify-center items-center h-screen">
-      this is the home page of courier-billing
-    </div>
+    <main>
+      <CustomerForm />
+    </main>
   );
 }
