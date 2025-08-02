@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js" 
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,29 +8,52 @@ datasource db {
 }
 
 model CustomerMaster {
-  id                    String    @id @default(cuid())
-  customerCode          String    @unique
-  customerName          String
-  contactPerson         String?
-  address               String?
-  pincode               String?
-  city                  String?
-  mobile                String?
-  phone                 String?
-  email                 String?   @unique
-  dateOfBirth           DateTime?
-  isInternational       Boolean   @default(false)
-  ownership             String?  
+  id              String    @id @default(cuid())
+  customerCode    String    @unique
+  customerName    String
+  contactPerson   String?
+  address         String?
+  pincode         String?
+  city            String?
+  mobile          String?
+  phone           String?
+  email           String?   @unique
+  dateOfBirth     DateTime?
+  isInternational Boolean   @default(false)
+  ownership       String?
 
-  contractNo            String?
-  contractDate          DateTime?
-  panNo                 String?
-  gstNo                 String?
-  fuelSurchargePercent  Float?
-  discountPercent       Float?
-  openingBalance        Float?
-  balanceType           String? // "Dr" or "Cr"
+  contractNo           String?
+  contractDate         DateTime?
+  panNo                String?
+  gstNo                String?
+  fuelSurchargePercent Float?
+  discountPercent      Float?
+  openingBalance       Float?
+  balanceType          String?
+  rates                RateMaster[]
 
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RateMaster {
+  id                String   @id @default(cuid())
+  mode              String
+  consignmentType   String
+  zone              String
+  state             String
+  city              String
+  fromWeight        Float
+  toWeight          Float
+  rate              Float
+  hasAdditionalRate Boolean  @default(false)
+  additionalWeight  Float?
+  additionalRate    Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerId String
+  customer   CustomerMaster @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
 }
