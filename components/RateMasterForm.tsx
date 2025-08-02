@@ -144,12 +144,12 @@ export default function RateMasterForm() {
  
     const inputStyle = "w-full p-2 cursor-pointer text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
     const labelStyle = "block cursor-pointer text-sm font-medium text-gray-700 mb-1";
-    const buttonStyle = "px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+    const buttonStyle = "px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
-                <div className="p-6 bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-md">
+                <div className="p-6 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white">CUSTOMER RATE MASTER</h1>
                 </div>
 
@@ -258,9 +258,9 @@ export default function RateMasterForm() {
                         {selectedCustomer ? `Rate Master Entry for ${selectedCustomer.customerName}` : 'Rate Master Entries'}
                     </h2>
                     {message && <p className="text-sm text-blue-600 mb-4">{message}</p>}
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto overflow-y-auto h-96">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Con. Type</th>
@@ -275,7 +275,7 @@ export default function RateMasterForm() {
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-gray-200 ">
                                 {isLoading ? (
                                     <tr><td colSpan={11} className="text-center py-4">Loading rates...</td></tr>
                                 ) : filteredRates.length > 0 ? (  
