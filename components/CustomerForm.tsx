@@ -1,9 +1,8 @@
-// filepath: app/components/CustomerForm.tsx
 'use client';
 
+import axios from 'axios';
 import { useState } from 'react';
 
-// Define the type for our form data based on the Prisma schema
 type CustomerFormData = {
   customerCode: string;
   customerName: string;
@@ -53,17 +52,22 @@ const initialFormData: CustomerFormData = {
 export default function CustomerForm() {
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(''); 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
-        const { checked } = e.target as HTMLInputElement;
-        setFormData(prev => ({ ...prev, [name]: checked }));
+      const { checked } = e.target as HTMLInputElement;
+      setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleGenerateCode = () => { 
+    const newCustomerCode = `CUST-${Date.now()}`;
+    setFormData(prev => ({ ...prev, customerCode: newCustomerCode }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,28 +76,23 @@ export default function CustomerForm() {
     setMessage('Saving customer...');
 
     try {
-      const response = await fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ...formData,
-            // Convert number fields from string to number
-            fuelSurchargePercent: parseFloat(String(formData.fuelSurchargePercent)),
-            discountPercent: parseFloat(String(formData.discountPercent)),
-            openingBalance: parseFloat(String(formData.openingBalance)),
-            // Ensure date fields are in ISO format or null
-            dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
-            contractDate: formData.contractDate ? new Date(formData.contractDate).toISOString() : null,
-        }),
-      });
+      const submissionData = {
+        ...formData, 
+        fuelSurchargePercent: parseFloat(String(formData.fuelSurchargePercent)),
+        discountPercent: parseFloat(String(formData.discountPercent)),
+        openingBalance: parseFloat(String(formData.openingBalance)),
+        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
+        contractDate: formData.contractDate ? new Date(formData.contractDate).toISOString() : null,
+      };
+      const response = await axios.post('/api/customers', submissionData);
 
-      if (!response.ok) {
+      if (!response.status || response.status !== 201) {
         throw new Error('Failed to save customer');
       }
 
-      const result = await response.json();
+      const result = await response.data;
       setMessage(`Customer saved successfully! ID: ${result.id}`);
-      setFormData(initialFormData); // Reset form
+      setFormData(initialFormData);
     } catch (error) {
       console.error(error);
       setMessage('An error occurred while saving the customer.');
@@ -102,15 +101,14 @@ export default function CustomerForm() {
     }
   };
 
-  // Input field styles for consistency
   const inputStyle = "w-full p-2 border text-gray-600 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"; // border-color: #d1d5db
-  const labelStyle = "block text-sm font-medium text-gray-700 mb-1"; // text-color: #374151
+  const labelStyle = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8"> {/* bg-color: #f9fafb */}
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden"> {/* bg-color: #ffffff */}
-        <div className="p-6 bg-blue-600"> {/* bg-color: #2563eb */}
-          <h1 className="text-2xl font-bold text-white">CUSTOMER MASTER</h1> {/* text-color: #ffffff */}
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 shadow-md">
+          <h1 className="text-2xl font-bold text-white">CUSTOMER MASTER</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-8">
@@ -121,7 +119,14 @@ export default function CustomerForm() {
             </div>
             <div>
               <label htmlFor="customerCode" className={labelStyle}>Customer Code</label>
-              <input type="text" name="customerCode" id="customerCode" value={formData.customerCode} onChange={handleChange} className={inputStyle} required />
+              <div className='flex items-center'>
+                <div className='flex items-center'>
+                  <input type="text" name="customerCode" id="customerCode" value={formData.customerCode} onChange={handleChange} className={inputStyle} required />
+                </div>
+                <button type="button" onClick={handleGenerateCode} className="ml-2 px-3 text-sm cursor-pointer py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  Generate Code
+                </button>
+              </div>
             </div>
             <div className="lg:col-span-2">
               <label htmlFor="customerName" className={labelStyle}>Customer Name</label>
@@ -155,7 +160,7 @@ export default function CustomerForm() {
               <label htmlFor="email" className={labelStyle}>Email ID</label>
               <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className={inputStyle} />
             </div>
-             <div>
+            <div>
               <label htmlFor="dateOfBirth" className={labelStyle}>Date of Birth</label>
               <input type="date" name="dateOfBirth" id="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className={inputStyle} />
             </div>
@@ -169,9 +174,9 @@ export default function CustomerForm() {
                 <option value="Public Limited">Public Limited</option>
               </select>
             </div>
-             <div className="flex items-center justify-start mt-6">
-              <input type="checkbox" name="isInternational" id="isInternational" checked={formData.isInternational} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-              <label htmlFor="isInternational" className="ml-2 block text-sm text-gray-900">Is International Customer</label> {/* text-color: #111827 */}
+            <div className="flex items-center justify-start mt-6">
+              <input type="checkbox" name="isInternational" id="isInternational" checked={formData.isInternational} onChange={handleChange} className="h-4 w-4 cursor-pointer text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+              <label htmlFor="isInternational" className="ml-2 block text-sm text-gray-900">Is International Customer</label>  
             </div>
           </div>
 
@@ -220,8 +225,8 @@ export default function CustomerForm() {
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-4 pt-4 border-t">
             {message && <p className="text-sm text-gray-600">{message}</p>}
-            <button type="button" className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"> {/* bg-color: #2563eb, hover: #1d4ed8 */}
+            <button type="button" className="px-6 py-2 cursor-pointer border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="px-6 py-2 cursor-pointer border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"> {/* bg-color: #2563eb, hover: #1d4ed8 */}
               {isSubmitting ? 'Saving...' : 'Save'}
             </button>
           </div>
