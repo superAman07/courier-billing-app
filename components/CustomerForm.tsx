@@ -1,7 +1,8 @@
 'use client';
 
 import axios from 'axios';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type CustomerFormData = {
   customerCode: string;
@@ -53,6 +54,29 @@ export default function CustomerForm() {
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(''); 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const customerId = searchParams.get('id');
+
+  useEffect(() => {
+    if (customerId) {
+      const fetchCustomerData = async () => {
+        try {
+          const response = await axios.get(`/api/customers/${customerId}`);
+          const data = {
+            ...response.data,
+            dateOfBirth: response.data.dateOfBirth ? response.data.dateOfBirth.split('T')[0] : '',
+            contractDate: response.data.contractDate ? response.data.contractDate.split('T')[0] : '',
+          };
+          setFormData(data);
+        } catch (error) {
+          console.error("Failed to fetch customer data", error);
+          setMessage("Could not load customer data for editing.");
+        }
+      };
+      fetchCustomerData();
+    }
+  }, [customerId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -73,7 +97,7 @@ export default function CustomerForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage('Saving customer...');
+    setMessage(customerId ? 'Updating customer...' : 'Saving customer...');
 
     try {
       const submissionData = {
@@ -84,15 +108,15 @@ export default function CustomerForm() {
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
         contractDate: formData.contractDate ? new Date(formData.contractDate).toISOString() : null,
       };
-      const response = await axios.post('/api/customers', submissionData);
-
-      if (!response.status || response.status !== 201) {
-        throw new Error('Failed to save customer');
+      if (customerId) {
+        await axios.put(`/api/customers/${customerId}`, submissionData);
+        setMessage('Customer updated successfully!');
+        setTimeout(() => router.push('/customer/list'), 1500);
+      } else {
+        const response = await axios.post('/api/customers', submissionData);
+        setMessage(`Customer saved successfully! ID: ${response.data.id}`);
+        setFormData(initialFormData);
       }
-
-      const result = await response.data;
-      setMessage(`Customer saved successfully! ID: ${result.id}`);
-      setFormData(initialFormData);
     } catch (error) {
       console.error(error);
       setMessage('An error occurred while saving the customer.');
@@ -227,7 +251,7 @@ export default function CustomerForm() {
             {message && <p className="text-sm text-gray-600">{message}</p>}
             <button type="button" className="px-6 py-2 cursor-pointer border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="px-6 py-2 cursor-pointer border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"> {/* bg-color: #2563eb, hover: #1d4ed8 */}
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? 'Saving...' : (customerId ? 'Update' : 'Save')}
             </button>
           </div>
         </form>
