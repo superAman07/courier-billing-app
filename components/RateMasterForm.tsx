@@ -35,6 +35,7 @@ export default function RateMasterForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [formData, setFormData] = useState<RateFormData>(initialFormData);
+    const [editingRateId, setEditingRateId] = useState<string | null>(null);
  
     useEffect(() => {
         const fetchAllCustomers = async () => {
@@ -90,10 +91,6 @@ export default function RateMasterForm() {
         setFormData(initialFormData);
     };
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-    };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const isCheckbox = type === 'checkbox';
@@ -105,29 +102,55 @@ export default function RateMasterForm() {
         }));
     };
 
-    const handleAddRate = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedCustomer) return;
         setIsLoading(true);
-        try {
-            const response = await axios.post('/api/rates', { ...formData, customerId: selectedCustomer.id });
-            setRates(prev => [...prev, response.data]);
-            setFormData(prev => ({
-                ...prev,
-                fromWeight: 0,
-                toWeight: 0,
-                rate: 0,
-                hasAdditionalRate: false,
-                additionalWeight: 0,
-                additionalRate: 0,
-            }));
-            setMessage("Rate added successfully!");
-        } catch (error) {
-            console.error("Failed to add rate", error);
-            setMessage("Error adding rate.");
-        } finally {
-            setIsLoading(false);
+        if (editingRateId) {
+            // --- UPDATE LOGIC ---
+            try {
+                const response = await axios.put(`/api/rates/${editingRateId}`, formData);
+                setRates(prev => prev.map(r => r.id === editingRateId ? response.data : r));
+                setMessage("Rate updated successfully!");
+                handleCancelEdit(); 
+            } catch (error) {
+                console.error("Failed to update rate", error);
+                setMessage("Error updating rate.");
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            try {
+                const response = await axios.post('/api/rates', { ...formData, customerId: selectedCustomer.id });
+                setRates(prev => [...prev, response.data]);
+                setFormData(prev => ({
+                    ...prev,
+                    fromWeight: 0,
+                    toWeight: 0,
+                    rate: 0,
+                    hasAdditionalRate: false,
+                    additionalWeight: 0,
+                    additionalRate: 0,
+                }));
+                setMessage("Rate added successfully!");
+            } catch (error) {
+                console.error("Failed to add rate", error);
+                setMessage("Error adding rate.");
+            } finally {
+                setIsLoading(false);
+            }
         }
+    };
+
+    const handleEditCLick = (rate: RateMaster) => {
+        setFormData(rate);
+        setEditingRateId(rate.id);
+        window.scrollTo(0, 0);
+    }
+
+    const handleCancelEdit = () => {
+        setEditingRateId(null); 
+        setFormData(initialFormData);  
     };
 
     const handleDeleteRate = async (rateId: string) => {
@@ -144,7 +167,7 @@ export default function RateMasterForm() {
  
     const inputStyle = "w-full p-2 cursor-pointer text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
     const labelStyle = "block cursor-pointer text-sm font-medium text-gray-700 mb-1";
-    const buttonStyle = "px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+    const buttonStyle = `${editingRateId ? 'px-1' : 'px-4'} py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`;
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
@@ -168,8 +191,8 @@ export default function RateMasterForm() {
 
                 {/* Add New Rate Form */}
                 {selectedCustomer && (
-                    <form onSubmit={handleAddRate} className="p-6 bg-gray-50">
-                        <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Add New Rate</h2>
+                    <form onSubmit={handleSubmit} className="p-6 bg-gray-50">
+                        <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">{editingRateId ? "Edit Rate" : "Add New Rate"}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
                             <div>
                                 <label htmlFor="mode" className={labelStyle}>Mode</label>
@@ -244,8 +267,13 @@ export default function RateMasterForm() {
                                 </>
                             )}
                             <div className="col-start-6 flex items-end">
+                                {editingRateId && (
+                                    <button type="button" onClick={handleCancelEdit} className={`${buttonStyle} w-full mr-2 cursor-pointer`}>
+                                        Cancel Edit
+                                    </button>
+                                )}
                                 <button type="submit" className={`${buttonStyle} w-full cursor-pointer`} disabled={isLoading}>
-                                    {isLoading ? 'Adding...' : 'Add Rate'}
+                                    {isLoading ? 'Saving...' : (editingRateId ? 'Update Rate' : 'Add Rate')}
                                 </button>
                             </div>
                         </div>
@@ -292,7 +320,7 @@ export default function RateMasterForm() {
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.hasAdditionalRate ? rate.additionalWeight?.toFixed(3) : 'N/A'}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.hasAdditionalRate ? rate.additionalRate?.toFixed(2) : 'N/A'}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">
-                                                <button onClick={() => alert('Edit functionality to be implemented.')} className="text-indigo-600 hover:text-indigo-900 mr-4 cursor-pointer">Edit</button>
+                                                <button onClick={() => handleEditCLick(rate)} className="text-indigo-600 hover:text-indigo-900 mr-4 cursor-pointer">Edit</button>
                                                 <button onClick={() => handleDeleteRate(rate.id)} className="text-red-600 hover:text-red-900 cursor-pointer">Delete</button>
                                             </td>
                                         </tr>
