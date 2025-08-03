@@ -15,6 +15,9 @@ export async function POST(req: NextRequest){
                 }
             }
         });
+        if (ratesToCopy.length === 0) {
+            return NextResponse.json({error: "No rates found to copy"}, {status: 404});
+        }
         const newRatesData = ratesToCopy.map(rate => {
             const {id,customerId,createdAt, updatedAt, ...restOfRate} = rate;
             return {
