@@ -64,6 +64,8 @@ export default function CustomerListPage() {
                                     <th className={tableHeaderStyle}>Contact Person</th>
                                     <th className={tableHeaderStyle}>City</th>
                                     <th className={tableHeaderStyle}>Mobile</th>
+                                    <th className={tableHeaderStyle}>Email</th>
+                                    <th className={tableHeaderStyle}>GST No.</th>
                                     <th className={tableHeaderStyle}>Actions</th>
                                 </tr>
                             </thead>
@@ -78,6 +80,8 @@ export default function CustomerListPage() {
                                             <td className={tableCellStyle}>{customer.contactPerson || 'N/A'}</td>
                                             <td className={tableCellStyle}>{customer.city || 'N/A'}</td>
                                             <td className={tableCellStyle}>{customer.mobile || 'N/A'}</td>
+                                            <td className={tableCellStyle}>{customer.email || 'N/A'}</td>
+                                            <td className={tableCellStyle}>{customer.gstNo || 'N/A'}</td>
                                             <td className={`${tableCellStyle} space-x-2`}>
                                                 <Link href={`/customer?id=${customer.id}`} className="text-indigo-600 hover:text-indigo-900 font-medium">Edit</Link>
                                                 <button onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900 font-medium">Delete</button>
