@@ -183,8 +183,7 @@ export default function RateMasterForm() {
                 <div className="p-6 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white">CUSTOMER RATE MASTER</h1>
                 </div>
-
-                {/* Customer Selection */}
+ 
                 <div className="p-6 border-b">
                     <label htmlFor="customerSelect" className={labelStyle}>Select Customer</label>
                     <select id="customerSelect" onChange={handleCustomerChange} value={selectedCustomer?.id || ''} className={inputStyle}>
@@ -196,8 +195,7 @@ export default function RateMasterForm() {
                         ))}
                     </select>
                 </div>
-
-                {/* Add New Rate Form */}
+ 
                 {selectedCustomer && (
                     <form onSubmit={handleSubmit} className="p-6 bg-gray-50">
                         <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">{editingRateId ? "Edit Rate" : "Add New Rate"}</h2>
