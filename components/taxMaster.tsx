@@ -122,7 +122,7 @@ export default function TaxMaster() {
                                 <tr key={tax.taxCode}>
                                     <td className="px-3 py-2 text-gray-600 uppercase">{tax.taxCode}</td>
                                     <td className="px-3 py-2 text-gray-600">{tax.description}</td>
-                                    <td className="px-3 py-2 text-gray-600">{tax.ratePercent}</td>
+                                    <td className="px-3 py-2 text-gray-600">{Number(tax.ratePercent).toFixed(3)}</td>
                                     <td className="px-3 py-2 text-gray-600 text-center">{tax.withinState ? '✔️' : ''}</td>
                                     <td className="px-3 py-2 text-gray-600 text-center">{tax.forOtherState ? '✔️' : ''}</td>
                                     <td className="px-3 py-2 text-gray-600 text-center">{tax.active ? '✔️' : ''}</td>
