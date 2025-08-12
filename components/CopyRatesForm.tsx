@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CustomerMaster, RateMaster } from '@prisma/client';
+import { toast } from 'sonner';
 
 export default function CopyRatesForm() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
@@ -37,6 +38,7 @@ export default function CopyRatesForm() {
                 } catch (error) {
                     console.error("Failed to fetch rates", error);
                     setMessage("Could not load rates for this customer.");
+                    toast.error("Could not load rates for this customer.");
                 } finally {
                     setIsLoading(false);
                 }
@@ -45,7 +47,7 @@ export default function CopyRatesForm() {
         } else {
             setSourceRates([]);
         }
-        setSelectedRateIds(new Set());  
+        setSelectedRateIds(new Set());
     }, [sourceCustomerId]);
 
     const handleSelectRate = (rateId: string) => {
@@ -71,6 +73,7 @@ export default function CopyRatesForm() {
     const handleCopyRates = async () => {
         if (!targetCustomerId || selectedRateIds.size === 0) {
             setMessage("Please select a target customer and at least one rate to copy.");
+            toast.error("Pick a target and at least one rate");
             return;
         }
         setIsCopying(true);
@@ -81,10 +84,12 @@ export default function CopyRatesForm() {
                 rateIds: Array.from(selectedRateIds),
             });
             setMessage(`${selectedRateIds.size} rates copied successfully to the target customer!`);
-            setSelectedRateIds(new Set());  
+            toast.success(`${selectedRateIds.size} rate(s) copied`);
+            setSelectedRateIds(new Set());
         } catch (error) {
             console.error("Failed to copy rates", error);
             setMessage("An error occurred while copying rates.");
+            toast.error("Copy failed");
         } finally {
             setIsCopying(false);
         }
