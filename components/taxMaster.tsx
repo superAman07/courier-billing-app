@@ -90,15 +90,15 @@ export default function TaxMaster() {
                     <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded text-gray-500 border-gray-300" required />
                     <input name="ratePercent" value={form.ratePercent} onChange={handleChange} placeholder="Tax %" className="p-2 border rounded text-gray-500 border-gray-300" required type="number" step="0.001" />
                     <label className="flex items-center space-x-2">
-                        <input type="checkbox" name="withinState" className='text-gray-600' checked={form.withinState} onChange={handleChange} />
+                        <input type="checkbox" name="withinState" className='text-gray-600 cursor-pointer' checked={form.withinState} onChange={handleChange} />
                         <span className='text-gray-600 cursor-pointer'>Within State</span>
                     </label>
                     <label className="flex items-center space-x-2">
-                        <input type="checkbox" name="forOtherState" className='text-gray-600' checked={form.forOtherState} onChange={handleChange} />
+                        <input type="checkbox" name="forOtherState" className='text-gray-600 cursor-pointer' checked={form.forOtherState} onChange={handleChange} />
                         <span className='text-gray-600 cursor-pointer'>For Other State</span>
                     </label>
                     <label className="flex items-center space-x-2">
-                        <input type="checkbox" name="active" className='text-gray-600' checked={form.active} onChange={handleChange} />
+                        <input type="checkbox" name="active" className='text-gray-600 cursor-pointer' checked={form.active} onChange={handleChange} />
                         <span className='text-gray-600 cursor-pointer'>Active</span>
                     </label>
                     <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded cursor-pointer">{editingIndex !== null ? 'Update' : 'Add'}</button>
