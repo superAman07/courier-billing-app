@@ -130,7 +130,7 @@ export default function CustomerForm() {
     }
   };
 
-  const inputStyle = "w-full p-2 border text-gray-600 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"; // border-color: #d1d5db
+  const inputStyle = "w-full p-2 border text-gray-600 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
   const labelStyle = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
@@ -150,7 +150,7 @@ export default function CustomerForm() {
               <label htmlFor="customerCode" className={labelStyle}>Customer Code</label>
               <div className='flex items-center'>
                 <div className='flex items-center'>
-                  <input type="text" name="customerCode" id="customerCode" value={formData.customerCode} onChange={handleChange} className={inputStyle} required />
+                  <input type="text" name="customerCode" id="customerCode" placeholder='CUSt-XXXXX' value={formData.customerCode} onChange={handleChange} className={inputStyle} required />
                 </div>
                 <button type="button" onClick={handleGenerateCode} className="ml-2 px-3 text-sm cursor-pointer py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   Generate Code
@@ -159,35 +159,35 @@ export default function CustomerForm() {
             </div>
             <div className="lg:col-span-2">
               <label htmlFor="customerName" className={labelStyle}>Customer Name</label>
-              <input type="text" name="customerName" id="customerName" value={formData.customerName} onChange={handleChange} className={inputStyle} required />
+              <input type="text" name="customerName" placeholder='Enter customer name' id="customerName" value={formData.customerName} onChange={handleChange} className={inputStyle} required />
             </div>
             <div>
               <label htmlFor="contactPerson" className={labelStyle}>Contact Person</label>
-              <input type="text" name="contactPerson" id="contactPerson" value={formData.contactPerson} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="contactPerson" placeholder='Enter contact person name' id="contactPerson" value={formData.contactPerson} onChange={handleChange} className={inputStyle} />
             </div>
             <div className="lg:col-span-2">
               <label htmlFor="address" className={labelStyle}>Address</label>
-              <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="address" placeholder='Enter address' id="address" value={formData.address} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="pincode" className={labelStyle}>Pincode</label>
-              <input type="text" name="pincode" id="pincode" value={formData.pincode} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="pincode" placeholder='Enter pincode' id="pincode" value={formData.pincode} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="city" className={labelStyle}>City</label>
-              <input type="text" name="city" id="city" value={formData.city} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="city" placeholder='Enter city' id="city" value={formData.city} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="mobile" className={labelStyle}>Mobile</label>
-              <input type="tel" name="mobile" id="mobile" value={formData.mobile} onChange={handleChange} className={inputStyle} />
+              <input type="tel" name="mobile" placeholder='Enter mobile number' id="mobile" value={formData.mobile} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="phone" className={labelStyle}>Phone</label>
-              <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange} className={inputStyle} />
+              <input type="tel" name="phone" placeholder='Enter phone number' id="phone" value={formData.phone} onChange={handleChange} className={inputStyle} />
             </div>
             <div className="lg:col-span-2">
               <label htmlFor="email" className={labelStyle}>Email ID</label>
-              <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className={inputStyle} />
+              <input type="email" name="email" placeholder='Enter email ID' id="email" value={formData.email} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="dateOfBirth" className={labelStyle}>Date of Birth</label>
@@ -195,7 +195,7 @@ export default function CustomerForm() {
             </div>
             <div>
               <label htmlFor="ownership" className={labelStyle}>Ownership</label>
-              <select name="ownership" id="ownership" value={formData.ownership} onChange={handleChange} className={inputStyle}>
+              <select name="ownership" id="ownership" value={formData.ownership} onChange={handleChange} className={`cursor-pointer ${inputStyle}`}>
                 <option value="">Select</option>
                 <option value="Proprietorship">Proprietorship</option>
                 <option value="Partnership">Partnership</option>
@@ -215,31 +215,31 @@ export default function CustomerForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <label htmlFor="contractNo" className={labelStyle}>Contract No</label>
-                <input type="text" name="contractNo" id="contractNo" value={formData.contractNo} onChange={handleChange} className={inputStyle} />
+                <input type="text" name="contractNo" id="contractNo" placeholder='Enter contract number' value={formData.contractNo} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="contractDate" className={labelStyle}>Contract Date</label>
-                <input type="date" name="contractDate" id="contractDate" value={formData.contractDate} onChange={handleChange} className={inputStyle} />
+                <input type="date" name="contractDate" id="contractDate" placeholder='Select contract date' value={formData.contractDate} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="panNo" className={labelStyle}>PAN No.</label>
-                <input type="text" name="panNo" id="panNo" value={formData.panNo} onChange={handleChange} className={inputStyle} />
+                <input type="text" name="panNo" id="panNo" placeholder='Enter PAN number' value={formData.panNo} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="gstNo" className={labelStyle}>GST No.</label>
-                <input type="text" name="gstNo" id="gstNo" value={formData.gstNo} onChange={handleChange} className={inputStyle} />
+                <input type="text" name="gstNo" id="gstNo" placeholder='Enter GST number' value={formData.gstNo} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="fuelSurchargePercent" className={labelStyle}>Fuel Surcharge %</label>
-                <input type="number" name="fuelSurchargePercent" id="fuelSurchargePercent" value={formData.fuelSurchargePercent} onChange={handleChange} className={inputStyle} />
+                <input type="number" name="fuelSurchargePercent" id="fuelSurchargePercent" placeholder='Enter Fuel Surcharge %' value={formData.fuelSurchargePercent} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="discountPercent" className={labelStyle}>Discount %</label>
-                <input type="number" name="discountPercent" id="discountPercent" value={formData.discountPercent} onChange={handleChange} className={inputStyle} />
+                <input type="number" name="discountPercent" id="discountPercent" placeholder='Enter Discount %' value={formData.discountPercent} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="openingBalance" className={labelStyle}>Opening Balance</label>
-                <input type="number" name="openingBalance" id="openingBalance" value={formData.openingBalance} onChange={handleChange} className={inputStyle} />
+                <input type="number" name="openingBalance" id="openingBalance" placeholder='Enter Opening Balance' value={formData.openingBalance} onChange={handleChange} className={inputStyle} />
               </div>
               <div>
                 <label htmlFor="balanceType" className={labelStyle}>Balance Type</label>
