@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { CustomerMaster, RateMaster } from '@prisma/client';
+import { toast } from 'sonner';
 
 type RateFormData = Omit<RateMaster, 'id' | 'createdAt' | 'updatedAt' | 'customerId'>;
 
@@ -45,6 +46,7 @@ export default function RateMasterForm() {
             } catch (error) {
                 console.error("Failed to fetch customers", error);
                 setMessage("Could not load customers list.");
+                toast.error("Failed to load customers");
             }
         };
         fetchAllCustomers();
@@ -106,16 +108,18 @@ export default function RateMasterForm() {
         e.preventDefault();
         if (!selectedCustomer) return;
         setIsLoading(true);
-        if (editingRateId) {
-            // --- UPDATE LOGIC ---
+        if (editingRateId) { 
             try {
                 const response = await axios.put(`/api/rates/${editingRateId}`, formData);
                 setRates(prev => prev.map(r => r.id === editingRateId ? response.data : r));
                 setMessage("Rate updated successfully!");
+                toast.success("Rate updated successfully");
                 handleCancelEdit(); 
             } catch (error) {
+                toast.error("Error updating rate");
                 console.error("Failed to update rate", error);
                 setMessage("Error updating rate.");
+
             } finally {
                 setIsLoading(false);
             }
@@ -133,9 +137,11 @@ export default function RateMasterForm() {
                     additionalRate: 0,
                 }));
                 setMessage("Rate added successfully!");
+                toast.success("Rate added successfully");
             } catch (error) {
                 console.error("Failed to add rate", error);
                 setMessage("Error adding rate.");
+                toast.error("Error adding rate");
             } finally {
                 setIsLoading(false);
             }
@@ -158,9 +164,11 @@ export default function RateMasterForm() {
         try {
             await axios.delete(`/api/rates/${rateId}`);
             setRates(prev => prev.filter(rate => rate.id !== rateId));
+            toast.success("Rate deleted successfully");
             setMessage("Rate deleted successfully.");
         } catch (error) {
             console.error("Failed to delete rate", error);
+            toast.error("Error deleting rate");
             setMessage("Error deleting rate.");
         }
     };

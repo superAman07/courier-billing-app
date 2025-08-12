@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type CustomerFormData = {
   customerCode: string;
@@ -71,6 +72,7 @@ export default function CustomerForm() {
           setFormData(data);
         } catch (error) {
           console.error("Failed to fetch customer data", error);
+          toast.error("Error loading customer data");
           setMessage("Could not load customer data for editing.");
         }
       };
@@ -110,15 +112,18 @@ export default function CustomerForm() {
       };
       if (customerId) {
         await axios.put(`/api/customers/${customerId}`, submissionData);
+        toast.success("Customer updated successfully");
         setMessage('Customer updated successfully!');
         setTimeout(() => router.push('/customer/list'), 1500);
       } else {
         const response = await axios.post('/api/customers', submissionData);
+        toast.success("Customer saved successfully");
         setMessage(`Customer saved successfully! ID: ${response.data.id}`);
         setFormData(initialFormData);
       }
     } catch (error) {
       console.error(error);
+      toast.error("Error saving customer");
       setMessage('An error occurred while saving the customer.');
     } finally {
       setIsSubmitting(false);

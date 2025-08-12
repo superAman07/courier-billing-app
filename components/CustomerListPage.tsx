@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { CustomerMaster } from '@prisma/client';
+import { toast } from 'sonner';
 
 export default function CustomerListPage() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
@@ -18,6 +19,7 @@ export default function CustomerListPage() {
                 setCustomers(response.data);
             } catch (error) {
                 console.error("Failed to fetch customers", error);
+                toast.error("Error loading customers");
                 setMessage("Could not load customers.");
             } finally {
                 setIsLoading(false);
@@ -33,9 +35,11 @@ export default function CustomerListPage() {
         try {
             await axios.delete(`/api/customers/${customerId}`);
             setCustomers(prev => prev.filter(c => c.id !== customerId));
+            toast.success("Customer deleted successfully");
             setMessage("Customer deleted successfully.");
         } catch (error) {
             console.error("Failed to delete customer", error);
+            toast.error("Error deleting customer");
             setMessage("Error deleting customer.");
         }
     };
