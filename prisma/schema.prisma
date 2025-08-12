@@ -57,3 +57,14 @@ model RateMaster {
 
   @@index([customerId])
 }
+model TaxMaster {
+  id            String   @id @default(cuid())
+  taxCode       String   @unique
+  description   String
+  ratePercent   Decimal  @db.Decimal(5,3)  
+  withinState   Boolean  @default(false)
+  forOtherState Boolean  @default(false)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
