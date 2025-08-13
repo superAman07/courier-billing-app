@@ -95,7 +95,7 @@ export default function StateMaster() {
         <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
           <input name="code" value={form.code} onChange={handleChange} placeholder="State Code" className="p-2 border rounded text-gray-500 border-gray-300 uppercase" required />
           <input name="name" value={form.name} onChange={handleChange} placeholder="State" className="p-2 border rounded text-gray-500 border-gray-300 uppercase" required />
-          <select name="zoneId" value={form.zoneId} onChange={handleChange} className="p-2 border rounded text-gray-500 border-gray-300" required>
+          <select name="zoneId" value={form.zoneId} onChange={handleChange} className="p-2 border cursor-pointer rounded text-gray-500 border-gray-300" required>
             <option value="">-- Select Zone --</option>
             {zones.map(z => <option key={z.id} value={z.id} className='uppercase'>{z.name.toUpperCase()}</option>)}
           </select>
@@ -107,7 +107,7 @@ export default function StateMaster() {
         </form>
         <div className="px-6 pb-2 flex items-center space-x-2">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Find State" className="p-2 border rounded text-gray-500 border-gray-300" />
-          <select value={zoneFilter} onChange={e => setZoneFilter(e.target.value)} className="p-2 border rounded text-gray-500 border-gray-300">
+          <select value={zoneFilter} onChange={e => setZoneFilter(e.target.value)} className="p-2 border cursor-pointer rounded text-gray-500 border-gray-300">
             <option value="ALL">All Zones</option>
             {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
           </select>
