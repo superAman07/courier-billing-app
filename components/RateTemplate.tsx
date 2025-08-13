@@ -136,7 +136,12 @@ export default function RateTemplate() {
                         <div>
                             <label className={labelStyle}>State wise</label>
                             <select value={filters.state} onChange={e => setFilters({ ...filters, state: e.target.value })} className={inputStyle}>
-                                <option value="ALL">ALL</option><option value="CENTRAL">CENTRAL</option><option value="EAST">EAST</option><option value="NORTH">NORTH</option><option value="SOUTH">SOUTH</option><option value="WEST">WEST</option>
+                                <option value="ALL">ALL</option>
+                                <option value="CENTRAL">CENTRAL</option>
+                                <option value="EAST">EAST</option>
+                                <option value="NORTH">NORTH</option>
+                                <option value="SOUTH">SOUTH</option>
+                                <option value="WEST">WEST</option>
                             </select>
                         </div>
                         <div>

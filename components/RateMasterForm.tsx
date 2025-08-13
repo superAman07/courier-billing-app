@@ -224,7 +224,7 @@ export default function RateMasterForm() {
                                 <select name="zoneId" id="zoneSelect" value={formData.zoneId} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
                                     {zones.map(z => (
-                                        <option key={z.code} value={z.code} className='uppercase'>{z.code}</option>
+                                        <option key={z.code} value={z.id} className='uppercase'>{z.code.toUpperCase()}</option>
                                     ))}
                                 </select>
                             </div>
@@ -233,7 +233,7 @@ export default function RateMasterForm() {
                                 <select name="stateId" id="stateSelect" value={formData.stateId} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
                                     {states.map(s => (
-                                        <option key={s.code} value={s.code}>{s.name}</option>
+                                        <option key={s.code} value={s.id}>{s.code.toUpperCase()}</option>
                                     ))}
                                 </select>
                             </div>
@@ -316,13 +316,13 @@ export default function RateMasterForm() {
                                         <tr key={rate.id}>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.mode}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.consignmentType}</td>
-                                            <td>
-                                                {zones.find(z => z.id === rate.zoneId)?.name || ''}
+                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">
+                                                {zones.find(z => z.id === rate.zoneId)?.code.toUpperCase() || ''}
                                             </td>
-                                            <td>
-                                                {states.find(s => s.id === rate.stateId)?.name || ''}
+                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">
+                                                {states.find(s => s.id === rate.stateId)?.code.toUpperCase() || ''}
                                             </td>
-                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.city}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.city.toUpperCase()}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.fromWeight}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.toWeight}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.rate.toFixed(2)}</td>
