@@ -77,3 +77,12 @@ model CountryMaster {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ZoneMaster {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
