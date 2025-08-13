@@ -104,10 +104,10 @@ export default function ZoneMaster() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((zone, idx) => (
+              {filtered.map((zone:ZoneForm, idx) => (
                 <tr key={zone.code}>
-                  <td className="px-3 py-2 text-gray-600 uppercase">{zone.code}</td>
-                  <td className="px-3 py-2 text-gray-600 uppercase">{zone.name}</td>
+                  <td className="px-3 py-2 text-gray-600 uppercase">{zone.code.toUpperCase()}</td>
+                  <td className="px-3 py-2 text-gray-600 uppercase">{zone.name.toUpperCase()}</td>
                   <td className="px-3 py-2 text-gray-600 text-center">{zone.active ? '✔️' : ''}</td>
                   <td className="px-3 py-2 text-gray-600 text-center">
                     <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
