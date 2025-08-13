@@ -16,7 +16,8 @@ export async function GET() {
     try {
         const zones = await prisma.zoneMaster.findMany({ orderBy: { name: 'asc' } });
         return NextResponse.json(zones);
-    } catch (e) {
+    } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: 'Failed to retrieve zones' }, { status: 500 });
     }
 }

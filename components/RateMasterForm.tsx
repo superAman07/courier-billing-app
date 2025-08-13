@@ -37,8 +37,18 @@ export default function RateMasterForm() {
     const [states, setStates] = useState<StateType[]>([]);
 
     useEffect(() => {
-        axios.get('/api/zone-master').then(res => setZones(res.data));
-        axios.get('/api/state-master').then(res => setStates(res.data));
+        Promise.all([
+            axios.get('/api/zone-master'),
+            axios.get('/api/state-master')
+        ])
+            .then(([zonesRes, statesRes]) => {
+                setZones(zonesRes.data);
+                setStates(statesRes.data);
+            })
+            .catch(error => {
+                toast.error("Failed to load zones or states");
+                console.error(error);
+            });
     }, []);
     useEffect(() => {
         const fetchAllCustomers = async () => {
