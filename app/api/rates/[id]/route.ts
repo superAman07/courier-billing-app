@@ -1,15 +1,25 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/prisma"; 
 
 export async function PUT(request: Request, { params }: {params: Promise<{id:string}>}) {
   try {
     const body = await request.json();
+    if (!body.zoneId || !body.stateId) {
+      return NextResponse.json({ message: "zoneId and stateId are required" }, { status: 400 });
+    }
+    if (!body.hasAdditionalRate) {
+      body.additionalWeight = null;
+      body.additionalRate = null;
+    }
+    const { zoneId, stateId, ...rest } = body;
     const updatedRate = await prisma.rateMaster.update({
       where: { id: (await params).id },
       data: {
-        ...body,
+        ...rest,
+        zone: { connect: { id: zoneId } },
+        state: { connect: { id: stateId } },
       },
-      include : {
+      include: {
         zone: true,
         state: true
       }
@@ -24,7 +34,7 @@ export async function PUT(request: Request, { params }: {params: Promise<{id:str
   }
 }
 
-export async function DELETE(request: Request, { params }: {params: Promise<{id:string}>}) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await prisma.rateMaster.delete({
       where: { id: (await params).id },
