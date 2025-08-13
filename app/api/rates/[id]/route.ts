@@ -6,7 +6,13 @@ export async function PUT(request: Request, { params }: {params: Promise<{id:str
     const body = await request.json();
     const updatedRate = await prisma.rateMaster.update({
       where: { id: (await params).id },
-      data: body,
+      data: {
+        ...body,
+      },
+      include : {
+        zone: true,
+        state: true
+      }
     });
     return NextResponse.json(updatedRate);
   } catch (error) {

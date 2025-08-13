@@ -11,7 +11,12 @@ export async function POST(request: Request) {
       );
     }
     const newRate = await prisma.rateMaster.create({
-      data: body,
+      data: {
+        ...body,
+      },include: {
+        zone: true,
+        state: true,
+      }
     });
     return NextResponse.json(newRate, { status: 201 });
   } catch (error) {
@@ -38,6 +43,7 @@ export async function GET(request: Request) {
     const rates = await prisma.rateMaster.findMany({
       where: { customerId: customerId },
       orderBy: { fromWeight: 'asc' },
+      include: { zone: true, state: true },
     });
     return NextResponse.json(rates);
   } catch (error) {

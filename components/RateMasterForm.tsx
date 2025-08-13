@@ -4,23 +4,18 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { CustomerMaster, RateMaster } from '@prisma/client';
 import { toast } from 'sonner';
-import { ZoneType } from '@/lib/types';
+import { StateType, ZoneType } from '@/lib/types';
 
-type RateFormData = Omit<RateMaster, 'id' | 'createdAt' | 'updatedAt' | 'customerId'>;
-
-type RateFilters = {
-    mode: string;
-    consignmentType: string;
-    zone: string;
-    state: string;
-    city: string;
-}
+type RateFormData = Omit<RateMaster, 'id' | 'createdAt' | 'updatedAt' | 'customerId' | 'zone' | 'state'> & {
+    zoneId?: string;
+    stateId?: string;
+};
 
 const initialFormData: RateFormData = {
     mode: 'ALL',
     consignmentType: 'ALL',
-    zone: 'ALL',
-    state: 'ALL',
+    zoneId: 'ALL',
+    stateId: 'ALL',
     city: '',
     fromWeight: 0,
     toWeight: 0,
@@ -39,9 +34,11 @@ export default function RateMasterForm() {
     const [formData, setFormData] = useState<RateFormData>(initialFormData);
     const [editingRateId, setEditingRateId] = useState<string | null>(null);
     const [zones, setZones] = useState<ZoneType[]>([]);
+    const [states, setStates] = useState<StateType[]>([]);
 
     useEffect(() => {
         axios.get('/api/zone-master').then(res => setZones(res.data));
+        axios.get('/api/state-master').then(res => setStates(res.data));
     }, []);
     useEffect(() => {
         const fetchAllCustomers = async () => {
@@ -84,8 +81,8 @@ export default function RateMasterForm() {
             return (
                 (formData.mode === 'ALL' || rate.mode === formData.mode) &&
                 (formData.consignmentType === 'ALL' || rate.consignmentType === formData.consignmentType) &&
-                (formData.zone === 'ALL' || rate.zone === formData.zone) &&
-                (formData.state === 'ALL' || rate.state === formData.state) &&
+                (formData.zoneId === 'ALL' || rate.zoneId === formData.zoneId) &&
+                (formData.stateId === 'ALL' || rate.stateId === formData.stateId) &&
                 (cityFilter === '' || rate.city.toLowerCase().includes(cityFilter))
             );
         });
@@ -224,7 +221,7 @@ export default function RateMasterForm() {
                             </div>
                             <div>
                                 <label htmlFor="zone" className={labelStyle}>Zone Wise</label>
-                                <select name="zone" id="zoneSelect" value={formData.zone} onChange={handleChange} className={inputStyle}>
+                                <select name="zoneId" id="zoneSelect" value={formData.zoneId} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
                                     {zones.map(z => (
                                         <option key={z.code} value={z.code} className='uppercase'>{z.code}</option>
@@ -233,13 +230,11 @@ export default function RateMasterForm() {
                             </div>
                             <div>
                                 <label htmlFor="state" className={labelStyle}>State Wise</label>
-                                <select name="state" id="stateSelect" value={formData.state} onChange={handleChange} className={inputStyle}>
+                                <select name="stateId" id="stateSelect" value={formData.stateId} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
-                                    <option value="CENTRAL">CENTRAL</option>
-                                    <option value="EAST">EAST</option>
-                                    <option value="NORTH">NORTH</option>
-                                    <option value="SOUTH">SOUTH</option>
-                                    <option value="WEST">WEST</option>
+                                    {states.map(s => (
+                                        <option key={s.code} value={s.code}>{s.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -321,8 +316,12 @@ export default function RateMasterForm() {
                                         <tr key={rate.id}>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.mode}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.consignmentType}</td>
-                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.zone}</td>
-                                            <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.state}</td>
+                                            <td>
+                                                {zones.find(z => z.id === rate.zoneId)?.name || ''}
+                                            </td>
+                                            <td>
+                                                {states.find(s => s.id === rate.stateId)?.name || ''}
+                                            </td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.city}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.fromWeight}</td>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.toWeight}</td>
