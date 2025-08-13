@@ -12,6 +12,7 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/copy-rates' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Copy Rate</button>
             <button onClick={() => { window.location.href = '/rate-template' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Rate Template</button>
             <button onClick={() => { window.location.href = '/tax-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Tax Master</button>
+            <button onClick={() => { window.location.href = '/country-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Country Master</button>
           </div>
         </section>
       </div>
