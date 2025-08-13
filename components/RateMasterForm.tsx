@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { CustomerMaster, RateMaster } from '@prisma/client';
 import { toast } from 'sonner';
+import { ZoneType } from '@/lib/types';
 
 type RateFormData = Omit<RateMaster, 'id' | 'createdAt' | 'updatedAt' | 'customerId'>;
 
@@ -32,12 +33,16 @@ const initialFormData: RateFormData = {
 export default function RateMasterForm() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerMaster | null>(null);
-    const [rates, setRates] = useState<RateMaster[]>([]); 
+    const [rates, setRates] = useState<RateMaster[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [formData, setFormData] = useState<RateFormData>(initialFormData);
     const [editingRateId, setEditingRateId] = useState<string | null>(null);
- 
+    const [zones, setZones] = useState<ZoneType[]>([]);
+
+    useEffect(() => {
+        axios.get('/api/zone-master').then(res => setZones(res.data));
+    }, []);
     useEffect(() => {
         const fetchAllCustomers = async () => {
             try {
@@ -85,7 +90,7 @@ export default function RateMasterForm() {
             );
         });
     }, [rates, formData]);
- 
+
     const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const customerId = e.target.value;
         const customer = customers.find(c => c.id === customerId) || null;
@@ -108,13 +113,13 @@ export default function RateMasterForm() {
         e.preventDefault();
         if (!selectedCustomer) return;
         setIsLoading(true);
-        if (editingRateId) { 
+        if (editingRateId) {
             try {
                 const response = await axios.put(`/api/rates/${editingRateId}`, formData);
                 setRates(prev => prev.map(r => r.id === editingRateId ? response.data : r));
                 setMessage("Rate updated successfully!");
                 toast.success("Rate updated successfully");
-                handleCancelEdit(); 
+                handleCancelEdit();
             } catch (error) {
                 toast.error("Error updating rate");
                 console.error("Failed to update rate", error);
@@ -155,8 +160,8 @@ export default function RateMasterForm() {
     }
 
     const handleCancelEdit = () => {
-        setEditingRateId(null); 
-        setFormData(initialFormData);  
+        setEditingRateId(null);
+        setFormData(initialFormData);
     };
 
     const handleDeleteRate = async (rateId: string) => {
@@ -172,7 +177,7 @@ export default function RateMasterForm() {
             setMessage("Error deleting rate.");
         }
     };
- 
+
     const inputStyle = "w-full p-2 cursor-pointer text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
     const labelStyle = "block cursor-pointer text-sm font-medium text-gray-700 mb-1";
     const buttonStyle = `${editingRateId ? 'px-1' : 'px-4'} py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`;
@@ -183,7 +188,7 @@ export default function RateMasterForm() {
                 <div className="p-6 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white">CUSTOMER RATE MASTER</h1>
                 </div>
- 
+
                 <div className="p-6 border-b">
                     <label htmlFor="customerSelect" className={labelStyle}>Select Customer</label>
                     <select id="customerSelect" onChange={handleCustomerChange} value={selectedCustomer?.id || ''} className={inputStyle}>
@@ -195,7 +200,7 @@ export default function RateMasterForm() {
                         ))}
                     </select>
                 </div>
- 
+
                 {selectedCustomer && (
                     <form onSubmit={handleSubmit} className="p-6 bg-gray-50">
                         <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">{editingRateId ? "Edit Rate" : "Add New Rate"}</h2>
@@ -221,10 +226,9 @@ export default function RateMasterForm() {
                                 <label htmlFor="zone" className={labelStyle}>Zone Wise</label>
                                 <select name="zone" id="zoneSelect" value={formData.zone} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
-                                    <option value="E">E</option>
-                                    <option value="W">W</option>
-                                    <option value="N">N</option>
-                                    <option value="S">S</option>
+                                    {zones.map(z => (
+                                        <option key={z.code} value={z.code} className='uppercase'>{z.code}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -312,7 +316,7 @@ export default function RateMasterForm() {
                             <tbody className="bg-white divide-y divide-gray-200 ">
                                 {isLoading ? (
                                     <tr><td colSpan={11} className="text-center py-4">Loading rates...</td></tr>
-                                ) : filteredRates.length > 0 ? (  
+                                ) : filteredRates.length > 0 ? (
                                     filteredRates.map(rate => (
                                         <tr key={rate.id}>
                                             <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-sm">{rate.mode}</td>
