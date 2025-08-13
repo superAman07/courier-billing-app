@@ -114,7 +114,7 @@ export default function CustomerForm() {
         await axios.put(`/api/customers/${customerId}`, submissionData);
         toast.success("Customer updated successfully");
         setMessage('Customer updated successfully!');
-        setTimeout(() => router.push('/customer/list'), 1500);
+        setTimeout(() => router.push('/all-customers'), 1500);
       } else {
         const response = await axios.post('/api/customers', submissionData);
         toast.success("Customer saved successfully");
