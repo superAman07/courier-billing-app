@@ -6,16 +6,16 @@ export async function GET(request: Request) {
   const customerId = searchParams.get("customerId") || "";
   const mode = searchParams.get("mode") || "";
   const consignmentType = searchParams.get("consignmentType") || "";
-  const zone = searchParams.get("zone") || "";
-  const state = searchParams.get("state") || "";
+  const zoneId = searchParams.get("zoneId") || "";
+  const stateId = searchParams.get("stateId") || "";
   const city = searchParams.get("city") ?? "";
 
-  if (!customerId || !mode || !consignmentType || !zone || !state || city === null) {
+  if (!customerId || !mode || !consignmentType || !zoneId || !stateId || city === null) {
     return NextResponse.json({ message: "missing params" }, { status: 400 });
   }
 
   const slabs = await prisma.rateMaster.findMany({
-    where: { customerId, mode, consignmentType, zone, state, city },
+    where: { customerId, mode, consignmentType, zoneId, stateId, city },
     orderBy: [{ fromWeight: "asc" }],
   });
 

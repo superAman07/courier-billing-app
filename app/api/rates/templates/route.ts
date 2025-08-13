@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   };
 
   const groups = await prisma.rateMaster.groupBy({
-    by: ["mode", "consignmentType", "zone", "state", "city"],
+    by: ["mode", "consignmentType", "zoneId", "stateId", "city"],
     where,
     _count: { _all: true },
   });

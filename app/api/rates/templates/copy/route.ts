@@ -4,8 +4,8 @@ import prisma from "@/lib/prisma";
 type Combo = {
   mode: string;
   consignmentType: string;
-  zone: string;
-  state: string;
+  zoneId: string;
+  stateId: string;
   city: string;
 };
 
@@ -29,8 +29,8 @@ export async function POST(request: Request) {
         customerId: sourceCustomerId,
         mode: c.mode,
         consignmentType: c.consignmentType,
-        zone: c.zone,
-        state: c.state,
+        zoneId: c.zoneId,
+        stateId: c.stateId,
         city: c.city,
       };
 
@@ -43,8 +43,8 @@ export async function POST(request: Request) {
             customerId: targetCustomerId,
             mode: c.mode,
             consignmentType: c.consignmentType,
-            zone: c.zone,
-            state: c.state,
+            zoneId: c.zoneId,
+            stateId: c.stateId,
             city: c.city,
           },
         });
