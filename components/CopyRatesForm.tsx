@@ -5,11 +5,16 @@ import axios from 'axios';
 import { CustomerMaster, RateMaster } from '@prisma/client';
 import { toast } from 'sonner';
 
+type RateWithRelations = RateMaster & {
+  zone?: { code: string };
+  state?: { code: string };
+};
+
 export default function CopyRatesForm() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
     const [sourceCustomerId, setSourceCustomerId] = useState<string>('');
     const [targetCustomerId, setTargetCustomerId] = useState<string>('');
-    const [sourceRates, setSourceRates] = useState<RateMaster[]>([]);
+    const [sourceRates, setSourceRates] = useState<RateWithRelations[]>([]);
     const [selectedRateIds, setSelectedRateIds] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState(false);
     const [isCopying, setIsCopying] = useState(false);
@@ -151,9 +156,9 @@ export default function CopyRatesForm() {
                                             <td className="px-3 py-2"><input type="checkbox" checked={selectedRateIds.has(rate.id)} onChange={() => handleSelectRate(rate.id)} /></td>
                                             <td className="px-3 py-2 text-gray-600 text-sm">{rate.mode}</td>
                                             <td className="px-3 py-2 text-gray-600 text-sm">{rate.consignmentType}</td>
-                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.zone}</td>
-                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.state}</td>
-                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.city}</td>
+                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.zone?.code.toUpperCase()}</td>
+                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.state?.code.toUpperCase()}</td>
+                                            <td className="px-3 py-2 text-gray-600 text-sm">{rate.city?.toUpperCase()}</td>
                                             <td className="px-3 py-2 text-gray-600 text-sm">{rate.fromWeight.toFixed(3)}</td>
                                             <td className="px-3 py-2 text-gray-600 text-sm">{rate.toWeight.toFixed(3)}</td>
                                             <td className="px-3 py-2 text-gray-600 text-sm">{rate.rate.toFixed(2)}</td>
