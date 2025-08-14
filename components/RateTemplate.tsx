@@ -61,8 +61,11 @@ export default function RateTemplate() {
             return n;
         });
     };
+    // const selectAll = (checked: boolean) => {
+    //     setSelectedKeys(checked ? new Set(templates.map(keyOf)) : new Set());
+    // };
     const selectAll = (checked: boolean) => {
-        setSelectedKeys(checked ? new Set(templates.map(keyOf)) : new Set());
+        setSelectedKeys(checked ? new Set(filteredTemplates.map(keyOf)) : new Set());
     };
 
     const openDetail = async (t: TemplateRow) => {
@@ -162,7 +165,7 @@ export default function RateTemplate() {
                         </div>
                         <div>
                             <label className={labelStyle}>State wise</label>
-                            <select value={filters.state} onChange={e => setFilters({ ...filters, state: e.target.value })} className={inputStyle}>
+                            <select value={filters.state}   onChange={e => setFilters(prev => ({ ...prev, state: e.target.value, city: 'ALL' }))} className={inputStyle}>
                                 <option value="ALL">ALL</option>
                                 {states.map(s => (
                                     <option key={s.id} value={s.id}>{s.code.toUpperCase()}</option>
@@ -170,8 +173,7 @@ export default function RateTemplate() {
                             </select>
                         </div>
                         <div>
-                            <label className={labelStyle}>City wise</label>
-                            {/* <input value={filters.city} onChange={e => setFilters({ ...filters, city: e.target.value })} className={inputStyle} placeholder="ALL" /> */}
+                            <label className={labelStyle}>City wise</label> 
                             <select
                                 value={filters.city}
                                 onChange={e => setFilters({ ...filters, city: e.target.value })}
@@ -192,7 +194,11 @@ export default function RateTemplate() {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                    <th className={thStyle}><input type="checkbox" onChange={e => selectAll(e.target.checked)} checked={templates.length > 0 && selectedKeys.size === templates.length} /></th>
+                                    <th className={thStyle}><input
+                                        type="checkbox"
+                                        onChange={e => selectAll(e.target.checked)}
+                                        checked={filteredTemplates.length > 0 && selectedKeys.size === filteredTemplates.length}
+                                    /></th>
                                     <th className={thStyle}>Mode</th>
                                     <th className={thStyle}>Con. Type</th>
                                     <th className={thStyle}>Zone</th>
