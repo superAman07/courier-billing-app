@@ -54,12 +54,14 @@ const initialFormData: CustomerFormData = {
 export default function CustomerForm() {
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState(''); 
+  const [message, setMessage] = useState('');
+  const [pincodes, setPincodes] = useState<any[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const customerId = searchParams.get('id');
 
   useEffect(() => {
+    axios.get('/api/pincode-master').then(res => setPincodes(res.data));
     if (customerId) {
       const fetchCustomerData = async () => {
         try {
@@ -83,7 +85,14 @@ export default function CustomerForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
-    if (type === 'checkbox') {
+    if (name === 'pincode') {
+      const matched = pincodes.find(pin => pin.pincode === value);
+      setFormData(prev => ({
+        ...prev,
+        pincode: value,
+        city: matched?.city?.name || ''
+      }));
+    } else if (type === 'checkbox') {
       const { checked } = e.target as HTMLInputElement;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
@@ -91,7 +100,7 @@ export default function CustomerForm() {
     }
   };
 
-  const handleGenerateCode = () => { 
+  const handleGenerateCode = () => {
     const newCustomerCode = `CUST-${Date.now()}`;
     setFormData(prev => ({ ...prev, customerCode: newCustomerCode }));
   };
@@ -103,7 +112,7 @@ export default function CustomerForm() {
 
     try {
       const submissionData = {
-        ...formData, 
+        ...formData,
         fuelSurchargePercent: parseFloat(String(formData.fuelSurchargePercent)),
         discountPercent: parseFloat(String(formData.discountPercent)),
         openingBalance: parseFloat(String(formData.openingBalance)),
@@ -171,11 +180,18 @@ export default function CustomerForm() {
             </div>
             <div>
               <label htmlFor="pincode" className={labelStyle}>Pincode</label>
-              <input type="text" name="pincode" placeholder='Enter pincode' id="pincode" value={formData.pincode} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="pincode" placeholder='Enter pincode' id="pincode" value={formData.pincode} onChange={handleChange} className={inputStyle} list="pincode-list" />
+              <datalist id="pincode-list">
+                {pincodes.map(pin => (
+                  <option key={pin.pincode} value={pin.pincode}>
+                    {pin.city?.name ? `${pin.pincode} - ${pin.city.name}` : pin.pincode}
+                  </option>
+                ))}
+              </datalist>
             </div>
             <div>
               <label htmlFor="city" className={labelStyle}>City</label>
-              <input type="text" name="city" placeholder='Enter city' id="city" value={formData.city} onChange={handleChange} className={inputStyle} />
+              <input type="text" name="city" placeholder='Enter city' id="city" value={formData.city?.toUpperCase()} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="mobile" className={labelStyle}>Mobile</label>
@@ -205,7 +221,7 @@ export default function CustomerForm() {
             </div>
             <div className="flex items-center justify-start mt-6">
               <input type="checkbox" name="isInternational" id="isInternational" checked={formData.isInternational} onChange={handleChange} className="h-4 w-4 cursor-pointer text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-              <label htmlFor="isInternational" className="ml-2 block text-sm text-gray-900">Is International Customer</label>  
+              <label htmlFor="isInternational" className="ml-2 block text-sm text-gray-900">Is International Customer</label>
             </div>
           </div>
 
