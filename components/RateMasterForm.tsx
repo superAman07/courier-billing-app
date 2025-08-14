@@ -35,6 +35,7 @@ export default function RateMasterForm() {
     const [editingRateId, setEditingRateId] = useState<string | null>(null);
     const [zones, setZones] = useState<ZoneType[]>([]);
     const [states, setStates] = useState<StateType[]>([]);
+    const [cities, setCities] = useState<any[]>([]);
 
     useEffect(() => {
         Promise.all([
@@ -50,6 +51,14 @@ export default function RateMasterForm() {
                 console.error(error);
             });
     }, []);
+    useEffect(() => {
+        if (formData.stateId && formData.stateId !== 'ALL') {
+            const selectedState = states.find(s => s.id === formData.stateId);
+            setCities(selectedState?.cities || []);
+        } else {
+            setCities([]);
+        }
+    }, [formData.stateId, states]);
     useEffect(() => {
         const fetchAllCustomers = async () => {
             try {
@@ -249,7 +258,18 @@ export default function RateMasterForm() {
                             </div>
                             <div>
                                 <label htmlFor="city" className={labelStyle}>City Wise</label>
-                                <input type="text" name="city" value={formData.city} onChange={handleChange} className={inputStyle} placeholder='All' />
+                                {/* <input type="text" name="city" value={formData.city} onChange={handleChange} className={inputStyle} placeholder='All' /> */}
+                                <select
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    className={inputStyle}
+                                >
+                                    <option value="ALL">ALL</option>
+                                    {cities.map(city => (
+                                        <option key={city.id} value={city.name}>{city.code.toUpperCase()}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div />
 

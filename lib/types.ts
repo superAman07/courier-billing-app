@@ -8,5 +8,6 @@ export interface StateType {
     id: string;
     name: string;
     code: string;
+    cities: any[];
     active: boolean;
 }

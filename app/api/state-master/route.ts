@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 export async function GET() {
     try {
         const states = await prisma.stateMaster.findMany({
-            include: { zone: true },
+            include: { zone: true, cities: true },
             orderBy: { name: "asc" }
         });
         return NextResponse.json(states);
