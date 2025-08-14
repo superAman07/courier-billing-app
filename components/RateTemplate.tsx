@@ -19,7 +19,7 @@ export default function RateTemplate() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
     const [sourceId, setSourceId] = useState("");
     const [targetId, setTargetId] = useState("");
-    const [filters, setFilters] = useState({ mode: "ALL", consignmentType: "ALL", zone: "ALL", state: "ALL", city: "" });
+    const [filters, setFilters] = useState({ mode: "ALL", consignmentType: "ALL", zone: "ALL", state: "ALL", city: "ALL" });
     const [templates, setTemplates] = useState<TemplateRow[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ export default function RateTemplate() {
         (async () => {
             setIsLoading(true);
             try {
-                const params = new URLSearchParams({ customerId: sourceId, ...filters, city: filters.city });
+                const params = new URLSearchParams({ customerId: sourceId });
                 const res = await axios.get(`/api/rates/templates?${params.toString()}`);
                 setTemplates(res.data);
                 setSelectedKeys(new Set());
@@ -51,7 +51,7 @@ export default function RateTemplate() {
                 setIsLoading(false);
             }
         })();
-    }, [sourceId, filters]);
+    }, [sourceId]);
 
     const toggleSelect = (t: TemplateRow) => {
         const k = keyOf(t);
@@ -92,9 +92,25 @@ export default function RateTemplate() {
         }
     };
 
+    const filteredTemplates = useMemo(() => {
+        return templates.filter(t =>
+            (filters.mode === "ALL" || t.mode === filters.mode) &&
+            (filters.consignmentType === "ALL" || t.consignmentType === filters.consignmentType) &&
+            (filters.zone === "ALL" || t.zoneId === filters.zone) &&
+            (filters.state === "ALL" || t.stateId === filters.state) &&
+            (filters.city === "ALL" || t.city === filters.city)
+        );
+    }, [templates, filters]);
+
     const inputStyle = "w-full p-2 cursor-pointer text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
     const labelStyle = "block cursor-pointer text-sm font-medium text-gray-700 mb-1";
     const thStyle = "px-3 py-2 cursor-pointer text-left text-xs font-medium text-gray-500 uppercase";
+
+    const filteredCities = useMemo(() => {
+        if (filters.state === 'ALL') return [];
+        const selectedState = states.find(s => s.id === filters.state);
+        return selectedState?.cities || [];
+    }, [filters.state, states]);
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
@@ -155,7 +171,17 @@ export default function RateTemplate() {
                         </div>
                         <div>
                             <label className={labelStyle}>City wise</label>
-                            <input value={filters.city} onChange={e => setFilters({ ...filters, city: e.target.value })} className={inputStyle} placeholder="ALL" />
+                            {/* <input value={filters.city} onChange={e => setFilters({ ...filters, city: e.target.value })} className={inputStyle} placeholder="ALL" /> */}
+                            <select
+                                value={filters.city}
+                                onChange={e => setFilters({ ...filters, city: e.target.value })}
+                                className={inputStyle}
+                            >
+                                <option value="ALL">ALL</option>
+                                {filteredCities.map(city => (
+                                    <option key={city.id} value={city.code}>{city.code.toUpperCase()}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -178,9 +204,9 @@ export default function RateTemplate() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {isLoading ? (
-                                    <tr><td colSpan={8} className="text-center py-4">Loading...</td></tr>
-                                ) : templates.length > 0 ? (
-                                    templates.map(t => (
+                                    <tr><td colSpan={8} className="text-center text-gray-600 py-4">Loading...</td></tr>
+                                ) : filteredTemplates.length > 0 ? (
+                                    filteredTemplates.map(t => (
                                         <tr key={keyOf(t)}>
                                             <td className="px-3 py-2"><input type="checkbox" checked={selectedKeys.has(keyOf(t))} onChange={() => toggleSelect(t)} /></td>
                                             <td className="px-3 py-2 text-sm text-gray-700">{t.mode}</td>
