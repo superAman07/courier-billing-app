@@ -16,7 +16,8 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/zone-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Zone Master</button>
             <button onClick={() => { window.location.href = '/state-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">State Master</button>
             <button onClick={() => { window.location.href = '/city-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">City Master</button>
-            <button onClick={() => { window.location.href = '/pincode-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Pincode Master</button>
+            <button onClick={() => { window.location.href = '/pincode-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Pincode Mapping Master</button>
+            <button onClick={() => { window.location.href = '/invoice-settings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Invoice Configuration</button>
           </div>
         </section>
       </div>
