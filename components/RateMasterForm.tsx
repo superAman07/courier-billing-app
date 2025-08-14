@@ -16,7 +16,7 @@ const initialFormData: RateFormData = {
     consignmentType: 'ALL',
     zoneId: 'ALL',
     stateId: 'ALL',
-    city: '',
+    city: 'ALL',
     fromWeight: 0,
     toWeight: 0,
     rate: 0,
@@ -102,7 +102,7 @@ export default function RateMasterForm() {
                 (formData.consignmentType === 'ALL' || rate.consignmentType === formData.consignmentType) &&
                 (formData.zoneId === 'ALL' || rate.zoneId === formData.zoneId) &&
                 (formData.stateId === 'ALL' || rate.stateId === formData.stateId) &&
-                (cityFilter === '' || rate.city.toLowerCase().includes(cityFilter))
+                (formData.city === 'ALL' || rate.city === formData.city || cities.find(c => c.code === formData.city)?.name === rate.city)
             );
         });
     }, [rates, formData]);
@@ -267,7 +267,7 @@ export default function RateMasterForm() {
                                 >
                                     <option value="ALL">ALL</option>
                                     {cities.map(city => (
-                                        <option key={city.id} value={city.name}>{city.code.toUpperCase()}</option>
+                                        <option key={city.id} value={city.code}>{city.code.toUpperCase()}</option>
                                     ))}
                                 </select>
                             </div>
