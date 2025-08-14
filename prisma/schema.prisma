@@ -101,6 +101,7 @@ model StateMaster {
   active    Boolean      @default(true)
   rates     RateMaster[]
   cities    CityMaster[]
+  pincodes  PincodeMaster[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 }
@@ -111,6 +112,19 @@ model CityMaster {
   name      String
   stateId   String
   state     StateMaster @relation(fields: [stateId], references: [id])
+  active    Boolean     @default(true)
+  pincodes  PincodeMaster[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model PincodeMaster {
+  id        String      @id @default(cuid())
+  pincode   String      @unique
+  stateId   String
+  state     StateMaster @relation(fields: [stateId], references: [id])
+  cityId    String
+  city      CityMaster  @relation(fields: [cityId], references: [id])
   active    Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
