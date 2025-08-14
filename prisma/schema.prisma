@@ -100,6 +100,18 @@ model StateMaster {
   zone      ZoneMaster   @relation(fields: [zoneId], references: [id])
   active    Boolean      @default(true)
   rates     RateMaster[]
+  cities    CityMaster[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+}
+
+model CityMaster {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  name      String
+  stateId   String
+  state     StateMaster @relation(fields: [stateId], references: [id])
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
