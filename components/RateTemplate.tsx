@@ -73,7 +73,10 @@ export default function RateTemplate() {
             const { mode, consignmentType, zoneId, stateId, city } = t;
             const params = new URLSearchParams({ customerId: sourceId, mode, consignmentType, zoneId, stateId, city });
             const res = await axios.get(`/api/rates/templates/slabs?${params.toString()}`);
-            setDetail({ open: true, slabs: res.data, title: `${t.mode} | ${t.consignmentType} | ${t.zoneId} | ${t.stateId} | ${t.city}` });
+            const zoneCode = zones.find(z => z.id === zoneId)?.code?.toUpperCase() || zoneId;
+            const stateCode = states.find(s => s.id === stateId)?.code?.toUpperCase() || stateId;
+            const cityCode = city?.toUpperCase() || city;
+            setDetail({ open: true, slabs: res.data, title: `${t.mode} | ${t.consignmentType} | ${zoneCode} | ${stateCode} | ${cityCode}` });
         } catch {
             setMessage("Failed to load details.");
             toast.error("Failed to load details");
@@ -165,7 +168,7 @@ export default function RateTemplate() {
                         </div>
                         <div>
                             <label className={labelStyle}>State wise</label>
-                            <select value={filters.state}   onChange={e => setFilters(prev => ({ ...prev, state: e.target.value, city: 'ALL' }))} className={inputStyle}>
+                            <select value={filters.state} onChange={e => setFilters(prev => ({ ...prev, state: e.target.value, city: 'ALL' }))} className={inputStyle}>
                                 <option value="ALL">ALL</option>
                                 {states.map(s => (
                                     <option key={s.id} value={s.id}>{s.code.toUpperCase()}</option>
@@ -173,7 +176,7 @@ export default function RateTemplate() {
                             </select>
                         </div>
                         <div>
-                            <label className={labelStyle}>City wise</label> 
+                            <label className={labelStyle}>City wise</label>
                             <select
                                 value={filters.city}
                                 onChange={e => setFilters({ ...filters, city: e.target.value })}
