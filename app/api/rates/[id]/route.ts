@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma"; 
+import prisma from "@/lib/prisma";
 
-export async function PUT(request: Request, { params }: {params: Promise<{id:string}>}) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const body = await request.json();
     if (!body.zoneId || !body.stateId) {
@@ -11,13 +11,14 @@ export async function PUT(request: Request, { params }: {params: Promise<{id:str
       body.additionalWeight = null;
       body.additionalRate = null;
     }
-    const { zoneId, stateId, ...rest } = body;
+    const { zoneId, stateId, customerId, ...rest } = body;
     const updatedRate = await prisma.rateMaster.update({
       where: { id: (await params).id },
       data: {
         ...rest,
         zone: { connect: { id: zoneId } },
         state: { connect: { id: stateId } },
+        customer: { connect: { id: customerId } },
       },
       include: {
         zone: true,
