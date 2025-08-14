@@ -93,29 +93,29 @@ model ZoneMaster {
 }
 
 model StateMaster {
-  id        String       @id @default(cuid())
-  code      String       @unique
+  id        String          @id @default(cuid())
+  code      String          @unique
   name      String
   zoneId    String
-  zone      ZoneMaster   @relation(fields: [zoneId], references: [id])
-  active    Boolean      @default(true)
+  zone      ZoneMaster      @relation(fields: [zoneId], references: [id])
+  active    Boolean         @default(true)
   rates     RateMaster[]
   cities    CityMaster[]
   pincodes  PincodeMaster[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 }
 
 model CityMaster {
-  id        String      @id @default(cuid())
-  code      String      @unique
+  id        String          @id @default(cuid())
+  code      String          @unique
   name      String
   stateId   String
-  state     StateMaster @relation(fields: [stateId], references: [id])
-  active    Boolean     @default(true)
+  state     StateMaster     @relation(fields: [stateId], references: [id])
+  active    Boolean         @default(true)
   pincodes  PincodeMaster[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 }
 
 model PincodeMaster {
