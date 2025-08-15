@@ -139,3 +139,32 @@ model InvoiceSettings {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model RegistrationDetails {
+  id              String   @id @default(cuid())
+  companyName     String
+  ownerName       String
+  address         String
+  pincode         String
+  city            String
+  state           String
+
+  phone           String?
+  mobile          String?
+  email           String?
+
+  panNo           String?
+  gstNo           String?
+  serviceTaxNo    String?
+  hsnSacCode      String?
+  stateCode       String?
+
+  associateWith   String?
+
+  bankName        String?
+  bankAccountNo   String?
+  ifscCode        String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
