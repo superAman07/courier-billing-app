@@ -1,3 +1,5 @@
+import BookRateMaster from "@/components/BookRateMaster";
+
 export default function (){
-    return <>this is book rate master</>
+    return <BookRateMaster/>
 }
