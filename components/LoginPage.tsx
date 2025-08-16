@@ -18,7 +18,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('/api/login', form);
+      const response = await axios.post('/api/login', form);
+      const userInfo = response.data;
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
       toast.success('Login successful');
       router.push('/');
     } catch (err: any) {

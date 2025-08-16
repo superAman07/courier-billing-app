@@ -25,6 +25,8 @@ export default function CreateUser() {
     const [users, setUsers] = useState<any[]>([]);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userInfo') || '{}') : {};
+    const isAdmin = userInfo.userType === 'ADMIN';
 
     useEffect(() => {
         axios.get('/api/create-user').then(res => setUsers(res.data));
@@ -116,97 +118,104 @@ export default function CreateUser() {
                 <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white">CREATE USERS</h1>
                 </div>
+                {!isAdmin && (
+                    <div className="p-4 bg-yellow-100 text-yellow-800 rounded text-center font-semibold mb-4">
+                        Only admin can create, edit, or delete users. You have view-only access.
+                    </div>
+                )}
                 <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 gap-4">
-                    <div>
-                        <label className={labelStyle}>User Name <span className="text-red-600">*</span></label>
-                        <input name="username" placeholder='Enter username' value={form.username} onChange={handleChange} className={inputStyle} required />
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:space-x-4">
-                        <div className="flex-1">
-                            <label className={labelStyle}>
-                                Password {editingIndex === null && <span className="text-red-600">*</span>}
-                            </label>
-                            <input
-                                name="password"
-                                placeholder="Enter password"
-                                value={form.password}
-                                onChange={handleChange}
-                                className={inputStyle}
-                                type="password"
-                                autoComplete="new-password"
-                                required={editingIndex === null}
-                            />
+                    <fieldset disabled={!isAdmin} className="space-y-4">
+                        <div>
+                            <label className={labelStyle}>User Name <span className="text-red-600">*</span></label>
+                            <input name="username" placeholder='Enter username' value={form.username} onChange={handleChange} className={inputStyle} required />
                         </div>
-                        <div className="flex-1 mt-4 sm:mt-0">
-                            <label className={labelStyle}>
-                                Re-Type Password {editingIndex === null && <span className="text-red-600">*</span>}
-                            </label>
-                            <input
-                                name="retypePassword"
-                                placeholder="Re-enter password"
-                                value={form.retypePassword}
-                                onChange={handleChange}
-                                className={inputStyle}
-                                type="password"
-                                autoComplete="new-password"
-                                required={editingIndex === null}
-                            />
+                        <div className="flex flex-col sm:flex-row sm:space-x-4">
+                            <div className="flex-1">
+                                <label className={labelStyle}>
+                                    Password {editingIndex === null && <span className="text-red-600">*</span>}
+                                </label>
+                                <input
+                                    name="password"
+                                    placeholder="Enter password"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    className={inputStyle}
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required={editingIndex === null}
+                                />
+                            </div>
+                            <div className="flex-1 mt-4 sm:mt-0">
+                                <label className={labelStyle}>
+                                    Re-Type Password {editingIndex === null && <span className="text-red-600">*</span>}
+                                </label>
+                                <input
+                                    name="retypePassword"
+                                    placeholder="Re-enter password"
+                                    value={form.retypePassword}
+                                    onChange={handleChange}
+                                    className={inputStyle}
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required={editingIndex === null}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-4">
-                        <div className="flex-1">
-                            <label className={labelStyle}>User Type <span className="text-red-600">*</span></label>
-                            <select
-                                name="userType"
-                                value={form.userType}
-                                onChange={handleChange}
-                                className={`${inputStyle} cursor-pointer`}
-                                required
-                            >
-                                <option value="ADMIN">ADMIN</option>
-                                <option value="USER">USER</option>
-                            </select>
-                        </div>
-                        <div className="flex items-center pt-6 sm:pt-0">
-                            <input
-                                type="checkbox"
-                                name="active"
-                                checked={form.active}
-                                onChange={handleChange}
-                                className="h-4 w-4 cursor-pointer text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                id="active-checkbox"
-                            />
-                            <label htmlFor="active-checkbox" className="ml-2 text-gray-700">Active</label>
-                        </div>
-                        <div className="flex space-x-2 pt-6 sm:pt-0">
-                            <button
-                                type="submit"
-                                className={`px-6 py-2 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded cursor-pointer font-semibold flex items-center justify-center`}
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                        </svg>
-                                        {editingIndex !== null ? 'Updating...' : 'Saving...'}
-                                    </>
-                                ) : (
-                                    editingIndex !== null ? 'Update' : 'Save'
-                                )}
-                            </button>
-                            {editingIndex !== null && (
-                                <button
-                                    type="button"
-                                    onClick={handleCancel}
-                                    className="px-6 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer font-semibold"
+                        <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-4">
+                            <div className="flex-1">
+                                <label className={labelStyle}>User Type <span className="text-red-600">*</span></label>
+                                <select
+                                    name="userType"
+                                    value={form.userType}
+                                    onChange={handleChange}
+                                    className={`${inputStyle} cursor-pointer`}
+                                    required
                                 >
-                                    Cancel
+                                    <option value="ADMIN">ADMIN</option>
+                                    <option value="USER">USER</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center pt-6 sm:pt-0">
+                                <input
+                                    type="checkbox"
+                                    name="active"
+                                    checked={form.active}
+                                    onChange={handleChange}
+                                    className="h-4 w-4 cursor-pointer text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    id="active-checkbox"
+                                />
+                                <label htmlFor="active-checkbox" className="ml-2 text-gray-700">Active</label>
+                            </div>
+                            <div className="flex space-x-2 pt-6 sm:pt-0">
+                                <button
+                                    type="submit"
+                                    className={`px-6 py-2 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded cursor-pointer font-semibold flex items-center justify-center`}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                            </svg>
+                                            {editingIndex !== null ? 'Updating...' : 'Saving...'}
+                                        </>
+                                    ) : (
+                                        editingIndex !== null ? 'Update' : 'Save'
+                                    )}
                                 </button>
-                            )}
+                                {editingIndex !== null && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancel}
+                                        className="px-6 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer font-semibold"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    </fieldset>
                 </form>
                 <div className="p-6">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -227,13 +236,13 @@ export default function CreateUser() {
                                     <td className="px-3 py-2 text-gray-600">{user.userType}</td>
                                     <td className="px-3 py-2 text-center">{user.active ? '✔️' : ''}</td>
                                     <td className="px-3 py-2 text-center">
-                                        <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
+                                        <button type="button" disabled={!isAdmin} onClick={() => handleEdit(idx)} className={`text-blue-600 hover:underline cursor-pointer ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>✏️</button>
                                     </td>
                                     <td className="px-3 py-2 text-center">
                                         <button type="button" onClick={() => alert(JSON.stringify(user, null, 2))} className="text-green-600 hover:underline cursor-pointer">🔍</button>
                                     </td>
                                     <td className="px-3 py-2 text-center">
-                                        <button type="button" onClick={() => handleDelete(idx)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
+                                        <button type="button" disabled={!isAdmin} onClick={() => handleDelete(idx)} className={`text-red-600 hover:underline cursor-pointer ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>🗑️</button>
                                     </td>
                                 </tr>
                             ))}
