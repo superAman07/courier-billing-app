@@ -141,30 +141,38 @@ model InvoiceSettings {
 }
 
 model RegistrationDetails {
-  id              String   @id @default(cuid())
-  companyName     String
-  ownerName       String
-  address         String
-  pincode         String
-  city            String
-  state           String
+  id          String @id @default(cuid())
+  companyName String
+  ownerName   String
+  address     String
+  pincode     String
+  city        String
+  state       String
 
-  phone           String?
-  mobile          String?
-  email           String?
+  phone  String?
+  mobile String?
+  email  String?
 
-  panNo           String?
-  gstNo           String?
-  serviceTaxNo    String?
-  hsnSacCode      String?
-  stateCode       String?
+  panNo        String?
+  gstNo        String?
+  serviceTaxNo String?
+  hsnSacCode   String?
+  stateCode    String?
 
-  associateWith   String?
+  associateWith String?
 
-  bankName        String?
-  bankAccountNo   String?
-  ifscCode        String?
+  bankName      String?
+  bankAccountNo String?
+  ifscCode      String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BookRateMaster {
+  id         String   @id @default(cuid())
+  bookSeries String
+  amount     Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

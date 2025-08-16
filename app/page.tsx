@@ -19,6 +19,7 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/pincode-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Pincode Mapping Master</button>
             <button onClick={() => { window.location.href = '/invoice-settings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Invoice Configuration</button>
             <button onClick={() => { window.location.href = '/registration-details' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify Registration Details</button>
+            <button onClick={() => { window.location.href = '/book-rate-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Book Rate Master</button>
           </div>
         </section>
       </div>
