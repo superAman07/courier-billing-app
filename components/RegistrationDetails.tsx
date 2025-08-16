@@ -123,7 +123,7 @@ export default function RegistrationDetailsPage() {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white">REGISTRATION DETAILS</h1>
                 </div>
@@ -262,8 +262,8 @@ export default function RegistrationDetailsPage() {
                                     <td className="px-3 py-2 text-gray-600">{reg.companyName}</td>
                                     <td className="px-3 py-2 text-gray-600">{reg.ownerName}</td>
                                     <td className="px-3 py-2 text-gray-600">{reg.pincode}</td>
-                                    <td className="px-3 py-2 text-gray-600">{reg.city}</td>
-                                    <td className="px-3 py-2 text-gray-600">{reg.state}</td>
+                                    <td className="px-3 py-2 text-gray-600">{reg.city.toUpperCase()}</td>
+                                    <td className="px-3 py-2 text-gray-600">{reg.state.toUpperCase()}</td>
                                     <td className="px-3 py-2 text-gray-600">{reg.mobile}</td>
                                     <td className="px-3 py-2 text-gray-600">{reg.email}</td>
                                     <td className="px-3 py-2 text-center">
