@@ -22,6 +22,7 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/book-rate-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Book Rate Master</button>
             <button onClick={() => { window.location.href = '/employee-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Employee Master</button>
             <button onClick={() => { window.location.href = '/create-user' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Create User</button>
+            <button onClick={() => { window.location.href = '/sms-api-settings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">SMS API Settings</button>
           </div>
         </section>
       </div>

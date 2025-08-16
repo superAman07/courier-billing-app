@@ -207,6 +207,17 @@ model AppUser {
   updatedAt    DateTime @updatedAt
 }
 
+model SmsApiSettings {
+  id           String   @id @default(cuid())
+  apiPart1     String
+  apiPart2     String
+  apiPart3     String?
+  companyName  String
+  phoneNo      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 enum UserType {
   ADMIN
   USER
