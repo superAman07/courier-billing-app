@@ -218,6 +218,14 @@ model SmsApiSettings {
   updatedAt    DateTime @updatedAt
 }
 
+model SmsTemplate {
+  id            String   @id @default(cuid())
+  templateName  String   @unique
+  templateText  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 enum UserType {
   ADMIN
   USER
