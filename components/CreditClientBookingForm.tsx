@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const initialForm = {
     bookingDate: '',
@@ -51,7 +52,7 @@ export default function CreditClientBookingForm() {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
-       
+
         e.preventDefault();
         setLoading(true);
         try {
@@ -61,10 +62,12 @@ export default function CreditClientBookingForm() {
                 await axios.post('/api/credit-client-booking', form);
             }
         } catch (error) {
+            toast.error("Error submitting form");
             console.error("Error submitting form:", error);
         } finally {
             setLoading(false);
         }
+        toast.success(editingId ? "Booking updated successfully" : "Booking added successfully");
         setForm(initialForm);
         setEditingId(null);
         fetchBookings();
@@ -80,8 +83,14 @@ export default function CreditClientBookingForm() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this booking?')) return;
-        await axios.delete(`/api/credit-client-booking/${id}`);
-        fetchBookings();
+        try {
+            await axios.delete(`/api/credit-client-booking/${id}`);
+            fetchBookings();
+            toast.success("Booking deleted successfully");
+        } catch (error) {
+            toast.error("Error deleting booking");
+            console.error("Error deleting booking:", error);
+        }
     };
 
     const totalRecords = bookings.length;
