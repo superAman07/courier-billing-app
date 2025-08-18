@@ -34,7 +34,7 @@ export default function InternationalCashBookingForm() {
   useEffect(() => {
     fetchBookings();
     axios.get('/api/pincode-master').then(res => setPincodes(res.data));
-    axios.get('/api/country-master').then(res => setCountries(res.data));
+    axios.get('/api/countries').then(res => setCountries(res.data));
   }, []);
 
   const fetchBookings = async () => {

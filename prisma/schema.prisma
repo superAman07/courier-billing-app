@@ -297,9 +297,6 @@ model InternationalCashBooking {
   bookingDate       DateTime
   senderName        String
   senderMobile      String
-  sourcePincode     String
-  sourceState       String
-  sourceCity        String
   receiverName      String
   receiverMobile    String
 
