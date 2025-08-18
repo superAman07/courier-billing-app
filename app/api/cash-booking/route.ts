@@ -15,9 +15,35 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const booking = await prisma.cashBooking.create({ data });
+    console.log("Cashbooking form payload sent data:", data);
+    const booking = await prisma.cashBooking.create({
+      data: {
+        bookingDate: new Date(data.bookingDate),
+        senderName: data.senderName,
+        senderMobile: data.senderMobile,
+        sourcePincode: data.sourcePincode,
+        sourceState: data.sourceState,
+        sourceCity: data.sourceCity,
+        receiverName: data.receiverName,
+        receiverMobile: data.receiverMobile,
+        consignmentNo: data.consignmentNo,
+        docType: data.docType,
+        mode: data.mode,
+        pincode: data.pincode,
+        city: data.city,
+        pieces: Number(data.pieces),
+        weight: Number(data.weight),
+        courierCharged: Number(data.courierCharged),
+        contents: data.contents,
+        value: data.value !== undefined ? Number(data.value) : null,
+        vsAmount: data.vsAmount !== undefined ? Number(data.vsAmount) : null,
+        amountCharged: Number(data.amountCharged),
+      }
+    });
+    console.log("Booking cashbook response from schema: ",booking);
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
+    console.log("Error creating cash booking: ", error);
     return NextResponse.json({ message: "Error creating cash booking" }, { status: 500 });
   }
 }

@@ -82,12 +82,25 @@ export default function CashBookingForm() {
     }
   };
 
+  const allowedFields = [
+    "bookingDate", "senderName", "senderMobile",'sourcePincode' ,"sourceCity","sourceState", "receiverName", "receiverMobile", "consignmentNo", "docType", "mode", "pincode", "city", "pieces", "weight", "courierCharged", "contents", "value", "vsAmount", "amountCharged"
+  ];
+
+  function filterFormData(form: any) {
+    const filtered: any = {};
+    for (const key of allowedFields) {
+      if (form[key] !== undefined) filtered[key] = form[key];
+    }
+    return filtered;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const filteredForm = filterFormData(form);
     if (editingId) {
-      await axios.put(`/api/cash-booking/${editingId}`, form);
+      await axios.put(`/api/cash-booking/${editingId}`, filteredForm);
     } else {
-      await axios.post('/api/cash-booking', form);
+      await axios.post('/api/cash-booking', filteredForm);
     }
     setForm(initialForm);
     setEditingId(null);
@@ -98,6 +111,7 @@ export default function CashBookingForm() {
     setForm({
       ...booking,
       bookingDate: booking.bookingDate?.slice(0, 10) || '',
+      sourcePincode: booking.sourcePincode || '',
     });
     setEditingId(booking.id);
   };
@@ -146,6 +160,24 @@ export default function CashBookingForm() {
                   <label className={labelStyle}>Sender Mobile No</label>
                   <input name="senderMobile" placeholder='Enter sender mobile no' value={form.senderMobile} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
                 </div>
+                <div>
+                  <label className={labelStyle}>Sender Pincode</label>
+                  <input
+                    name="sourcePincode"
+                    placeholder="Enter sender pincode"
+                    value={form.sourcePincode}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded text-gray-700"
+                    list="pincode-list"
+                  />
+                  <datalist id="pincode-list">
+                    {pincodes.map(pin => (
+                      <option key={pin.pincode} value={pin.pincode}>
+                        {pin.pincode} - {pin.city?.name || ''} {pin.state?.name || ''}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
               </div>
             </div>
             <div>
@@ -190,7 +222,7 @@ export default function CashBookingForm() {
             </div>
             <div>
               <label className={labelStyle}>City</label>
-              <input name="city" placeholder='Enter city' value={form.city} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
+              <input name="city" placeholder='Enter city' value={form.city.toUpperCase()} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
             </div>
             <div>
               <label className={labelStyle}>Pcs</label>
@@ -250,21 +282,21 @@ export default function CashBookingForm() {
             <tbody>
               {bookings.map((b) => (
                 <tr key={b.id}>
-                  <td className="px-2 py-1 border">{b.consignmentNo}</td>
-                  <td className="px-2 py-1 border">{b.docType}</td>
-                  <td className="px-2 py-1 border">{b.mode}</td>
-                  <td className="px-2 py-1 border">{b.pincode}</td>
-                  <td className="px-2 py-1 border">{b.city}</td>
-                  <td className="px-2 py-1 border">{b.pieces}</td>
-                  <td className="px-2 py-1 border">{b.contents}</td>
-                  <td className="px-2 py-1 border">{b.weight}</td>
-                  <td className="px-2 py-1 border">{b.courierCharged}</td>
-                  <td className="px-2 py-1 border">{b.amountCharged}</td>
-                  <td className="px-2 py-1 border">
-                    <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline">✏️</button>
+                  <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.city}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
+                  <td className="px-2 py-1 text-gray-600 border">
+                    <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
                   </td>
-                  <td className="px-2 py-1 border">
-                    <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline">🗑️</button>
+                  <td className="px-2 py-1 text-gray-600 border">
+                    <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
                   </td>
                 </tr>
               ))}

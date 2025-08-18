@@ -269,7 +269,8 @@ model CashBooking {
   bookingDate       DateTime
   senderName        String
   senderMobile      String
-  sourceState       String  
+  sourcePincode     String
+  sourceState       String
   sourceCity        String
   receiverName      String
   receiverMobile    String
