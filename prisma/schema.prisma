@@ -33,6 +33,7 @@ model CustomerMaster {
   rates                RateMaster[]
 
   bookings BookingMaster[] @relation("CustomerBookings")
+  creditClientBookings CreditClientBooking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -314,6 +315,26 @@ model InternationalCashBooking {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model CreditClientBooking {
+  id              String   @id @default(cuid())
+  bookingDate     DateTime
+  consignmentNo   String   @unique
+  customerId      String
+  customer        CustomerMaster @relation(fields: [customerId], references: [id])
+  docType         String    
+  serviceType     String   
+  pincode         String
+  city            String   
+  weight          Float
+  courierAmount   Float
+  vasAmount       Float?
+  chargeAmount    Float
+  consigneeName   String
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 enum UserType {
