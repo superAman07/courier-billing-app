@@ -6,9 +6,6 @@ const initialForm = {
   bookingDate: '',
   senderName: '',
   senderMobile: '',
-  sourcePincode: '',
-  sourceCity: '',
-  sourceState: '',
   receiverName: '',
   receiverMobile: '',
   consignmentNo: '',
@@ -28,12 +25,11 @@ export default function InternationalCashBookingForm() {
   const [form, setForm] = useState(initialForm);
   const [bookings, setBookings] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [pincodes, setPincodes] = useState<any[]>([]);
   const [countries, setCountries] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchBookings();
-    axios.get('/api/pincode-master').then(res => setPincodes(res.data));
     axios.get('/api/countries').then(res => setCountries(res.data));
   }, []);
 
@@ -44,29 +40,26 @@ export default function InternationalCashBookingForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (name === 'sourcePincode') {
-      const matched = pincodes.find((p: any) => p.pincode === value);
-      setForm(prev => ({
-        ...prev,
-        sourcePincode: value,
-        sourceCity: matched?.city?.name || '',
-        sourceState: matched?.state?.name || ''
-      }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      await axios.put(`/api/international-cash-booking/${editingId}`, form);
-    } else {
-      await axios.post('/api/international-cash-booking', form);
+    setLoading(true);
+    try {
+      e.preventDefault();
+      if (editingId) {
+        await axios.put(`/api/international-cash-booking/${editingId}`, form);
+      } else {
+        await axios.post('/api/international-cash-booking', form);
+      }
+      setForm(initialForm);
+      setEditingId(null);
+      fetchBookings();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    } finally {
+      setLoading(false);
     }
-    setForm(initialForm);
-    setEditingId(null);
-    fetchBookings();
   };
 
   const handleEdit = (booking: any) => {
@@ -100,36 +93,11 @@ export default function InternationalCashBookingForm() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-1">Sender Name</label>
-                  <input name="senderName" value={form.senderName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
+                  <input name="senderName" placeholder='Enter sender name' value={form.senderName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-1">Sender Mobile No</label>
-                  <input name="senderMobile" value={form.senderMobile} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-blue-900 mb-1">Sender Pincode</label>
-                  <input
-                    name="sourcePincode"
-                    value={form.sourcePincode}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded text-gray-700"
-                    list="pincode-list"
-                  />
-                  <datalist id="pincode-list">
-                    {pincodes.map(pin => (
-                      <option key={pin.pincode} value={pin.pincode}>
-                        {pin.pincode} - {pin.city?.name || ''} {pin.state?.name || ''}
-                      </option>
-                    ))}
-                  </datalist>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-blue-900 mb-1">Source City</label>
-                  <input name="sourceCity" value={form.sourceCity} readOnly className="w-full p-2 border rounded text-gray-700 bg-gray-100" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-blue-900 mb-1">Source State</label>
-                  <input name="sourceState" value={form.sourceState} readOnly className="w-full p-2 border rounded text-gray-700 bg-gray-100" />
+                  <input name="senderMobile" placeholder='Enter sender mobile no' value={form.senderMobile} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
                 </div>
               </div>
             </div>
@@ -138,11 +106,11 @@ export default function InternationalCashBookingForm() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-1">Receiver Name</label>
-                  <input name="receiverName" value={form.receiverName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
+                  <input name="receiverName" placeholder='Enter receiver name' value={form.receiverName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-1">Receiver Mobile No</label>
-                  <input name="receiverMobile" value={form.receiverMobile} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
+                  <input name="receiverMobile" placeholder='Enter receiver mobile no' value={form.receiverMobile} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
                 </div>
               </div>
             </div>
@@ -151,11 +119,11 @@ export default function InternationalCashBookingForm() {
           <div className="grid grid-cols-2 md:grid-cols-8 gap-4 items-end">
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Consignment No</label>
-              <input name="consignmentNo" value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
+              <input name="consignmentNo" placeholder='INTL123456' value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Doc Type</label>
-              <select name="docType" value={form.docType} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+              <select name="docType" value={form.docType} onChange={handleChange} className="w-full p-2 cursor-pointer border rounded text-gray-700">
                 <option value="">Select</option>
                 <option value="DOX">DOX</option>
                 <option value="NONDOX">NONDOX</option>
@@ -163,7 +131,7 @@ export default function InternationalCashBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Mode</label>
-              <select name="mode" value={form.mode} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+              <select name="mode" value={form.mode} onChange={handleChange} className="w-full cursor-pointer p-2 border rounded text-gray-700">
                 <option value="">Select</option>
                 <option value="AIR">AIR</option>
                 <option value="SURFACE">SURFACE</option>
@@ -171,7 +139,7 @@ export default function InternationalCashBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Country</label>
-              <select name="country" value={form.country} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+              <select name="country" value={form.country} onChange={handleChange} className="w-full p-2 cursor-pointer border rounded text-gray-700">
                 <option value="">Select</option>
                 {countries.map((c: any) => (
                   <option key={c.code} value={c.name}>{c.name}</option>
@@ -207,9 +175,9 @@ export default function InternationalCashBookingForm() {
               <input type="number" name="amountCharged" value={form.amountCharged} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" step="0.01" />
             </div>
             <div className="md:col-span-2 flex space-x-2 mt-4">
-              <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? 'Update' : 'Save'}</button>
+              <button type="submit" className="px-6 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? (loading ? 'Updating...' : 'Update') : (loading ? 'Saving...' : 'Save')}</button>
               {editingId && (
-                <button type="button" onClick={() => { setForm(initialForm); setEditingId(null); }} className="px-6 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold">Cancel</button>
+                <button type="button" onClick={() => { setForm(initialForm); setEditingId(null); }} className="px-6 py-2 cursor-pointer bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold">Cancel</button>
               )}
             </div>
           </div>
