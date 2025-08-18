@@ -23,6 +23,7 @@ export default function CreditClientBookingForm() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [pincodes, setPincodes] = useState<any>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         fetchBookings();
@@ -50,11 +51,19 @@ export default function CreditClientBookingForm() {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
+       
         e.preventDefault();
-        if (editingId) {
-            await axios.put(`/api/credit-client-booking/${editingId}`, form);
-        } else {
-            await axios.post('/api/credit-client-booking', form);
+        setLoading(true);
+        try {
+            if (editingId) {
+                await axios.put(`/api/credit-client-booking/${editingId}`, form);
+            } else {
+                await axios.post('/api/credit-client-booking', form);
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error);
+        } finally {
+            setLoading(false);
         }
         setForm(initialForm);
         setEditingId(null);
@@ -102,7 +111,7 @@ export default function CreditClientBookingForm() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-blue-900 mb-1">Consignment No</label>
-                            <input name="consignmentNo" placeholder='Enter Consignment No' value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
+                            <input name="consignmentNo" placeholder='EU62749125IN' value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-7 gap-4 items-end mt-4">
@@ -154,9 +163,9 @@ export default function CreditClientBookingForm() {
                             <input name="consigneeName" placeholder='Enter Consignee Name' value={form.consigneeName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
                         </div>
                         <div className="md:col-span-2 flex space-x-2 mt-4">
-                            <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? 'Update' : 'Add'}</button>
+                            <button type="submit" className="px-6 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? (loading ? 'Updating...' : 'Update') : (loading ? 'Adding...' : 'Add')}</button>
                             {editingId && (
-                                <button type="button" onClick={() => { setForm(initialForm); setEditingId(null); }} className="px-6 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold">Cancel</button>
+                                <button type="button" onClick={() => { setForm(initialForm); setEditingId(null); }} className="px-6 py-2 cursor-pointer bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold">Cancel</button>
                             )}
                         </div>
                     </div>
