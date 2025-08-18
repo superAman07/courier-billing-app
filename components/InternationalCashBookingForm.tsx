@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const initialForm = {
   bookingDate: '',
@@ -52,10 +53,12 @@ export default function InternationalCashBookingForm() {
       } else {
         await axios.post('/api/international-cash-booking', form);
       }
+      toast.success("Form submitted successfully");
       setForm(initialForm);
       setEditingId(null);
       fetchBookings();
     } catch (error) {
+      toast.error("Error submitting form");
       console.error("Error submitting form:", error);
     } finally {
       setLoading(false);
