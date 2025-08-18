@@ -90,7 +90,7 @@ export default function CreditClientBookingForm() {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white text-center">DIRECT PARTY BOOKING</h1>
                 </div>
@@ -193,22 +193,22 @@ export default function CreditClientBookingForm() {
                         <tbody>
                             {bookings.map((b) => (
                                 <tr key={b.id}>
-                                    <td className="px-2 py-1 border">{b.consignmentNo}</td>
-                                    <td className="px-2 py-1 border">{b.customer?.customerName}</td>
-                                    <td className="px-2 py-1 border">{b.docType}</td>
-                                    <td className="px-2 py-1 border">{b.serviceType}</td>
-                                    <td className="px-2 py-1 border">{b.pincode}</td>
-                                    <td className="px-2 py-1 border">{b.city}</td>
-                                    <td className="px-2 py-1 border">{b.weight}</td>
-                                    <td className="px-2 py-1 border">{b.vasAmount}</td>
-                                    <td className="px-2 py-1 border">{b.courierAmount}</td>
-                                    <td className="px-2 py-1 border">{b.chargeAmount}</td>
-                                    <td className="px-2 py-1 border">{b.consigneeName}</td>
-                                    <td className="px-2 py-1 border">
-                                        <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline">✏️</button>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.customer?.customerName}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.serviceType}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.city}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.vasAmount}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.courierAmount}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.chargeAmount}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">{b.consigneeName}</td>
+                                    <td className="px-2 py-1 text-gray-600 border">
+                                        <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
                                     </td>
-                                    <td className="px-2 py-1 border">
-                                        <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline">🗑️</button>
+                                    <td className="px-2 py-1 text-gray-600 border">
+                                        <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
                                     </td>
                                 </tr>
                             ))}
@@ -220,9 +220,9 @@ export default function CreditClientBookingForm() {
                         </tbody>
                     </table>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-                        <div className="bg-orange-100 rounded p-2 text-center font-bold">Total Records<br />{totalRecords}</div>
-                        <div className="bg-orange-100 rounded p-2 text-center font-bold">Total Weight<br />{totalWeight.toFixed(3)}</div>
-                        <div className="bg-orange-100 rounded p-2 text-center font-bold">Total Amount<br />{totalAmount.toFixed(2)}</div>
+                        <div className="bg-purple-600 rounded p-2 text-center font-bold">Total Records<br />{totalRecords}</div>
+                        <div className="bg-purple-600 rounded p-2 text-center font-bold">Total Weight<br />{totalWeight.toFixed(3)}</div>
+                        <div className="bg-purple-600 rounded p-2 text-center font-bold">Total Amount<br />{totalAmount.toFixed(2)}</div>
                     </div>
                 </div>
             </div>
