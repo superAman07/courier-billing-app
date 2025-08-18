@@ -22,16 +22,27 @@ const initialForm = {
   amountCharged: 0,
 };
 
+type Tax = {
+  taxCode: string;
+  description: string;
+  ratePercent: number;
+  withinState: boolean;
+  forOtherState: boolean;
+  active: boolean;
+};
+
 export default function InternationalCashBookingForm() {
   const [form, setForm] = useState(initialForm);
   const [bookings, setBookings] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [countries, setCountries] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [taxes, setTaxes] = useState<Tax[]>([]);
 
   useEffect(() => {
     fetchBookings();
     axios.get('/api/countries').then(res => setCountries(res.data));
+    axios.get('/api/taxMaster').then(res => setTaxes(res.data));
   }, []);
 
   const fetchBookings = async () => {
@@ -78,6 +89,17 @@ export default function InternationalCashBookingForm() {
     await axios.delete(`/api/international-cash-booking/${id}`);
     fetchBookings();
   };
+
+  const totalWithoutTax = bookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
+
+  const cgst = 0;
+  const sgst = 0;
+  const igst = Number(taxes.find(t => t.taxCode === 'igst')?.ratePercent) || 0;
+
+  const cgstAmt = totalWithoutTax * cgst / 100;
+  const sgstAmt = totalWithoutTax * sgst / 100;
+  const igstAmt = totalWithoutTax * igst / 100;
+  const netAmount = totalWithoutTax + cgstAmt + sgstAmt + igstAmt;
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
@@ -230,6 +252,20 @@ export default function InternationalCashBookingForm() {
               )}
             </tbody>
           </table>
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-blue-900 font-semibold mb-2">Total Amount Without Tax:</div>
+              <div className="text-xl font-bold text-gray-800 mb-4">₹ {totalWithoutTax.toFixed(2)}</div>
+              <div className="text-blue-900 font-semibold mb-2">Net Amount Collected:</div>
+              <div className="text-xl font-bold text-green-700 mb-4">₹ {netAmount.toFixed(2)}</div>
+            </div>
+            <div>
+              <div className="text-blue-900 font-semibold mb-2">Tax Breakdown:</div>
+              <div className="text-gray-700">Central GST: {cgst.toFixed(2)}% (₹ {cgstAmt.toFixed(2)})</div>
+              <div className="text-gray-700">State GST: {sgst.toFixed(2)}% (₹ {sgstAmt.toFixed(2)})</div>
+              <div className="text-gray-700">Integrated GST: {igst.toFixed(2)}% (₹ {igstAmt.toFixed(2)})</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
