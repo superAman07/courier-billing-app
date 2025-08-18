@@ -26,6 +26,12 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/sms-templates' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">SMS Templates</button>
           </div>
         </section>
+        <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
+          <h1 className="text-2xl font-bold mb-4 text-center">Billings</h1>
+          <div className="flex flex-col space-y-2">
+            <button onClick={() => { window.location.href = '/customer' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking</button>
+          </div>
+        </section>
       </div>
     </main>
   );

@@ -32,6 +32,8 @@ model CustomerMaster {
   balanceType          String?
   rates                RateMaster[]
 
+  bookings BookingMaster[] @relation("CustomerBookings")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -107,15 +109,16 @@ model StateMaster {
 }
 
 model CityMaster {
-  id        String          @id @default(cuid())
-  code      String          @unique
-  name      String
-  stateId   String
-  state     StateMaster     @relation(fields: [stateId], references: [id])
-  active    Boolean         @default(true)
-  pincodes  PincodeMaster[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id                    String          @id @default(cuid())
+  code                  String          @unique
+  name                  String
+  stateId               String
+  state                 StateMaster     @relation(fields: [stateId], references: [id])
+  active                Boolean         @default(true)
+  pincodes              PincodeMaster[]
+  bookingsAsDestination BookingMaster[] @relation("BookingMaster_destinationCityFk")
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 }
 
 model PincodeMaster {
@@ -208,22 +211,57 @@ model AppUser {
 }
 
 model SmsApiSettings {
+  id          String   @id @default(cuid())
+  apiPart1    String
+  apiPart2    String
+  apiPart3    String?
+  companyName String
+  phoneNo     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SmsTemplate {
   id           String   @id @default(cuid())
-  apiPart1     String
-  apiPart2     String
-  apiPart3     String?
-  companyName  String
-  phoneNo      String
+  templateName String   @unique
+  templateText String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
 
-model SmsTemplate {
-  id            String   @id @default(cuid())
-  templateName  String   @unique
-  templateText  String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model BookingMaster {
+  id                String    @id @default(cuid())
+  awbNo             String    @unique
+  customerRefNo     String?
+  pickupRequestDate DateTime?
+  bookingDate       DateTime
+  bookingRo         String?
+  bookingBranch     String?
+  bookingCity       String?
+  customerCode      String?
+  consignee         String?
+  destinationRo     String?
+  destinationBranch String?
+  destinationCity   String?
+  destinationPin    String?
+  mode              String?
+  pieces            Int?
+  actualWeight      Float?
+  chargeWeight      Float?
+  invoiceValue      Float?
+  status            String?
+  statusDate        DateTime?
+  remarkDetails     String?
+  currentRo         String?
+  currentBranch     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customerId        String?
+  customer          CustomerMaster? @relation("CustomerBookings", fields: [customerId], references: [id])
+  destinationCityId String?
+  destinationCityFk CityMaster?     @relation("BookingMaster_destinationCityFk", fields: [destinationCityId], references: [id])
 }
 
 enum UserType {
