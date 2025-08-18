@@ -228,7 +228,7 @@ model SmsTemplate {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
-
+// we will come
 model BookingMaster {
   id                String    @id @default(cuid())
   awbNo             String    @unique
@@ -262,6 +262,31 @@ model BookingMaster {
   customer          CustomerMaster? @relation("CustomerBookings", fields: [customerId], references: [id])
   destinationCityId String?
   destinationCityFk CityMaster?     @relation("BookingMaster_destinationCityFk", fields: [destinationCityId], references: [id])
+}
+
+model CashBooking {
+  id                String   @id @default(cuid())
+  bookingDate       DateTime
+  senderName        String
+  senderMobile      String
+  receiverName      String
+  receiverMobile    String
+
+  consignmentNo     String   @unique
+  docType           String   
+  mode              String
+  pincode           String
+  city              String   
+  pieces            Int
+  weight            Float
+  courierCharged    Float
+  contents          String?
+  value             Float?
+  vsAmount          Float?   
+  amountCharged     Float
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 enum UserType {
