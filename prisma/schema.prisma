@@ -292,6 +292,33 @@ model CashBooking {
   updatedAt         DateTime @updatedAt
 }
 
+model InternationalCashBooking {
+  id                String   @id @default(cuid())
+  bookingDate       DateTime
+  senderName        String
+  senderMobile      String
+  sourcePincode     String
+  sourceState       String
+  sourceCity        String
+  receiverName      String
+  receiverMobile    String
+
+  consignmentNo     String   @unique
+  docType           String    
+  mode              String
+  country           String    
+  pieces            Int
+  weight            Float
+  courierCharged    Float
+  contents          String?
+  value             Float?
+  vasAmount         Float?    
+  amountCharged     Float
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
 enum UserType {
   ADMIN
   USER
