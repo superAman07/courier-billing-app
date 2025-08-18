@@ -203,20 +203,20 @@ export default function InternationalCashBookingForm() {
             <tbody>
               {bookings.map((b) => (
                 <tr key={b.id}>
-                  <td className="px-2 py-1 border">{b.consignmentNo}</td>
-                  <td className="px-2 py-1 border">{b.docType}</td>
-                  <td className="px-2 py-1 border">{b.mode}</td>
-                  <td className="px-2 py-1 border">{b.country}</td>
-                  <td className="px-2 py-1 border">{b.pieces}</td>
-                  <td className="px-2 py-1 border">{b.contents}</td>
-                  <td className="px-2 py-1 border">{b.weight}</td>
-                  <td className="px-2 py-1 border">{b.courierCharged}</td>
-                  <td className="px-2 py-1 border">{b.amountCharged}</td>
-                  <td className="px-2 py-1 border">
-                    <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline">✏️</button>
+                  <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.country}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
+                  <td className="px-2 py-1 text-gray-600 border">
+                    <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
                   </td>
-                  <td className="px-2 py-1 border">
-                    <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline">🗑️</button>
+                  <td className="px-2 py-1 text-gray-600 border">
+                    <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
                   </td>
                 </tr>
               ))}
