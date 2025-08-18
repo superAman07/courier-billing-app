@@ -70,7 +70,7 @@ export default function CreditClientBookingForm() {
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 shadow-md">
           <h1 className="text-2xl font-bold text-white text-center">DIRECT PARTY BOOKING</h1>
         </div>
@@ -82,7 +82,7 @@ export default function CreditClientBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Customer Name</label>
-              <select name="customerId" value={form.customerId} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required>
+              <select name="customerId" value={form.customerId} onChange={handleChange} className="w-full p-2 py-2.5 cursor-pointer border rounded text-gray-700" required>
                 <option value="">Select</option>
                 {customers.map((c: any) => (
                   <option key={c.id} value={c.id}>{c.customerName}</option>
@@ -91,13 +91,13 @@ export default function CreditClientBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Consignment No</label>
-              <input name="consignmentNo" value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
+              <input name="consignmentNo" placeholder='Enter Consignment No' value={form.consignmentNo} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" required />
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-7 gap-4 items-end mt-4">
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Doc Type</label>
-              <select name="docType" value={form.docType} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+              <select name="docType" value={form.docType} onChange={handleChange} className="w-full p-2 cursor-pointer border rounded text-gray-700">
                 <option value="">Select</option>
                 <option value="DOX">DOX</option>
                 <option value="NONDOX">NONDOX</option>
@@ -105,19 +105,22 @@ export default function CreditClientBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Service Type</label>
-              <select name="serviceType" value={form.serviceType} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+              <select name="serviceType" value={form.serviceType} onChange={handleChange} className="w-full p-2 border cursor-pointer rounded text-gray-700">
                 <option value="">Select</option>
                 <option value="AIR">AIR</option>
+                <option value="AIR CARGO">AIR CARGO</option>
+                <option value="PLUS">PLUS</option>
+                <option value="PRIORITY">PRIORITY</option>
                 <option value="SURFACE">SURFACE</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Pincode</label>
-              <input name="pincode" value={form.pincode} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
+              <input name="pincode" placeholder='Enter Pincode' value={form.pincode} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">City</label>
-              <input name="city" value={form.city} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
+              <input name="city" placeholder='Enter Pincode' value={form.city} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Weight (Kg)</label>
@@ -137,7 +140,7 @@ export default function CreditClientBookingForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-blue-900 mb-1">Consignee Name</label>
-              <input name="consigneeName" value={form.consigneeName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
+              <input name="consigneeName" placeholder='Enter Consignee Name' value={form.consigneeName} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" />
             </div>
             <div className="md:col-span-2 flex space-x-2 mt-4">
               <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? 'Update' : 'Add'}</button>

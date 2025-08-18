@@ -31,6 +31,7 @@ export default function Home() {
           <div className="flex flex-col space-y-2">
             <button onClick={() => { window.location.href = '/cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking</button>
             <button onClick={() => { window.location.href = '/international-cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">International Cash Booking</button>
+            <button onClick={() => { window.location.href = '/credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking</button>
           </div>
         </section>
       </div>
