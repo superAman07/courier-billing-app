@@ -41,6 +41,7 @@ export default function CashBookingForm() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [taxes, setTaxes] = useState<Tax[]>([]);
   const [pincodes, setPincodes] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchBookings();
@@ -97,10 +98,17 @@ export default function CashBookingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const filteredForm = filterFormData(form);
-    if (editingId) {
-      await axios.put(`/api/cash-booking/${editingId}`, filteredForm);
-    } else {
-      await axios.post('/api/cash-booking', filteredForm);
+    setLoading(true);
+    try {
+      if (editingId) {
+        await axios.put(`/api/cash-booking/${editingId}`, filteredForm);
+      } else {
+        await axios.post('/api/cash-booking', filteredForm);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    } finally {
+      setLoading(false);
     }
     setForm(initialForm);
     setEditingId(null);
@@ -253,7 +261,7 @@ export default function CashBookingForm() {
               <input type="number" name="amountCharged" placeholder='Enter Amt. Charged' value={form.amountCharged} onChange={handleChange} className="w-full p-2 border rounded text-gray-700" step="0.01" />
             </div>
             <div className="md:col-span-2 flex space-x-2 mt-4">
-              <button type="submit" className="px-6 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? 'Update' : 'Save'}</button>
+              <button type="submit" className="px-6 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">{editingId ? (loading ? 'Updating...' : 'Update') : (loading ? 'Saving...' : 'Save')}</button>
               {editingId && (
                 <button type="button" onClick={() => { setForm(initialForm); setEditingId(null); }} className="px-6 py-2 cursor-pointer bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold">Cancel</button>
               )}
