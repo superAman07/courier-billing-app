@@ -32,8 +32,9 @@ model CustomerMaster {
   balanceType          String?
   rates                RateMaster[]
 
-  bookings BookingMaster[] @relation("CustomerBookings")
-  creditClientBookings CreditClientBooking[]
+  bookings                          BookingMaster[]                    @relation("CustomerBookings")
+  creditClientBookings              CreditClientBooking[]
+  internationalCreditClientBookings InternationalCreditClientBooking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,6 +230,7 @@ model SmsTemplate {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
 // we will come
 model BookingMaster {
   id                String    @id @default(cuid())
@@ -266,75 +268,94 @@ model BookingMaster {
 }
 
 model CashBooking {
-  id                String   @id @default(cuid())
-  bookingDate       DateTime
-  senderName        String
-  senderMobile      String
-  sourcePincode     String
-  sourceState       String
-  sourceCity        String
-  receiverName      String
-  receiverMobile    String
+  id             String   @id @default(cuid())
+  bookingDate    DateTime
+  senderName     String
+  senderMobile   String
+  sourcePincode  String
+  sourceState    String
+  sourceCity     String
+  receiverName   String
+  receiverMobile String
 
-  consignmentNo     String   @unique
-  docType           String   
-  mode              String
-  pincode           String
-  city              String   
-  pieces            Int
-  weight            Float
-  courierCharged    Float
-  contents          String?
-  value             Float?
-  vsAmount          Float?   
-  amountCharged     Float
+  consignmentNo  String  @unique
+  docType        String
+  mode           String
+  pincode        String
+  city           String
+  pieces         Int
+  weight         Float
+  courierCharged Float
+  contents       String?
+  value          Float?
+  vsAmount       Float?
+  amountCharged  Float
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model InternationalCashBooking {
-  id                String   @id @default(cuid())
-  bookingDate       DateTime
-  senderName        String
-  senderMobile      String
-  receiverName      String
-  receiverMobile    String
+  id             String   @id @default(cuid())
+  bookingDate    DateTime
+  senderName     String
+  senderMobile   String
+  receiverName   String
+  receiverMobile String
 
-  consignmentNo     String   @unique
-  docType           String    
-  mode              String
-  country           String    
-  pieces            Int
-  weight            Float
-  courierCharged    Float
-  contents          String?
-  value             Float?
-  vasAmount         Float?    
-  amountCharged     Float
+  consignmentNo  String  @unique
+  docType        String
+  mode           String
+  country        String
+  pieces         Int
+  weight         Float
+  courierCharged Float
+  contents       String?
+  value          Float?
+  vasAmount      Float?
+  amountCharged  Float
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CreditClientBooking {
-  id              String   @id @default(cuid())
-  bookingDate     DateTime
-  consignmentNo   String   @unique
-  customerId      String
-  customer        CustomerMaster @relation(fields: [customerId], references: [id])
-  docType         String    
-  serviceType     String   
-  pincode         String
-  city            String   
-  weight          Float
-  courierAmount   Float
-  vasAmount       Float?
-  chargeAmount    Float
-  consigneeName   String
+  id            String         @id @default(cuid())
+  bookingDate   DateTime
+  consignmentNo String         @unique
+  customerId    String
+  customer      CustomerMaster @relation(fields: [customerId], references: [id])
+  docType       String
+  serviceType   String
+  pincode       String
+  city          String
+  weight        Float
+  courierAmount Float
+  vasAmount     Float?
+  chargeAmount  Float
+  consigneeName String
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InternationalCreditClientBooking {
+  id            String         @id @default(cuid())
+  bookingDate   DateTime
+  consignmentNo String         @unique
+  customerId    String
+  customer      CustomerMaster @relation(fields: [customerId], references: [id])
+  docType       String
+  serviceType   String
+  country       String
+  weight        Float
+  courierAmount Float
+  vasAmount     Float?
+  chargeAmount  Float
+  consigneeName String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserType {
