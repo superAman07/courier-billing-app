@@ -29,7 +29,7 @@ export default function BookingImportPanel({ onData }: { onData: (rows: any[]) =
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <button
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
         onClick={() => fileInputRef.current?.click()}
       >
         {fileName ? `Imported: ${fileName}` : 'Import Excel'}
@@ -42,7 +42,7 @@ export default function BookingImportPanel({ onData }: { onData: (rows: any[]) =
         onChange={handleFileChange}
         disabled={loading}
       />
-      {loading && <div className="text-xs text-blue-700 mt-2">Parsing file...</div>}
+      {loading && <div className="text-xs text-purple-700 mt-2">Parsing file...</div>}
     </div>
   );
 }
