@@ -32,9 +32,10 @@ model CustomerMaster {
   balanceType          String?
   rates                RateMaster[]
 
-  bookings                          BookingMaster[]                    @relation("CustomerBookings")
   creditClientBookings              CreditClientBooking[]
   internationalCreditClientBookings InternationalCreditClientBooking[]
+
+  bookings BookingMaster[]        @relation("CustomerMasterToBookingMaster")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -118,7 +119,7 @@ model CityMaster {
   state                 StateMaster     @relation(fields: [stateId], references: [id])
   active                Boolean         @default(true)
   pincodes              PincodeMaster[]
-  bookingsAsDestination BookingMaster[] @relation("BookingMaster_destinationCityFk")
+  // bookingsAsDestination BookingMaster[] @relation("BookingMaster_destinationCityFk")
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 }
@@ -233,38 +234,46 @@ model SmsTemplate {
 
 // we will come
 model BookingMaster {
-  id                String    @id @default(cuid())
-  awbNo             String    @unique
-  customerRefNo     String?
-  pickupRequestDate DateTime?
-  bookingDate       DateTime
-  bookingRo         String?
-  bookingBranch     String?
-  bookingCity       String?
-  customerCode      String?
-  consignee         String?
-  destinationRo     String?
-  destinationBranch String?
-  destinationCity   String?
-  destinationPin    String?
-  mode              String?
-  pieces            Int?
-  actualWeight      Float?
-  chargeWeight      Float?
-  invoiceValue      Float?
-  status            String?
-  statusDate        DateTime?
-  remarkDetails     String?
-  currentRo         String?
-  currentBranch     String?
+  id                        String   @id @default(cuid())
+  srNo                      Int?
+  bookingDate               DateTime
+  awbNo                     String   @unique
+  destinationCity           String
+  mode                      String
+  pcs                       Int
+  pin                       String
+  dsrContents               String?
+  dsrNdxPaper               String?
+  invoiceValue              Float?
+  actualWeight              Float?
+  chargeWeight              Float?
+  invoiceWt                 Float?
+  clientBillingValue        Float?
+  creditCustomerAmount      Float?
+  regularCustomerAmount     Float?
+  childCustomer             String?
+  parentCustomer            String?
+  paymentStatus             String?
+  senderContactNo           String?
+  address                   String?
+  adhaarNo                  String?
+  customerAttendBy          String?
+  status                    String?
+  statusDate                DateTime?
+  pendingDaysNotDelivered   Int?
+  receiverName              String?
+  receiverContactNo         String?
+  complainNo                String?
+  shipmentCostOtherMode     Float?
+  podStatus                 String?
+  remarks                   String?
+  countryName               String?
+  domesticInternational     String?
+  internationalMode         String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  customerId        String?
-  customer          CustomerMaster? @relation("CustomerBookings", fields: [customerId], references: [id])
-  destinationCityId String?
-  destinationCityFk CityMaster?     @relation("BookingMaster_destinationCityFk", fields: [destinationCityId], references: [id])
+  createdAt                 DateTime @default(now())
+  customerId                String?
+  customer                  CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
 }
 
 model CashBooking {

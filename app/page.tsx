@@ -33,6 +33,7 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (Domestic)</button>
             <button onClick={() => { window.location.href = '/international-cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking (International)</button>
             <button onClick={() => { window.location.href = '/international-credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (International)</button>
+            <button onClick={() => { window.location.href = '/international-credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (International)</button>
           </div>
         </section>
       </div>
