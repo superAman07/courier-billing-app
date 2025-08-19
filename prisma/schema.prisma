@@ -232,7 +232,6 @@ model SmsTemplate {
   updatedAt    DateTime @updatedAt
 }
 
-// we will come
 model BookingMaster {
   id                        String   @id @default(cuid())
   srNo                      Int?
