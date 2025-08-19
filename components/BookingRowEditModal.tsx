@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const bookingFields = [
   "SR NO.",
@@ -46,46 +46,111 @@ export default function BookingRowEditModal({
   row: any;
   onClose: () => void;
 }) {
-  // Initialize form with imported values where available, else empty
-  const [form, setForm] = useState(
+    const [form, setForm] = useState(
     bookingFields.reduce((acc, field) => {
       acc[field] = row[field] || "";
       return acc;
     }, {} as Record<string, string>)
   );
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Save to DB via API
+    // Save logic
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
-        <h2 className="text-lg font-bold mb-4">Edit Booking Row</h2>
-        <form onSubmit={handleSubmit} className="space-y-3 max-h-[60vh] overflow-y-auto">
+    <div ref={panelRef} className="w-full mt-8">
+      <div className="w-full rounded-xl shadow-lg border border-blue-200 bg-white px-8 py-8 transition-all animate-in fade-in slide-in-from-top">
+        <h2 className="text-2xl font-bold text-blue-700 mb-6">Edit Booking Row</h2>
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-7 max-h-[65vh] overflow-y-auto"
+        >
           {bookingFields.map((key) => (
-            <div key={key} className="flex items-center gap-2">
-              <label className="w-48 font-medium text-gray-700">{key}</label>
+            <div key={key}>
+              <label className="block mb-2 text-[15px] font-medium text-gray-700">{key}</label>
               <input
                 name={key}
                 value={form[key]}
                 onChange={handleChange}
-                className="flex-1 p-2 border rounded"
+                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-800"
+                autoComplete="off"
               />
             </div>
           ))}
-          <div className="flex justify-end gap-2 mt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
-          </div>
         </form>
+        <div className="flex justify-center gap-4 mt-8 border-t pt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 rounded-md cursor-pointer border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="edit-booking-form"
+            className="px-5 py-2 rounded-md cursor-pointer bg-blue-600 text-white hover:bg-blue-700 shadow font-semibold transition"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
+//   // Initialize form with imported values where available, else empty
+//   const [form, setForm] = useState(
+//     bookingFields.reduce((acc, field) => {
+//       acc[field] = row[field] || "";
+//       return acc;
+//     }, {} as Record<string, string>)
+//   );
+
+//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setForm({ ...form, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSubmit = (e: React.FormEvent) => {
+//     e.preventDefault();
+//     // TODO: Save to DB via API
+//     onClose();
+//   };
+
+//   return (
+//     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+//       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+//         <h2 className="text-lg font-bold mb-4">Edit Booking Row</h2>
+//         <form onSubmit={handleSubmit} className="space-y-3 max-h-[60vh] overflow-y-auto">
+//           {bookingFields.map((key) => (
+//             <div key={key} className="flex items-center gap-2">
+//               <label className="w-48 font-medium text-gray-700">{key}</label>
+//               <input
+//                 name={key}
+//                 value={form[key]}
+//                 onChange={handleChange}
+//                 className="flex-1 p-2 border rounded"
+//               />
+//             </div>
+//           ))}
+//           <div className="flex justify-end gap-2 mt-4">
+//             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+//             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+//           </div>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// }
