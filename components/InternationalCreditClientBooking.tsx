@@ -95,7 +95,7 @@ export default function InternationalCreditClientBookingForm() {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 shadow-md">
                     <h1 className="text-2xl font-bold text-white text-center">INTERNATIONAL CREDIT CLIENT BOOKING</h1>
                 </div>
@@ -141,10 +141,10 @@ export default function InternationalCreditClientBookingForm() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-blue-900 mb-1">Country</label>
-                            <select name="country" value={form.country} onChange={handleChange} className="w-full p-2 border rounded text-gray-700">
+                            <select name="country" value={form.country} onChange={handleChange} className="w-full p-2 cursor-pointer border rounded text-gray-700">
                                 <option value="">Select</option>
                                 {countries.map((c: any) => (
-                                    <option key={c.code} value={c.name}>{c.name}</option>
+                                    <option key={c.code} value={c.name.toUpperCase()}>{c.name.toUpperCase()}</option>
                                 ))}
                             </select>
                         </div>

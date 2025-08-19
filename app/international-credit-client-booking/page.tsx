@@ -1,3 +1,5 @@
+import InternationalCreditClientBookingForm from "@/components/InternationalCreditClientBooking";
+
 export default function (){
-    return <></>
+    return <InternationalCreditClientBookingForm/>
 }
