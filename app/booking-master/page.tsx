@@ -57,7 +57,7 @@ export default function BookingMasterPage() {
             <Database className="w-5 h-5 text-green-600" />
             Imported Rows
           </h2>
-          <BookingImportedRowsTable rows={customerRows} />
+          <BookingImportedRowsTable rows={customerRows} customerId={selectedCustomer?.id} />
         </section>
       </div>
     </div>

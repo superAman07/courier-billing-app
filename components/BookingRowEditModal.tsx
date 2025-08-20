@@ -42,9 +42,11 @@ const bookingFields = [
 
 export default function BookingRowEditModal({
   row,
+  customerId,
   onClose,
 }: {
   row: any;
+  customerId: string;
   onClose: () => void;
 }) {
   const [form, setForm] = useState(
@@ -102,6 +104,7 @@ export default function BookingRowEditModal({
         countryName: form["Country Name"],
         domesticInternational: form["Domestic / International"],
         internationalMode: form["International Mode"],
+        customerId,
       };
 
       await axios.post("/api/booking-master", payload);

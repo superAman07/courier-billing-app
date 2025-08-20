@@ -47,6 +47,7 @@ export default function BookingImportedRowsTable({ rows }: { rows: any[] }) {
       {editingRow && (
         <BookingRowEditModal
           row={editingRow}
+          customerId={customerId}
           onClose={() => setEditingRow(null)}
         />
       )}
