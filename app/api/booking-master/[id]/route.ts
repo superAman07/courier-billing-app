@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const id = (await params).id;
     const data = await req.json();
+    console.log("Updating booking:", id, data);
     const booking = await prisma.bookingMaster.update({
       where: { id },
       data: {
@@ -39,8 +40,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         statusDate: data.statusDate ? new Date(data.statusDate) : null,
       },
     });
+    console.log("Updated booking:", booking);
     return NextResponse.json(booking);
   } catch (error) {
+    console.error("Error updating booking:", error);
     return NextResponse.json({ message: "Error updating booking" }, { status: 500 });
   }
 }
