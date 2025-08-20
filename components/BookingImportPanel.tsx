@@ -33,7 +33,7 @@ export default function BookingImportPanel({ onData }: { onData: (rows: any[]) =
             <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 
+                className="flex cursor-pointer items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 
                  hover:from-purple-700 hover:to-purple-800 px-5 py-3 rounded-full shadow-lg 
                  text-white font-medium transition-transform transform hover:scale-105 
                  active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
