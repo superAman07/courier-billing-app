@@ -49,16 +49,29 @@ const COLUMN_MAP: Record<string, string> = {
   internationalMode: "International Mode",
   createdAt: "Created At"
 };
-
 export default function AllBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>({}); // Stores the current values for edit
+  const [editForm, setEditForm] = useState<any>({});
+  
+  // Filter state for search inputs
+  const [filters, setFilters] = useState({
+    customerName: "",
+    bookingDate: "",
+    consignStartNo: "",
+    consignEndNo: "",
+    consignNo: "",
+  });
 
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [bookings, filters]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -68,7 +81,31 @@ export default function AllBookingsPage() {
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  // Filter application logic (simple contains/startsWith, adjust as needed)
+  const applyFilters = () => {
+    let filtered = [...bookings];
+
+    if (filters.customerName)
+      filtered = filtered.filter(b =>
+        (b.childCustomer + b.parentCustomer).toLowerCase().includes(filters.customerName.toLowerCase())
+      );
+    if (filters.consignStartNo)
+      filtered = filtered.filter(b => b.awbNo?.startsWith(filters.consignStartNo));
+    if (filters.consignEndNo)
+      filtered = filtered.filter(b => b.awbNo?.endsWith(filters.consignEndNo));
+    if (filters.consignNo)
+      filtered = filtered.filter(b => b.awbNo?.includes(filters.consignNo));
+    if (filters.bookingDate)
+      filtered = filtered.filter(b => b.bookingDate?.startsWith(filters.bookingDate));
+
+    setFilteredBookings(filtered);
+  };
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+    const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this booking?")) return;
     await axios.delete(`/api/booking-master/${id}`);
     setBookings(bookings => bookings.filter(b => b.id !== id));
@@ -103,7 +140,47 @@ export default function AllBookingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">All Bookings</h1>
+      <h1 className="text-3xl text-blue-900 font-bold mb-6">All Bookings</h1>
+
+      <div className="mb-6 rounded-md p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 text-gray-900 font-medium text-sm">
+        <input
+          name="customerName"
+          value={filters.customerName}
+          onChange={handleFilterChange}
+          placeholder="Customer Name"
+          className="p-2 rounded-md border border-gray-300"
+        />
+        <input
+          name="consignStartNo"
+          value={filters.consignStartNo}
+          onChange={handleFilterChange}
+          placeholder="Consignment Start No"
+          className="p-2 rounded-md border border-gray-300"
+        />
+        <input
+          name="consignEndNo"
+          value={filters.consignEndNo}
+          onChange={handleFilterChange}
+          placeholder="Consignment End No"
+          className="p-2 rounded-md border border-gray-300"
+        />
+        <input
+          name="consignNo"
+          value={filters.consignNo}
+          onChange={handleFilterChange}
+          placeholder="Consignment No"
+          className="p-2 rounded-md border border-gray-300"
+        />      
+        <input
+          name="bookingDate"
+          type="date"
+          value={filters.bookingDate}
+          onChange={handleFilterChange}
+          className="p-2 rounded-md border border-gray-300"
+          placeholder="Booking Date"
+        />
+      </div>
+
       <div className="overflow-x-auto bg-white rounded-xl shadow border">
         <table className="min-w-full text-xs md:text-sm table-auto">
           <thead className="bg-blue-50">
@@ -121,28 +198,26 @@ export default function AllBookingsPage() {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((row, idx) => (
+            {filteredBookings.map((row, idx) => (
               <tr key={row.id || idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                 {columns.map(col => {
                   const isDateField = ["bookingDate", "statusDate", "createdAt"].includes(col);
-                  return (
-                    editingId === row.id ? (
-                      <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
-                        <input
-                          name={col}
-                          value={editForm[col] ?? ""}
-                          onChange={handleInputChange}
-                          className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
-                          readOnly={col === "srNo" || col === "id"}
-                        />
-                      </td>
-                    ) : (
-                      <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
-                        {isDateField ? parseDateString(row[col]) : row[col]}
-                      </td>
-                    )
-                  );
-                })} 
+                  return editingId === row.id ? (
+                    <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
+                      <input
+                        name={col}
+                        value={editForm[col] ?? ""}
+                        onChange={handleInputChange}
+                        className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
+                        readOnly={col === "srNo" || col === "id"}
+                      />
+                    </td>
+                  ) : (
+                    <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
+                      {isDateField ? parseDateString(row[col]) : row[col]}
+                    </td>
+                  )
+                })}
                 {editingId === row.id ? (
                   <>
                     <td className="px-3 py-1 gap-y-0.5 border-b text-center">
