@@ -40,6 +40,43 @@ const bookingFields = [
   "International Mode"
 ];
 
+const fieldPlaceholders: Record<string, string> = {
+  "Booking Date": "e.g. 2024-08-20",
+  "AwbNo": "e.g. 1234567890",
+  "Destination City": "e.g. DELHI",
+  "Mode": "e.g. AIR",
+  "PCS": "e.g. 2",
+  "Pin": "e.g. 110001",
+  "DSR_CONTENTS": "e.g. DOCUMENTS",
+  "DSR_NDX_PAPER": "e.g. N",
+  "Invoice value": "e.g. 5000",
+  "Actual Weight": "e.g. 2.5",
+  "Charge Weight": "e.g. 3.0",
+  "Invoice Wt": "e.g. 3.0",
+  "Clinet Billing Value": "e.g. 1200",
+  "Credit Customer Amount": "e.g. 1000",
+  "Regular Customer Amount": "e.g. 200",
+  "Child Customer": "e.g. ABC Pvt Ltd",
+  "Parrent Customer": "e.g. XYZ Logistics",
+  "PAYMENT STATUS": "e.g. PAID",
+  "Sender Contact No": "e.g. 9876543210",
+  "Address": "e.g. 123 Main Street",
+  "Adhaar No": "e.g. 123412341234",
+  "Customer Attend By": "e.g. John Doe",
+  "STATUS": "e.g. Delivered",
+  "Status Date": "e.g. 2024-08-21",
+  "Pending Days of Not Delivered": "e.g. 0",
+  "Receiver Name": "e.g. Rahul Sharma",
+  "Receiver Contact No": "e.g. 9123456789",
+  "Complain No.": "e.g. CMP12345",
+  "Shipment Cost by other Mode": "e.g. 500",
+  "POD Status": "e.g. Received",
+  "Remarks": "e.g. Urgent delivery",
+  "Country Name": "e.g. INDIA",
+  "Domestic / International": "e.g. Domestic",
+  "International Mode": "e.g. AIR"
+};
+
 export default function BookingRowEditModal({
   row,
   customerId,
@@ -124,12 +161,9 @@ export default function BookingRowEditModal({
           className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-7 max-h-[65vh] overflow-y-auto"
         >
           {bookingFields.map((key) => {
-            // Use date input for Booking Date and Status Date
             const isDateField = key === "Booking Date" || key === "Status Date";
             let value = form[key];
-            // Convert to YYYY-MM-DD for date input
             if (isDateField && value && typeof value === "string" && value.includes("/")) {
-              // Convert DD/MM/YYYY to YYYY-MM-DD
               const [d, m, y] = value.split("/");
               value = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
             }
@@ -141,24 +175,13 @@ export default function BookingRowEditModal({
                   type={isDateField ? "date" : "text"}
                   value={value}
                   onChange={handleChange}
+                  placeholder={fieldPlaceholders[key] || ""}
                   className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-800"
                   autoComplete="off"
                 />
               </div>
             );
           })}
-          {/* {bookingFields.map((key) => (
-            <div key={key}>
-              <label className="block mb-2 text-[15px] font-medium text-gray-700">{key}</label>
-              <input
-                name={key}
-                value={form[key]}
-                onChange={handleChange}
-                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-800"
-                autoComplete="off"
-              />
-            </div>
-          ))} */}
         </form>
         <div className="flex justify-center gap-4 mt-8 border-t pt-6">
           <button
@@ -180,47 +203,3 @@ export default function BookingRowEditModal({
     </div>
   );
 }
-
-//   // Initialize form with imported values where available, else empty
-//   const [form, setForm] = useState(
-//     bookingFields.reduce((acc, field) => {
-//       acc[field] = row[field] || "";
-//       return acc;
-//     }, {} as Record<string, string>)
-//   );
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     // TODO: Save to DB via API
-//     onClose();
-//   };
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-//       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
-//         <h2 className="text-lg font-bold mb-4">Edit Booking Row</h2>
-//         <form onSubmit={handleSubmit} className="space-y-3 max-h-[60vh] overflow-y-auto">
-//           {bookingFields.map((key) => (
-//             <div key={key} className="flex items-center gap-2">
-//               <label className="w-48 font-medium text-gray-700">{key}</label>
-//               <input
-//                 name={key}
-//                 value={form[key]}
-//                 onChange={handleChange}
-//                 className="flex-1 p-2 border rounded"
-//               />
-//             </div>
-//           ))}
-//           <div className="flex justify-end gap-2 mt-4">
-//             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-//             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// }
