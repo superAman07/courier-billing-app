@@ -13,7 +13,6 @@ export default function BookingMasterPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-8 md:p-10">
-      {/* Page Header */}
       <header className="mb-10">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <Database className="w-7 h-7 text-blue-600" />
@@ -23,13 +22,9 @@ export default function BookingMasterPage() {
           Import customer bookings, search and filter by customer, and manage data efficiently.
         </p>
       </header>
-
-      {/* Import Panel (Floating button) */}
+ 
       <BookingImportPanel onData={setImportedRows} />
-
-      {/* Main two sections */}
-      <div className="space-y-8">
-        {/* 1. Customer Filter/Search */}
+      <div className="space-y-8"> 
         <section className="bg-white p-6 rounded-xl shadow-sm border">
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -57,7 +52,6 @@ export default function BookingMasterPage() {
           </div>
         </section>
 
-        {/* 2. Data Table */}
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <Database className="w-5 h-5 text-green-600" />
