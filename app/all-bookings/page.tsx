@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { parseDateString } from "@/lib/convertDateInJSFormat";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
@@ -122,23 +123,26 @@ export default function AllBookingsPage() {
           <tbody>
             {bookings.map((row, idx) => (
               <tr key={row.id || idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                {columns.map(col => (
-                  editingId === row.id ? (
-                    <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
-                      <input
-                        name={col}
-                        value={editForm[col] ?? ""}
-                        onChange={handleInputChange}
-                        className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
-                        readOnly={col === "srNo" || col === "id"}
-                      />
-                    </td>
-                  ) : (
-                    <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
-                      {row[col]}
-                    </td>
-                  )
-                ))} 
+                {columns.map(col => {
+                  const isDateField = ["bookingDate", "statusDate", "createdAt"].includes(col);
+                  return (
+                    editingId === row.id ? (
+                      <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
+                        <input
+                          name={col}
+                          value={editForm[col] ?? ""}
+                          onChange={handleInputChange}
+                          className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
+                          readOnly={col === "srNo" || col === "id"}
+                        />
+                      </td>
+                    ) : (
+                      <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
+                        {isDateField ? parseDateString(row[col]) : row[col]}
+                      </td>
+                    )
+                  );
+                })} 
                 {editingId === row.id ? (
                   <>
                     <td className="px-3 py-1 gap-y-0.5 border-b text-center">
