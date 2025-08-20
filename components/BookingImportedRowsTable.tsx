@@ -2,7 +2,7 @@
 import { useState } from "react";
 import BookingRowEditModal from "./BookingRowEditModal";
 
-export default function BookingImportedRowsTable({ rows }: { rows: any[] }) {
+export default function BookingImportedRowsTable({ rows, customerId }: { rows: any[]; customerId: string }) {
   const [editingRow, setEditingRow] = useState<any | null>(null);
 
   if (!rows || rows.length === 0) {

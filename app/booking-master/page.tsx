@@ -10,6 +10,7 @@ import { handleDownload } from "@/lib/downloadExcel";
 export default function BookingMasterPage() {
   const [importedRows, setImportedRows] = useState<any[]>([]);
   const [customerRows, setCustomerRows] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 
   return (
     <div className="max-w-7xl mx-auto p-8 md:p-10">
@@ -22,9 +23,9 @@ export default function BookingMasterPage() {
           Import customer bookings, search and filter by customer, and manage data efficiently.
         </p>
       </header>
- 
+
       <BookingImportPanel onData={setImportedRows} />
-      <div className="space-y-8"> 
+      <div className="space-y-8">
         <section className="bg-white p-6 rounded-xl shadow-sm border">
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -35,6 +36,7 @@ export default function BookingMasterPage() {
               <BookingCustomerSearch
                 importedRows={importedRows}
                 onSelectCustomerRows={setCustomerRows}
+                onSelectCustomer={setSelectedCustomer}
               />
               {importedRows.length === 0 && (
                 <p className="text-sm text-gray-400 mt-3">
