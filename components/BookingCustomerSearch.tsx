@@ -28,26 +28,53 @@ export default function BookingCustomerSearch({
             setFilteredCustomers([]);
             return;
         }
-        setFilteredCustomers(
-            customers.filter(c =>
-                c.customerName.toLowerCase().includes(search.toLowerCase()) ||
-                c.customerCode.toLowerCase().includes(search.toLowerCase())
-            )
+
+        // Check if search matches any AWB number in importedRows
+        const awbMatches = importedRows.filter(row =>
+            (row['AwbNo'] || row['awbNo'] || '').toString().includes(search)
         );
-    }, [search, customers]);
+
+        let customerResults = customers.filter(c =>
+            c.customerName.toLowerCase().includes(search.toLowerCase()) ||
+            c.customerCode.toLowerCase().includes(search.toLowerCase())
+        );
+
+        // If AWB match found, add a virtual result
+        if (awbMatches.length > 0) {
+            customerResults = [
+                ...customerResults,
+                {
+                    id: 'awb-search',
+                    customerName: `AWB: ${search}`,
+                    customerCode: awbMatches[0]['Customer Code'] || awbMatches[0]['CustomerCode'] || '',
+                    awbNo: search,
+                    isAwbSearch: true,
+                }
+            ];
+        }
+
+        setFilteredCustomers(customerResults);
+    }, [search, customers, importedRows]);
 
     const handleSelect = (customer: any) => {
         setSelectedCustomer(customer);
 
-        const rows = importedRows.filter(row => {
-            const codeMatch =
-                (row['Customer Code'] || row['CustomerCode'] || '').toString().trim().toLowerCase() ===
-                customer.customerCode.trim().toLowerCase();
-            const nameMatch =
-                (row['Consignee'] || '').toString().trim().toLowerCase() ===
-                customer.customerName.trim().toLowerCase();
-            return codeMatch || nameMatch;
-        });
+        let rows;
+        if (customer.isAwbSearch && customer.awbNo) { 
+            rows = importedRows.filter(row =>
+                (row['AwbNo'] || row['awbNo'] || '').toString() === customer.awbNo
+            );
+        } else {
+            rows = importedRows.filter(row => {
+                const codeMatch =
+                    (row['Customer Code'] || row['CustomerCode'] || '').toString().trim().toLowerCase() ===
+                    customer.customerCode.trim().toLowerCase();
+                const nameMatch =
+                    (row['Consignee'] || '').toString().trim().toLowerCase() ===
+                    customer.customerName.trim().toLowerCase();
+                return codeMatch || nameMatch;
+            });
+        }
 
         onSelectCustomerRows(rows);
         setSearch('');
