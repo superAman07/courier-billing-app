@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from "react";
-import { Database, Users } from "lucide-react";
+import { Database, Download, Users } from "lucide-react";
 import BookingImportPanel from "@/components/BookingImportPanel";
 import BookingCustomerSearch from "@/components/BookingCustomerSearch";
 import BookingImportedRowsTable from "@/components/BookingImportedRowsTable";
+import { handleDownload } from "@/lib/downloadExcel";
 
 export default function BookingMasterPage() {
   const [importedRows, setImportedRows] = useState<any[]>([]);
@@ -30,19 +31,30 @@ export default function BookingMasterPage() {
       <div className="space-y-8">
         {/* 1. Customer Filter/Search */}
         <section className="bg-white p-6 rounded-xl shadow-sm border">
-          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-purple-600" />
-            Search Customer
-          </h2>
-          <BookingCustomerSearch
-            importedRows={importedRows}
-            onSelectCustomerRows={setCustomerRows}
-          />
-          {importedRows.length === 0 && (
-            <p className="text-sm text-gray-400 mt-3">
-              ⚠️ Import Excel first to enable customer filtering.
-            </p>
-          )}
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-purple-600" />
+                Search Customer
+              </h2>
+              <BookingCustomerSearch
+                importedRows={importedRows}
+                onSelectCustomerRows={setCustomerRows}
+              />
+              {importedRows.length === 0 && (
+                <p className="text-sm text-gray-400 mt-3">
+                  ⚠️ Import Excel first to enable customer filtering.
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleDownload}
+              className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
+            >
+              <Download className="w-5 h-5" />
+              Download Excel
+            </button>
+          </div>
         </section>
 
         {/* 2. Data Table */}
