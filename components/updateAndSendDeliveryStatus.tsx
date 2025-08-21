@@ -269,7 +269,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     <select
                       value={booking.deliveryStatus || ''}
                       onChange={(e) => handleStatusUpdate(booking.id, booking.type, e.target.value)}
-                      className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full p-1 border border-gray-300 text-gray-600 cursor-pointer rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       {getStatusOptions().map(option => (
                         <option key={option.value} value={option.value}>
@@ -285,7 +285,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                       type="date"
                       value={booking.deliveryDate ? booking.deliveryDate.split('T')[0] : ''}
                       onChange={(e) => handleDateUpdate(booking.id, booking.type, e.target.value)}
-                      className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full p-1 text-gray-500 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
@@ -293,17 +293,14 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                   <div>
                     <button
                       onClick={() => handleSendSMS(booking)}
-                      disabled={booking.smsSent && booking.type !== 'BookingMaster'}
-                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${(booking.smsSent && booking.type !== 'BookingMaster')
-                        ? 'bg-green-100 text-green-600 cursor-default'
-                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 cursor-pointer'
-                        }`}
-                      title={booking.smsSent ? 'SMS already sent' : 'Send SMS'}
+                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors relative ${booking.smsSent
+                          ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                          : 'bg-green-100 text-green-600 hover:bg-green-200'} cursor-pointer`}
+                      title={booking.smsSent ? 'SMS already sent (click to resend)' : 'Send SMS'}
                     >
-                      {(booking.smsSent && booking.type !== 'BookingMaster') ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-4 h-4" />
+                      {booking.smsSent && (
+                        <Check className="w-3 h-3 absolute right-0 bottom-0 bg-white rounded-full border border-green-200" />
                       )}
                     </button>
                   </div>
