@@ -15,6 +15,8 @@ const initialForm = {
     vasAmount: 0,
     chargeAmount: 0,
     consigneeName: '',
+    smsSent: false,
+    smsDate: ''
 };
 
 export default function InternationalCreditClientBookingForm() {
@@ -193,6 +195,7 @@ export default function InternationalCreditClientBookingForm() {
                                 <th className="px-2 py-1 border text-blue-900">Consignee</th>
                                 <th className="px-2 py-1 border text-blue-900">Edit</th>
                                 <th className="px-2 py-1 border text-blue-900">Delete</th>
+                                <th className="px-2 py-1 border text-blue-900">Send SMS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -213,6 +216,33 @@ export default function InternationalCreditClientBookingForm() {
                                     </td>
                                     <td className="px-2 py-1 text-gray-600 border">
                                         <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
+                                    </td>
+                                    <td className="px-2 py-1 text-gray-600 border text-center">
+                                        {b.smsSent && (
+                                            <span
+                                                title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                                                className="mr-2"
+                                            >
+                                                ✅
+                                            </span>
+                                        )}
+                                        <button
+                                            title="Send SMS"
+                                            className="text-blue-600 cursor-pointer hover:underline"
+                                            onClick={async () => {
+                                                const { data: fullBooking } = await axios.get(`/api/international-credit-client-booking/${b.id}`);
+                                                await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.customer?.mobile });
+                                                await axios.put(`/api/international-credit-client-booking/${b.id}`, {
+                                                    ...fullBooking,
+                                                    smsSent: true,
+                                                    smsDate: new Date().toISOString(),
+                                                });
+                                                toast.success("SMS sent successfully!");
+                                                fetchBookings();
+                                            }}
+                                        >
+                                            📩
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
