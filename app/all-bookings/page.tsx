@@ -55,7 +55,7 @@ export default function AllBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
-  
+
   // Filter state for search inputs
   const [filters, setFilters] = useState({
     customerName: "",
@@ -105,7 +105,7 @@ export default function AllBookingsPage() {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
-    const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this booking?")) return;
     await axios.delete(`/api/booking-master/${id}`);
     setBookings(bookings => bookings.filter(b => b.id !== id));
@@ -170,7 +170,7 @@ export default function AllBookingsPage() {
           onChange={handleFilterChange}
           placeholder="Consignment No"
           className="p-2 rounded-md border border-gray-300"
-        />      
+        />
         <input
           name="bookingDate"
           type="date"
