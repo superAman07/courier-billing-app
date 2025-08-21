@@ -174,19 +174,16 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
         <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-t-lg shadow-lg">
           <h1 className="text-xl font-bold text-center">UPDATE DELIVERY STATUS / SEND DELIVERY SMS</h1>
         </div>
 
-        {/* Controls Bar */}
         <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 flex justify-between items-center">
           <div className="text-white font-medium">
             Select Consign No. Customer Destination
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -197,16 +194,8 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
               />
             </div>
-
-            {/* Browse XLS Button */}
-            <button className="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2 shadow-sm">
-              <Upload className="w-4 h-4" />
-              <span>Browse Xls File</span>
-            </button>
           </div>
         </div>
-
-        {/* Table Container */}
         <div className="bg-white rounded-b-lg shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-3">
             <div className="grid grid-cols-8 gap-4 text-white font-medium text-sm">
@@ -221,7 +210,6 @@ const UpdateDeliveryStatusPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Table Body */}
           <div className="max-h-96 overflow-y-auto bg-gray-100">
             {filteredBookings.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -234,7 +222,6 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                   className={`grid grid-cols-8 gap-4 p-3 border-b border-gray-200 items-center text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                     } hover:bg-blue-50 transition-colors`}
                 >
-                  {/* Select Checkbox */}
                   <div>
                     <input
                       type="checkbox"
@@ -244,27 +231,22 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* Consignment No */}
                   <div className="font-medium text-gray-900">
                     {booking.consignmentNo}
                   </div>
 
-                  {/* Customer */}
                   <div className="text-gray-700 truncate">
                     {booking.customer}
                   </div>
 
-                  {/* Destination */}
                   <div className="text-gray-700 truncate">
                     {booking.destination}
                   </div>
 
-                  {/* Booking Date */}
                   <div className="text-gray-600">
                     {formatDate(booking.bookingDate)}
                   </div>
 
-                  {/* Delivery Status */}
                   <div>
                     <select
                       value={booking.deliveryStatus || ''}
@@ -279,7 +261,6 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Delivery Date */}
                   <div>
                     <input
                       type="date"
@@ -289,7 +270,6 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* Send SMS */}
                   <div>
                     <button
                       onClick={() => handleSendSMS(booking)}
@@ -309,7 +289,6 @@ const UpdateDeliveryStatusPage: React.FC = () => {
             )}
           </div>
 
-          {/* Footer Controls */}
           <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 flex justify-between items-center">
             <div className="flex items-center space-x-3">
               <input
