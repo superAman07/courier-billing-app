@@ -223,6 +223,7 @@ export default function InternationalCashBookingForm() {
                 <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
                 <th className="px-2 py-1 border text-blue-900">Edit</th>
                 <th className="px-2 py-1 border text-blue-900">Delete</th>
+                <th className="px-2 py-1 border text-blue-900 text-center">Send SMS</th>
               </tr>
             </thead>
             <tbody>
@@ -242,6 +243,33 @@ export default function InternationalCashBookingForm() {
                   </td>
                   <td className="px-2 py-1 text-gray-600 border">
                     <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
+                  </td>
+                  <td className="px-2 py-1 text-gray-600 border text-center">
+                    {b.smsSent && (
+                      <span
+                        title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                        className="mr-2"
+                      >
+                        ✅
+                      </span>
+                    )}
+                    <button
+                      title="Send SMS"
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={async () => {
+                        const { data: fullBooking } = await axios.get(`/api/international-cash-booking/${b.id}`);
+                        await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
+                        await axios.put(`/api/international-cash-booking/${b.id}`, {
+                          ...fullBooking,
+                          smsSent: true,
+                          smsDate: new Date().toISOString(),
+                        });
+                        toast.success("SMS sent successfully!");
+                        fetchBookings();
+                      }}
+                    >
+                      📩
+                    </button>
                   </td>
                 </tr>
               ))}
