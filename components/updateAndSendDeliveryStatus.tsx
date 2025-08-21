@@ -35,7 +35,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     if (!searchTerm) {
       setFilteredBookings(bookings)
     } else {
-      const filtered = bookings.filter(booking => 
+      const filtered = bookings.filter(booking =>
         booking.consignmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.destination.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,37 +76,31 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     setSelectAll(newSelected.size === filteredBookings.length)
   }
 
-  const handleStatusUpdate = async (id: string, status: string) => {
+  const handleStatusUpdate = async (id: string, type: string, status: string) => {
     try {
-      await axios.put(`/api/update-and-send-delivery-status/BookingMaster/${id}`, {
+      await axios.put(`/api/update-and-send-delivery-status/${type}/${id}`, {
         status,
         statusDate: new Date().toISOString()
       })
-      
-      // Update local state
-      setBookings(prev => prev.map(booking => 
+      setBookings(prev => prev.map(booking =>
         booking.id === id ? { ...booking, deliveryStatus: status, deliveryDate: new Date().toISOString() } : booking
       ))
-      
       toast.success('Delivery status updated successfully')
     } catch (error) {
       toast.error('Failed to update delivery status')
     }
   }
 
-  const handleDateUpdate = async (id: string, date: string) => {
+  const handleDateUpdate = async (id: string, type: string, date: string) => {
     try {
       const booking = bookings.find(b => b.id === id)
-      await axios.put(`/api/update-and-send-delivery-status/BookingMaster/${id}`, {
+      await axios.put(`/api/update-and-send-delivery-status/${type}/${id}`, {
         status: booking?.deliveryStatus || '',
         statusDate: date
       })
-      
-      // Update local state
-      setBookings(prev => prev.map(booking => 
+      setBookings(prev => prev.map(booking =>
         booking.id === id ? { ...booking, deliveryDate: date } : booking
       ))
-      
       toast.success('Delivery date updated successfully')
     } catch (error) {
       toast.error('Failed to update delivery date')
@@ -119,12 +113,12 @@ const UpdateDeliveryStatusPage: React.FC = () => {
         smsSent: true,
         smsDate: new Date().toISOString()
       })
-      
+
       // Update local state
-      setBookings(prev => prev.map(b => 
+      setBookings(prev => prev.map(b =>
         b.id === booking.id ? { ...b, smsSent: true, smsDate: new Date().toISOString() } : b
       ))
-      
+
       toast.success('SMS sent successfully')
     } catch (error) {
       toast.error('Failed to send SMS')
@@ -139,11 +133,11 @@ const UpdateDeliveryStatusPage: React.FC = () => {
 
     try {
       const selectedBookings = filteredBookings.filter(booking => selectedRows.has(booking.id))
-      
+
       for (const booking of selectedBookings) {
         await handleSendSMS(booking)
       }
-      
+
       toast.success(`SMS sent to ${selectedRows.size} recipients`)
       setSelectedRows(new Set())
       setSelectAll(false)
@@ -179,7 +173,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* Header */}
         <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-t-lg shadow-lg">
           <h1 className="text-xl font-bold text-center">UPDATE DELIVERY STATUS / SEND DELIVERY SMS</h1>
@@ -190,7 +184,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
           <div className="text-white font-medium">
             Select Consign No. Customer Destination
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Search Bar */}
             <div className="relative">
@@ -203,7 +197,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
               />
             </div>
-            
+
             {/* Browse XLS Button */}
             <button className="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2 shadow-sm">
               <Upload className="w-4 h-4" />
@@ -235,11 +229,10 @@ const UpdateDeliveryStatusPage: React.FC = () => {
               </div>
             ) : (
               filteredBookings.map((booking, index) => (
-                <div 
-                  key={booking.id} 
-                  className={`grid grid-cols-8 gap-4 p-3 border-b border-gray-200 items-center text-sm ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  } hover:bg-blue-50 transition-colors`}
+                <div
+                  key={booking.id}
+                  className={`grid grid-cols-8 gap-4 p-3 border-b border-gray-200 items-center text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    } hover:bg-blue-50 transition-colors`}
                 >
                   {/* Select Checkbox */}
                   <div>
@@ -273,35 +266,27 @@ const UpdateDeliveryStatusPage: React.FC = () => {
 
                   {/* Delivery Status */}
                   <div>
-                    {booking.type === 'BookingMaster' ? (
-                      <select
-                        value={booking.deliveryStatus || ''}
-                        onChange={(e) => handleStatusUpdate(booking.id, e.target.value)}
-                        className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        {getStatusOptions().map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
+                    <select
+                      value={booking.deliveryStatus || ''}
+                      onChange={(e) => handleStatusUpdate(booking.id, booking.type, e.target.value)}
+                      className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      {getStatusOptions().map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Delivery Date */}
                   <div>
-                    {booking.type === 'BookingMaster' ? (
-                      <input
-                        type="date"
-                        value={booking.deliveryDate ? booking.deliveryDate.split('T')[0] : ''}
-                        onChange={(e) => handleDateUpdate(booking.id, e.target.value)}
-                        className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
+                    <input
+                      type="date"
+                      value={booking.deliveryDate ? booking.deliveryDate.split('T')[0] : ''}
+                      onChange={(e) => handleDateUpdate(booking.id, booking.type, e.target.value)}
+                      className="w-full p-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
 
                   {/* Send SMS */}
@@ -309,11 +294,10 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     <button
                       onClick={() => handleSendSMS(booking)}
                       disabled={booking.smsSent && booking.type !== 'BookingMaster'}
-                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-                        (booking.smsSent && booking.type !== 'BookingMaster') 
-                          ? 'bg-green-100 text-green-600 cursor-default' 
-                          : 'bg-blue-100 text-blue-600 hover:bg-blue-200 cursor-pointer'
-                      }`}
+                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${(booking.smsSent && booking.type !== 'BookingMaster')
+                        ? 'bg-green-100 text-green-600 cursor-default'
+                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 cursor-pointer'
+                        }`}
                       title={booking.smsSent ? 'SMS already sent' : 'Send SMS'}
                     >
                       {(booking.smsSent && booking.type !== 'BookingMaster') ? (
@@ -339,15 +323,14 @@ const UpdateDeliveryStatusPage: React.FC = () => {
               />
               <span className="text-white font-medium">Select All</span>
             </div>
-            
+
             <button
               onClick={handleBulkSMS}
               disabled={selectedRows.size === 0}
-              className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${
-                selectedRows.size === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm'
-              }`}
+              className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${selectedRows.size === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm'
+                }`}
             >
               <MessageCircle className="w-4 h-4" />
               <span>Send SMS ({selectedRows.size})</span>

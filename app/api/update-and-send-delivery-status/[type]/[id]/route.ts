@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ type: string, id: string }>}) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ type: string, id: string }> }) {
   const { type, id } = await params;
   const data = await req.json();
 
@@ -28,13 +28,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ type
 
   try {
     let updateData: any = {};
-    if (type === "BookingMaster") {
-      updateData.status = data.status;
-      updateData.statusDate = data.statusDate ? new Date(data.statusDate) : null;
-    } else {
-      updateData.smsSent = data.smsSent ?? false;
-      updateData.smsDate = data.smsDate ? new Date(data.smsDate) : null;
-    }
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.statusDate !== undefined) updateData.statusDate = data.statusDate ? new Date(data.statusDate) : null;
+    if (data.smsSent !== undefined) updateData.smsSent = data.smsSent;
+    if (data.smsDate !== undefined) updateData.smsDate = data.smsDate ? new Date(data.smsDate) : null;
+    // let updateData: any = {};
+    // if (type === "BookingMaster") {
+    //   updateData.status = data.status;
+    //   updateData.statusDate = data.statusDate ? new Date(data.statusDate) : null;
+    // } else {
+    //   updateData.smsSent = data.smsSent ?? false;
+    //   updateData.smsDate = data.smsDate ? new Date(data.smsDate) : null;
+    //   updateData.status = data.status;
+    //   updateData.statusDate = data.statusDate ? new Date(data.statusDate) : null;
+    // }
 
     const updated = await (model as any).update({
       where: { id },
