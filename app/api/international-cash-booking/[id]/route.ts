@@ -35,6 +35,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         value: data.value !== undefined ? Number(data.value) : null,
         vasAmount: data.vasAmount !== undefined ? Number(data.vasAmount) : null,
         amountCharged: Number(data.amountCharged),
+        smsSent: data.smsSent ?? false,
+        smsDate: data.smsDate ? new Date(data.smsDate) : null,
       }
     });
     return NextResponse.json(booking);
