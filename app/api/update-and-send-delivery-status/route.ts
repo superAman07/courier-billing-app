@@ -36,6 +36,7 @@ export async function GET() {
         bookingDate: b.bookingDate,
         deliveryStatus: b.status ?? "",
         deliveryDate: b.statusDate,
+        mobile: b.customer?.mobile ?? "",
       })),
       ...cashBookings.map(b => ({
         type: "CashBooking",
@@ -48,6 +49,7 @@ export async function GET() {
         deliveryDate: b.statusDate ?? null,
         smsSent: b.smsSent ?? false,
         smsDate: b.smsDate ?? null,
+        mobile: b.receiverMobile ?? "",
       })),
       ...creditBookings.map(b => ({
         type: "CreditClientBooking",
@@ -60,6 +62,7 @@ export async function GET() {
         deliveryDate: b.statusDate ?? null,
         smsSent: b.smsSent ?? false,
         smsDate: b.smsDate ?? null,
+        mobile: b.customer?.mobile ?? "",
       })),
       ...intlCashBookings.map(b => ({
         type: "InternationalCashBooking",
@@ -72,6 +75,7 @@ export async function GET() {
         deliveryDate: b.statusDate ?? null,
         smsSent: b.smsSent ?? false,
         smsDate: b.smsDate ?? null,
+        mobile: b.receiverMobile ?? "", 
       })),
       ...intlCreditBookings.map(b => ({
         type: "InternationalCreditClientBooking",
@@ -84,6 +88,7 @@ export async function GET() {
         deliveryDate: b.statusDate ?? null,
         smsSent: b.smsSent ?? false,
         smsDate: b.smsDate ?? null,
+        mobile: b.customer?.mobile ?? "",
       })),
     ];
 

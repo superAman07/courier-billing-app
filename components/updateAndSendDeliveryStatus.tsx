@@ -14,7 +14,8 @@ interface BookingData {
   deliveryStatus?: string
   deliveryDate?: string
   smsSent?: boolean
-  smsDate?: string
+  smsDate?: string 
+  mobile?: string
 }
 
 const UpdateDeliveryStatusPage: React.FC = () => {
@@ -25,12 +26,10 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [selectAll, setSelectAll] = useState(false)
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchBookings()
   }, [])
 
-  // Filter bookings based on search term
   useEffect(() => {
     if (!searchTerm) {
       setFilteredBookings(bookings)
@@ -109,12 +108,17 @@ const UpdateDeliveryStatusPage: React.FC = () => {
 
   const handleSendSMS = async (booking: BookingData) => {
     try {
+      await axios.post('/api/send-sms', {
+        bookingType: booking.type,
+        bookingId: booking.id,
+        phoneNumber: booking.mobile,
+        messageType: 'delivery'
+      });
       await axios.put(`/api/update-and-send-delivery-status/${booking.type}/${booking.id}`, {
         smsSent: true,
         smsDate: new Date().toISOString()
       })
 
-      // Update local state
       setBookings(prev => prev.map(b =>
         b.id === booking.id ? { ...b, smsSent: true, smsDate: new Date().toISOString() } : b
       ))
@@ -274,8 +278,8 @@ const UpdateDeliveryStatusPage: React.FC = () => {
                     <button
                       onClick={() => handleSendSMS(booking)}
                       className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors relative ${booking.smsSent
-                          ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                          : 'bg-green-100 text-green-600 hover:bg-green-200'} cursor-pointer`}
+                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                        : 'bg-green-100 text-green-600 hover:bg-green-200'} cursor-pointer`}
                       title={booking.smsSent ? 'SMS already sent (click to resend)' : 'Send SMS'}
                     >
                       <MessageCircle className="w-4 h-4" />
