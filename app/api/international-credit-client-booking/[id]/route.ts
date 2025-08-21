@@ -33,6 +33,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         vasAmount: data.vasAmount !== undefined ? Number(data.vasAmount) : null,
         chargeAmount: Number(data.chargeAmount),
         consigneeName: data.consigneeName,
+        smsSent: data.smsSent ?? false,
+        smsDate: data.smsDate ? new Date(data.smsDate) : null,
       }
     });
     return NextResponse.json(booking);
