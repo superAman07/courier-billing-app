@@ -33,8 +33,8 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (Domestic)</button>
             <button onClick={() => { window.location.href = '/international-cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking (International)</button>
             <button onClick={() => { window.location.href = '/international-credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (International)</button>
-            <button onClick={() => { window.location.href = '/booking-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Booking Master / Bulk Booking</button>
-            <button onClick={() => { window.location.href = '/all-bookings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Bookings  </button>
+            <button onClick={() => { window.location.href = '/booking-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Booking Master</button>
+            <button onClick={() => { window.location.href = '/all-bookings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Bookings / Bulk Booking</button>
           </div>
         </section>
       </div>
