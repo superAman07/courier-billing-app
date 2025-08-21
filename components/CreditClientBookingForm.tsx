@@ -63,7 +63,7 @@ export default function CreditClientBookingForm() {
             } else {
                 await axios.post('/api/credit-client-booking', form);
             }
-            
+
         } catch (error) {
             toast.error("Error submitting form");
             console.error("Error submitting form:", error);
@@ -237,7 +237,7 @@ export default function CreditClientBookingForm() {
                                             className="text-blue-600 cursor-pointer hover:underline"
                                             onClick={async () => {
                                                 const { data: fullBooking } = await axios.get(`/api/credit-client-booking/${b.id}`);
-                                                await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.consigneeMobile });
+                                                await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.customer?.mobile });
                                                 await axios.put(`/api/credit-client-booking/${b.id}`, {
                                                     ...fullBooking,
                                                     smsSent: true,
