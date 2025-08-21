@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function GET() {
-  try { 
+  try {
     const bookingMaster = await prisma.bookingMaster.findMany({
       include: { customer: true },
       orderBy: { bookingDate: "desc" }
@@ -26,7 +26,6 @@ export async function GET() {
       orderBy: { bookingDate: "desc" }
     });
 
-    // Normalize all bookings to a common structure
     const all = [
       ...bookingMaster.map(b => ({
         type: "BookingMaster",
@@ -37,7 +36,6 @@ export async function GET() {
         bookingDate: b.bookingDate,
         deliveryStatus: b.status ?? "",
         deliveryDate: b.statusDate,
-        smsSent: false, // You can update this if you add SMS tracking
       })),
       ...cashBookings.map(b => ({
         type: "CashBooking",
@@ -46,9 +44,8 @@ export async function GET() {
         customer: b.senderName,
         destination: b.city,
         bookingDate: b.bookingDate,
-        deliveryStatus: "", // Add if you have a status field
-        deliveryDate: null, // Add if you have a delivery date field
-        smsSent: false,
+        smsSent: b.smsSent ?? false,
+        smsDate: b.smsDate ?? null,
       })),
       ...creditBookings.map(b => ({
         type: "CreditClientBooking",
@@ -57,9 +54,8 @@ export async function GET() {
         customer: b.customer?.customerName ?? "",
         destination: b.city,
         bookingDate: b.bookingDate,
-        deliveryStatus: "", // Add if you have a status field
-        deliveryDate: null, // Add if you have a delivery date field
-        smsSent: false,
+        smsSent: b.smsSent ?? false,
+        smsDate: b.smsDate ?? null,
       })),
       ...intlCashBookings.map(b => ({
         type: "InternationalCashBooking",
@@ -68,9 +64,8 @@ export async function GET() {
         customer: b.senderName,
         destination: b.country,
         bookingDate: b.bookingDate,
-        deliveryStatus: "", // Add if you have a status field
-        deliveryDate: null, // Add if you have a delivery date field
-        smsSent: false,
+        smsSent: b.smsSent ?? false,
+        smsDate: b.smsDate ?? null,
       })),
       ...intlCreditBookings.map(b => ({
         type: "InternationalCreditClientBooking",
@@ -79,9 +74,8 @@ export async function GET() {
         customer: b.customer?.customerName ?? "",
         destination: b.country,
         bookingDate: b.bookingDate,
-        deliveryStatus: "", // Add if you have a status field
-        deliveryDate: null, // Add if you have a delivery date field
-        smsSent: false,
+        smsSent: b.smsSent ?? false,
+        smsDate: b.smsDate ?? null,
       })),
     ];
 
