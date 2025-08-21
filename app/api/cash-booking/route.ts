@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
         value: data.value !== undefined ? Number(data.value) : null,
         vsAmount: data.vsAmount !== undefined ? Number(data.vsAmount) : null,
         amountCharged: Number(data.amountCharged),
+        smsSent: data.smsSent ?? false,
+        smsDate: data.smsDate ? new Date(data.smsDate) : null,
       }
     });
     console.log("Booking cashbook response from schema: ",booking);
