@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const initialForm = {
   bookingDate: '',
@@ -24,6 +25,8 @@ const initialForm = {
   value: 0,
   vsAmount: 0,
   amountCharged: 0,
+  smsSent: false,
+  smsDate: '',
 };
 
 type Tax = {
@@ -84,7 +87,7 @@ export default function CashBookingForm() {
   };
 
   const allowedFields = [
-    "bookingDate", "senderName", "senderMobile",'sourcePincode' ,"sourceCity","sourceState", "receiverName", "receiverMobile", "consignmentNo", "docType", "mode", "pincode", "city", "pieces", "weight", "courierCharged", "contents", "value", "vsAmount", "amountCharged"
+    "bookingDate", "senderName", "senderMobile", 'sourcePincode', "sourceCity", "sourceState", "receiverName", "receiverMobile", "consignmentNo", "docType", "mode", "pincode", "city", "pieces", "weight", "courierCharged", "contents", "value", "vsAmount", "amountCharged"
   ];
 
   function filterFormData(form: any) {
@@ -105,7 +108,9 @@ export default function CashBookingForm() {
       } else {
         await axios.post('/api/cash-booking', filteredForm);
       }
+      toast.success(editingId ? 'Booking updated successfully!' : 'Booking created successfully!');
     } catch (error) {
+      toast.error(editingId ? 'Error updating booking!' : 'Error creating booking!');
       console.error("Error submitting form:", error);
     } finally {
       setLoading(false);
@@ -147,7 +152,7 @@ export default function CashBookingForm() {
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md">
           <h1 className="text-2xl font-bold text-white text-center">CASH BOOKING</h1>
         </div>
@@ -285,6 +290,7 @@ export default function CashBookingForm() {
                 <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
                 <th className="px-2 py-1 border text-blue-900">Edit</th>
                 <th className="px-2 py-1 border text-blue-900">Delete</th>
+                <th className="px-2 py-1 border text-blue-900">Send SMS</th>
               </tr>
             </thead>
             <tbody>
@@ -305,6 +311,33 @@ export default function CashBookingForm() {
                   </td>
                   <td className="px-2 py-1 text-gray-600 border">
                     <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
+                  </td>
+                  <td className="px-2 py-1 text-gray-600 border text-center">
+                    {b.smsSent && (
+                      <span
+                        title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                        className="mr-2"
+                      >
+                        ✅
+                      </span>
+                    )}
+                    <button
+                      title="Send SMS"
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={async () => {
+                        const { data: fullBooking } = await axios.get(`/api/cash-booking/${b.id}`);
+                        await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
+                        await axios.put(`/api/cash-booking/${b.id}`, {
+                          ...fullBooking,
+                          smsSent: true,
+                          smsDate: new Date().toISOString(),
+                        });
+                        toast.success("SMS sent successfully!");
+                        fetchBookings();
+                      }}
+                    >
+                      📩
+                    </button> 
                   </td>
                 </tr>
               ))}
