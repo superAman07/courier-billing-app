@@ -103,7 +103,7 @@ export default function InternationalCashBookingForm() {
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 shadow-md">
           <h1 className="text-2xl font-bold text-white text-center">INTERNATIONAL CASH BOOKING</h1>
         </div>
