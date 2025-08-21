@@ -35,7 +35,8 @@ model CustomerMaster {
   creditClientBookings              CreditClientBooking[]
   internationalCreditClientBookings InternationalCreditClientBooking[]
 
-  bookings BookingMaster[]        @relation("CustomerMasterToBookingMaster")
+  bookings         BookingMaster[]  @relation("CustomerMasterToBookingMaster")
+  deliveryStatuses DeliveryStatus[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,16 +113,16 @@ model StateMaster {
 }
 
 model CityMaster {
-  id                    String          @id @default(cuid())
-  code                  String          @unique
-  name                  String
-  stateId               String
-  state                 StateMaster     @relation(fields: [stateId], references: [id])
-  active                Boolean         @default(true)
-  pincodes              PincodeMaster[]
+  id        String          @id @default(cuid())
+  code      String          @unique
+  name      String
+  stateId   String
+  state     StateMaster     @relation(fields: [stateId], references: [id])
+  active    Boolean         @default(true)
+  pincodes  PincodeMaster[]
   // bookingsAsDestination BookingMaster[] @relation("BookingMaster_destinationCityFk")
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 }
 
 model PincodeMaster {
@@ -233,46 +234,48 @@ model SmsTemplate {
 }
 
 model BookingMaster {
-  id                        String   @id @default(cuid())
-  srNo                      Int?
-  bookingDate               DateTime
-  awbNo                     String   @unique
-  destinationCity           String
-  mode                      String
-  pcs                       Int
-  pin                       String
-  dsrContents               String?
-  dsrNdxPaper               String?
-  invoiceValue              Float?
-  actualWeight              Float?
-  chargeWeight              Float?
-  invoiceWt                 Float?
-  clientBillingValue        Float?
-  creditCustomerAmount      Float?
-  regularCustomerAmount     Float?
-  childCustomer             String?
-  parentCustomer            String?
-  paymentStatus             String?
-  senderContactNo           String?
-  address                   String?
-  adhaarNo                  String?
-  customerAttendBy          String?
-  status                    String?
-  statusDate                DateTime?
-  pendingDaysNotDelivered   Int?
-  receiverName              String?
-  receiverContactNo         String?
-  complainNo                String?
-  shipmentCostOtherMode     Float?
-  podStatus                 String?
-  remarks                   String?
-  countryName               String?
-  domesticInternational     String?
-  internationalMode         String?
+  id                      String    @id @default(cuid())
+  srNo                    Int?
+  bookingDate             DateTime
+  awbNo                   String    @unique
+  destinationCity         String
+  mode                    String
+  pcs                     Int
+  pin                     String
+  dsrContents             String?
+  dsrNdxPaper             String?
+  invoiceValue            Float?
+  actualWeight            Float?
+  chargeWeight            Float?
+  invoiceWt               Float?
+  clientBillingValue      Float?
+  creditCustomerAmount    Float?
+  regularCustomerAmount   Float?
+  childCustomer           String?
+  parentCustomer          String?
+  paymentStatus           String?
+  senderContactNo         String?
+  address                 String?
+  adhaarNo                String?
+  customerAttendBy        String?
+  status                  String?
+  statusDate              DateTime?
+  pendingDaysNotDelivered Int?
+  receiverName            String?
+  receiverContactNo       String?
+  complainNo              String?
+  shipmentCostOtherMode   Float?
+  podStatus               String?
+  remarks                 String?
+  countryName             String?
+  domesticInternational   String?
+  internationalMode       String?
 
-  createdAt                 DateTime @default(now())
-  customerId                String?
-  customer                  CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
+  createdAt  DateTime        @default(now())
+  customerId String?
+  customer   CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
+
+  deliveryStatuses DeliveryStatus[]
 }
 
 model CashBooking {
@@ -364,6 +367,26 @@ model InternationalCreditClientBooking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DeliveryStatus {
+  id             String          @id @default(cuid())
+  consignmentNo  String
+  bookingId      String
+  booking        BookingMaster   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId     String?
+  customer       CustomerMaster? @relation(fields: [customerId], references: [id])
+  destination    String
+  bookingDate    DateTime
+  deliveryStatus String
+  deliveryDate   DateTime?
+  smsSent        Boolean         @default(false)
+  smsDate        DateTime?
+  createdAt      DateTime        @default(now())
+
+  @@index([consignmentNo])
+  @@index([bookingId])
+  @@index([customerId])
 }
 
 enum UserType {
