@@ -167,6 +167,11 @@ export default function SmartBookingMasterPage() {
         }
     };
 
+    const PAYMENT_STATUS_OPTIONS = ["PAID", "UNPAID", "PARTIAL"];
+    const MODE_OPTIONS = ["A", "S", "R", "T"];
+    const POD_STATUS_OPTIONS = ["Received", "Pending", "Not Required"];
+    const STATUS_OPTIONS = ["BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED", "RETURNED"];
+
     return (
         <div className="max-w-7xl mx-auto p-8 md:p-10">
             <div className="flex items-center justify-between mb-6">
@@ -210,7 +215,51 @@ export default function SmartBookingMasterPage() {
                                                         col === "dsrNdxPaper" ? "w-16" : "w-28")
                                             }
                                         >
-                                            {["bookingDate", "statusDate", "createdAt"].includes(col) ? (
+                                            {col === "paymentStatus" ? (
+                                                <select
+                                                    value={row[col] || ""}
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                >
+                                                    <option value="">Select</option>
+                                                    {PAYMENT_STATUS_OPTIONS.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            ) : col === "mode" ? (
+                                                <select
+                                                    value={row[col] || ""}
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-24 p-1 cursor-pointer border text-gray-600 rounded text-xs"
+                                                >
+                                                    <option value="">Select</option>
+                                                    {MODE_OPTIONS.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            ) : col === "podStatus" ? (
+                                                <select
+                                                    value={row[col] || ""}
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                >
+                                                    <option value="">Select</option>
+                                                    {POD_STATUS_OPTIONS.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            ) : col === "status" ? (
+                                                <select
+                                                    value={row[col] || ""}
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-32 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                >
+                                                    <option value="">Select</option>
+                                                    {STATUS_OPTIONS.map(opt => (
+                                                        <option key={opt} value={opt}>{opt.replace("_", " ")}</option>
+                                                    ))}
+                                                </select>
+                                            ) : ["bookingDate", "statusDate", "createdAt"].includes(col) ? (
                                                 <input
                                                     type="date"
                                                     value={
