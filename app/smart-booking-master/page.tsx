@@ -68,6 +68,15 @@ export default function SmartBookingMasterPage() {
         }
         const customerMap = Object.fromEntries(customers.map((c: any) => [c.customerCode, c]));
 
+        let allBookings: any[] = [];
+        try {
+            const { data } = await axios.get("/api/booking-master");
+            allBookings = data;
+        } catch {
+            toast.error("Failed to fetch bookings for AWB check");
+        }
+        const awbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
+
         const mappedRows = rows.map((row, idx) => {
             const mapped: any = {};
             columns.forEach(col => {
@@ -85,6 +94,16 @@ export default function SmartBookingMasterPage() {
 
             mapped.srNo = idx + 1;
 
+            const awbNo = mapped.awbNo?.toString();
+            let awbExists = false;
+            let bookingId = null;
+            if (awbNo && awbMap[awbNo]) {
+                awbExists = true;
+                bookingId = awbMap[awbNo].id;
+                // Overwrite mapped row with DB data, but keep AWB and srNo from Excel
+                Object.assign(mapped, awbMap[awbNo], { awbNo, srNo: mapped.srNo });
+            }
+
             // --- Customer auto-fill ---
             const excelCustomerCode = row["Customer Code"] || row["CustomerCode"];
             const cust = excelCustomerCode && customerMap[excelCustomerCode];
@@ -100,6 +119,8 @@ export default function SmartBookingMasterPage() {
 
             return {
                 ...mapped,
+                _awbExists: awbExists,
+                _bookingId: bookingId,
                 _customerExists: customerExists,
                 _rowStatus: !customerExists ? "missing-customer" : "new"
             };
