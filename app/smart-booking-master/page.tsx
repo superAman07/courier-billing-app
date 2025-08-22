@@ -247,7 +247,7 @@ export default function SmartBookingMasterPage() {
                                     </td>
                                     <td className="px-3 py-2 border-b">
                                         <button
-                                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-blue-700"
+                                            className="bg-blue-600 text-white cursor-pointer px-3 py-1 rounded text-xs font-semibold hover:bg-blue-700"
                                             onClick={() => handleSave(idx)}
                                             disabled={!row._customerExists}
                                         >
