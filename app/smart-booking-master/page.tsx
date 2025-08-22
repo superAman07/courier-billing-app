@@ -201,7 +201,15 @@ export default function SmartBookingMasterPage() {
                                         row._awbExists ? "bg-yellow-50" : ""
                                 }>
                                     {columns.map(col => (
-                                        <td key={col} className="px-1 py-1 border-b">
+                                        <td
+                                            key={col}
+                                            className={
+                                                "px-1 py-2 border-b " +
+                                                (col === "bookingDate" ? "w-32" :
+                                                    col === "awbNo" ? "w-40" :
+                                                        col === "dsrNdxPaper" ? "w-16" : "w-28")
+                                            }
+                                        >
                                             {["bookingDate", "statusDate", "createdAt"].includes(col) ? (
                                                 <input
                                                     type="date"
@@ -222,13 +230,17 @@ export default function SmartBookingMasterPage() {
                                                             : ""
                                                     }
                                                     onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-full p-1 border text-gray-600 rounded text-xs"
+                                                    className="w-28 p-1 border text-gray-600 rounded text-xs"
                                                 />
                                             ) : (
                                                 <input
                                                     value={row[col] || ""}
                                                     onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-full p-1 border text-gray-600 rounded text-xs"
+                                                    className={
+                                                        (col === "awbNo" ? "w-36 " : "") +
+                                                        (col === "dsrNdxPaper" ? "w-12 text-center " : "") + (col === "srNo" ? "w-12 text-center " : "") +
+                                                        "p-1 border text-gray-600 rounded text-xs"
+                                                    }
                                                     disabled={col === "awbNo" && row._awbExists}
                                                 />
                                             )}
