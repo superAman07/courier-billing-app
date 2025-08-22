@@ -5,6 +5,7 @@ import BookingImportPanel from "@/components/BookingImportPanel";
 import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
+import { handleDownload } from "@/lib/downloadExcel";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
@@ -100,7 +101,6 @@ export default function SmartBookingMasterPage() {
             if (awbNo && awbMap[awbNo]) {
                 awbExists = true;
                 bookingId = awbMap[awbNo].id;
-                // Overwrite mapped row with DB data, but keep AWB and srNo from Excel
                 Object.assign(mapped, awbMap[awbNo], { awbNo, srNo: mapped.srNo });
             }
 
@@ -145,14 +145,9 @@ export default function SmartBookingMasterPage() {
         const cleanRow = { ...row };
         delete cleanRow._customerExists;
         delete cleanRow._rowStatus;
-        // delete cleanRow.createdAt;
 
-        // Convert date fields
         cleanRow.bookingDate = parseDateString(cleanRow.bookingDate);
         cleanRow.statusDate = parseDateString(cleanRow.statusDate);
-        // cleanRow.createdAt = parseDateString(cleanRow.createdAt);
-
-        // Convert numbers
         cleanRow.invoiceWt = Number(cleanRow.invoiceWt) || null;
         cleanRow.clientBillingValue = Number(cleanRow.clientBillingValue) || null;
         cleanRow.creditCustomerAmount = Number(cleanRow.creditCustomerAmount) || null;
@@ -174,7 +169,15 @@ export default function SmartBookingMasterPage() {
 
     return (
         <div className="max-w-7xl mx-auto p-8 md:p-10">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Bulk Import & Edit Bookings</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold text-gray-900">Bulk Import & Edit Bookings</h1>
+                <button
+                    onClick={handleDownload}
+                    className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
+                >
+                    Download Excel
+                </button>
+            </div>
             <BookingImportPanel onData={handleImport} />
             {loading && <div className="text-blue-600 my-4">Processing import...</div>}
             {tableRows.length > 0 && (
