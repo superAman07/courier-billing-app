@@ -4,13 +4,14 @@ import { useState } from "react";
 import BookingImportPanel from "@/components/BookingImportPanel";
 import { toast } from "sonner";
 import axios from "axios";
+import { parseDateString } from "@/lib/convertDateInJSFormat";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
     "actualWeight", "chargeWeight", "invoiceWt", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
     "childCustomer", "parentCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo", "customerAttendBy",
     "status", "statusDate", "pendingDaysNotDelivered", "receiverName", "receiverContactNo", "complainNo",
-    "shipmentCostOtherMode", "podStatus", "remarks", "countryName", "domesticInternational", "internationalMode", "createdAt"
+    "shipmentCostOtherMode", "podStatus", "remarks", "countryName", "domesticInternational", "internationalMode"
 ];
 
 const COLUMN_MAP: Record<string, string> = {
@@ -48,8 +49,7 @@ const COLUMN_MAP: Record<string, string> = {
     remarks: "Remarks",
     countryName: "Country Name",
     domesticInternational: "Domestic / International",
-    internationalMode: "International Mode",
-    createdAt: "Created At"
+    internationalMode: "International Mode"
 };
 
 export default function SmartBookingMasterPage() {
@@ -63,13 +63,12 @@ export default function SmartBookingMasterPage() {
         try {
             const { data } = await axios.get("/api/customers");
             customers = data;
-            console.log("customers ", customers);
         } catch {
             toast.error("Failed to fetch customers for auto-fill");
         }
         const customerMap = Object.fromEntries(customers.map((c: any) => [c.customerCode, c]));
 
-        const mappedRows = await Promise.all(rows.map(async (row, idx) => {
+        const mappedRows = rows.map((row, idx) => {
             const mapped: any = {};
             columns.forEach(col => {
                 const excelKey = Object.keys(row).find(
@@ -77,29 +76,34 @@ export default function SmartBookingMasterPage() {
                         k.replace(/[\s_]/g, '').toLowerCase() === col.replace(/[\s_]/g, '').toLowerCase() ||
                         k.replace(/[\s_]/g, '').toLowerCase() === (COLUMN_MAP[col] || '').replace(/[\s_]/g, '').toLowerCase()
                 );
-                mapped[col] = excelKey ? row[excelKey] : "";
+                if (col === "bookingDate" && excelKey) {
+                    mapped[col] = parseDateString(row[excelKey]);
+                } else {
+                    mapped[col] = excelKey ? row[excelKey] : "";
+                }
             });
 
             mapped.srNo = idx + 1;
 
+            // --- Customer auto-fill ---
             const excelCustomerCode = row["Customer Code"] || row["CustomerCode"];
             const cust = excelCustomerCode && customerMap[excelCustomerCode];
 
             if (cust) {
+                mapped.customerId = cust.id;
                 mapped.receiverName = cust.customerName;
-                mapped.address = cust.address;
                 mapped.receiverContactNo = cust.mobile;
                 mapped.city = cust.city;
                 mapped.pincode = cust.pincode;
             }
-            let customerExists = !!cust; 
+            let customerExists = !!cust;
 
             return {
                 ...mapped,
                 _customerExists: customerExists,
                 _rowStatus: !customerExists ? "missing-customer" : "new"
             };
-        }));
+        });
 
         setImportedRows(mappedRows);
         setTableRows(mappedRows);
@@ -111,19 +115,35 @@ export default function SmartBookingMasterPage() {
             rows.map((row, i) => i === idx ? { ...row, [field]: value } : row)
         );
     };
-
     const handleSave = async (idx: number) => {
         const row = tableRows[idx];
         if (!row._customerExists) {
             toast.error("Customer not found. Please create Customer Master first.");
             return;
         }
+        const cleanRow = { ...row };
+        delete cleanRow._customerExists;
+        delete cleanRow._rowStatus;
+        // delete cleanRow.createdAt;
+
+        // Convert date fields
+        cleanRow.bookingDate = parseDateString(cleanRow.bookingDate);
+        cleanRow.statusDate = parseDateString(cleanRow.statusDate);
+        // cleanRow.createdAt = parseDateString(cleanRow.createdAt);
+
+        // Convert numbers
+        cleanRow.invoiceWt = Number(cleanRow.invoiceWt) || null;
+        cleanRow.clientBillingValue = Number(cleanRow.clientBillingValue) || null;
+        cleanRow.creditCustomerAmount = Number(cleanRow.creditCustomerAmount) || null;
+        cleanRow.regularCustomerAmount = Number(cleanRow.regularCustomerAmount) || null;
+        cleanRow.pendingDaysNotDelivered = Number(cleanRow.pendingDaysNotDelivered) || null;
+        cleanRow.shipmentCostOtherMode = Number(cleanRow.shipmentCostOtherMode) || null;
         try {
             if (row._awbExists && row._bookingId) {
-                await axios.put(`/api/booking-master/${row._bookingId}`, row);
+                await axios.put(`/api/booking-master/${row._bookingId}`, cleanRow);
                 toast.success("Booking updated!");
             } else {
-                await axios.post("/api/booking-master", row);
+                await axios.post("/api/booking-master", cleanRow);
                 toast.success("Booking created!");
             }
         } catch {
@@ -158,12 +178,38 @@ export default function SmartBookingMasterPage() {
                                 }>
                                     {columns.map(col => (
                                         <td key={col} className="px-3 py-2 border-b">
-                                            <input
-                                                value={row[col] || ""}
-                                                onChange={e => handleEdit(idx, col, e.target.value)}
-                                                className="w-full p-1 border text-gray-600 rounded text-xs"
-                                                disabled={col === "awbNo" && row._awbExists}
-                                            />
+                                            {["bookingDate", "statusDate", "createdAt"].includes(col) ? (
+                                                <input
+                                                    type="date"
+                                                    value={
+                                                        row[col]
+                                                            ? (() => {
+                                                                // Try to format as yyyy-MM-dd for <input type="date">
+                                                                const d = new Date(row[col]);
+                                                                if (!isNaN(d.getTime())) {
+                                                                    return d.toISOString().slice(0, 10);
+                                                                }
+                                                                // Try dd/mm/yyyy or dd-mm-yyyy
+                                                                const parts = row[col].split(/[\/\-]/);
+                                                                if (parts.length === 3) {
+                                                                    const [dd, mm, yyyy] = parts;
+                                                                    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+                                                                }
+                                                                return "";
+                                                            })()
+                                                            : ""
+                                                    }
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-full p-1 border text-gray-600 rounded text-xs"
+                                                />
+                                            ) : (
+                                                <input
+                                                    value={row[col] || ""}
+                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                                    className="w-full p-1 border text-gray-600 rounded text-xs"
+                                                    disabled={col === "awbNo" && row._awbExists}
+                                                />
+                                            )}
                                         </td>
                                     ))}
                                     <td className="px-3 py-2 border-b text-xs">
