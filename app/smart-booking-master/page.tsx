@@ -201,19 +201,17 @@ export default function SmartBookingMasterPage() {
                                         row._awbExists ? "bg-yellow-50" : ""
                                 }>
                                     {columns.map(col => (
-                                        <td key={col} className="px-3 py-2 border-b">
+                                        <td key={col} className="px-1 py-1 border-b">
                                             {["bookingDate", "statusDate", "createdAt"].includes(col) ? (
                                                 <input
                                                     type="date"
                                                     value={
                                                         row[col]
                                                             ? (() => {
-                                                                // Try to format as yyyy-MM-dd for <input type="date">
                                                                 const d = new Date(row[col]);
                                                                 if (!isNaN(d.getTime())) {
                                                                     return d.toISOString().slice(0, 10);
                                                                 }
-                                                                // Try dd/mm/yyyy or dd-mm-yyyy
                                                                 const parts = row[col].split(/[\/\-]/);
                                                                 if (parts.length === 3) {
                                                                     const [dd, mm, yyyy] = parts;
