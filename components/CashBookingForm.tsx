@@ -136,7 +136,15 @@ export default function CashBookingForm() {
     fetchBookings();
   };
 
-  const totalWithoutTax = bookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
+  const filteredBookings = bookings.filter(b =>
+    b.consignmentNo.toLowerCase().includes(search.toLowerCase()) ||
+    b.senderName.toLowerCase().includes(search.toLowerCase()) ||
+    b.receiverName.toLowerCase().includes(search.toLowerCase()) ||
+    b.city.toLowerCase().includes(search.toLowerCase())
+    // Add more fields as needed
+  );
+
+  const totalWithoutTax = filteredBookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
   const isWithinState = form.sourceState && form.state && form.sourceState === form.state;
   const applicableTaxes = taxes.filter(
     t => t.active && (isWithinState ? t.withinState : t.forOtherState)
@@ -150,14 +158,6 @@ export default function CashBookingForm() {
 
   const labelStyle = "block text-sm font-semibold text-blue-900 mb-1";
   const sectionHeader = "text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded mb-4 mt-6 border-l-4 border-blue-600";
-
-  const filteredBookings = bookings.filter(b =>
-    b.consignmentNo.toLowerCase().includes(search.toLowerCase()) ||
-    b.senderName.toLowerCase().includes(search.toLowerCase()) ||
-    b.receiverName.toLowerCase().includes(search.toLowerCase()) ||
-    b.city.toLowerCase().includes(search.toLowerCase())
-    // Add more fields as needed
-  );
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
