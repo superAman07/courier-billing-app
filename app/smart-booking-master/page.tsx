@@ -204,15 +204,25 @@ export default function SmartBookingMasterPage() {
             <BookingImportPanel onData={handleImport} />
             {tableRows.length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-4 items-center">
-                    <input
-                        type="text"
-                        placeholder="Search by AWB, Receiver, City, Status, etc."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="p-2 rounded text-gray-600 border border-gray-300 text-xs w-80"
-                    />
+                    <div className="relative w-80">
+                        <input
+                            type="text"
+                            id="search"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-purple-500 focus:outline-none"
+                            placeholder=" " 
+                        />
+                        <label
+                            htmlFor="search"
+                            className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200 peer-focus:-translate-y-5.5 peer-focus:text-purple-600 peer-focus:text-xs peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs pointer-events-none bg-transparent px-1"
+                            style={{ background: '#ededed' }}
+                        >
+                            Search by AWB, Receiver, City, Status, etc.
+                        </label>
+                    </div>
                     <button
-                        className="px-3 py-1 rounded bg-gray-200 text-xs"
+                        className="px-3 py-2.5 rounded bg-purple-700 hover:bg-purple-600 duration-200 cursor-pointer text-[14px]"
                         onClick={() => setSearch("")}
                     >
                         Clear
@@ -245,7 +255,7 @@ export default function SmartBookingMasterPage() {
                             </thead>
                             <tbody>
                                 {filteredRows.map((row) => {
-                                    const idx = row.__origIndex; // original index in tableRows
+                                    const idx = row.__origIndex;
                                     return (
                                         <tr
                                             key={row.awbNo ?? idx}
