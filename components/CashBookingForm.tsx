@@ -140,8 +140,9 @@ export default function CashBookingForm() {
     b.consignmentNo.toLowerCase().includes(search.toLowerCase()) ||
     b.senderName.toLowerCase().includes(search.toLowerCase()) ||
     b.receiverName.toLowerCase().includes(search.toLowerCase()) ||
-    b.city.toLowerCase().includes(search.toLowerCase())
-    // Add more fields as needed
+    b.city.toLowerCase().includes(search.toLowerCase()) ||
+    b.mode.toLowerCase().includes(search.toLowerCase()) ||
+    b.pincode.toLowerCase().includes(search.toLowerCase())  
   );
 
   const totalWithoutTax = filteredBookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
@@ -284,13 +285,27 @@ export default function CashBookingForm() {
         </form>
         <div className="p-6">
           <div className={sectionHeader}>Booked Consignment Details for the Day</div>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by Consignment No, Sender, Receiver, City..."
-            className="mb-4 p-2 border rounded text-gray-700 w-full max-w-xs"
-          />
+          <div className="relative w-80 mb-4">
+            <input
+              type="text"
+              id="search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-blue-500 focus:outline-none"
+              placeholder=" "
+            />
+            <label
+              htmlFor="search"
+              className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200
+                peer-focus:-translate-y-5.5 peer-focus:text-blue-600 peer-focus:text-xs
+                peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-blue-600 peer-[&:not(:placeholder-shown)]:text-xs
+                peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs
+                pointer-events-none bg-white px-1"
+              style={{ background: 'white' }}
+            >
+              Search by Consignment No, Sender, Receiver, City...
+            </label>
+          </div>
           <table className="min-w-full border">
             <thead className="bg-blue-50">
               <tr>
@@ -316,7 +331,7 @@ export default function CashBookingForm() {
                   <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.city}</td>
+                  <td className="px-2 py-1 text-gray-600 border">{b.city.toUpperCase()}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
