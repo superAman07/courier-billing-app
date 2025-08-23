@@ -193,7 +193,10 @@ export default function SmartBookingMasterPage() {
     return (
         <div className="max-w-7xl mx-auto p-8 md:p-10">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Bulk Import & Edit Bookings</h1>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Smart Booking Master</h1>
+                    <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
+                </div>
                 <button
                     onClick={handleDownload}
                     className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
@@ -211,7 +214,7 @@ export default function SmartBookingMasterPage() {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-purple-500 focus:outline-none"
-                            placeholder=" " 
+                            placeholder=" "
                         />
                         <label
                             htmlFor="search"
