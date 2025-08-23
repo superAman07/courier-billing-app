@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
+import { Download } from "lucide-react";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
@@ -201,6 +202,7 @@ export default function SmartBookingMasterPage() {
                     onClick={handleDownload}
                     className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
                 >
+                    <Download className="w-5 h-5" />
                     Download Excel
                 </button>
             </div>
