@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
-import { Download } from "lucide-react";
+import { Download, Users } from "lucide-react";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
@@ -201,35 +201,43 @@ export default function SmartBookingMasterPage() {
             </div>
             <BookingImportPanel onData={handleImport} />
             {tableRows.length > 0 && (
-                <div className="flex justify-between">
+                <div className="flex justify-between bg-white py-12 px-6 rounded-xl shadow-sm border mt-10">
                     <div className="my-2 flex flex-wrap gap-4 items-center">
-                        <div className="relative w-80">
-                            <input
-                                type="text"
-                                id="search"
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-purple-500 focus:outline-none"
-                                placeholder=" "
-                            />
-                            <label
-                                htmlFor="search"
-                                className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200 peer-focus:-translate-y-5.5 peer-focus:text-purple-600 peer-focus:text-xs peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-purple-600 peer-[&:not(:placeholder-shown)]:text-xs peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs pointer-events-none bg-transparent px-1"
-                                style={{ background: '#ededed' }}
-                            >
-                                Search by AWB, Receiver, City, Status, etc.
-                            </label>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                <Users className="w-5 h-5 text-purple-600" />
+                                Search Customer
+                            </h2>
+                            <div className="flex space-x-2">
+                                <div className="relative w-80">
+                                    <input
+                                        type="text"
+                                        id="search"
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-purple-500 focus:outline-none"
+                                        placeholder=" "
+                                    />
+                                    <label
+                                        htmlFor="search"
+                                        className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200 peer-focus:-translate-y-5.5 peer-focus:text-purple-600 peer-focus:text-xs peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-purple-600 peer-[&:not(:placeholder-shown)]:text-xs peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs pointer-events-none bg-transparent px-1"
+                                        style={{ background: 'white' }}
+                                    >
+                                        Search by AWB, Receiver, City, Status, etc.
+                                    </label>
+                                </div>
+                                <button
+                                    className="px-3 py-2.5 rounded bg-purple-700 hover:bg-purple-600 duration-200 cursor-pointer text-[14px]"
+                                    onClick={() => setSearch("")}
+                                >
+                                    Clear
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            className="px-3 py-2.5 rounded bg-purple-700 hover:bg-purple-600 duration-200 cursor-pointer text-[14px]"
-                            onClick={() => setSearch("")}
-                        >
-                            Clear
-                        </button>
                     </div>
                     <button
                         onClick={handleDownload}
-                        className="flex cursor-pointer items-center gap-2 px-4 my-2 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
+                        className="flex cursor-pointer items-center gap-2 px-4 my-7 bg-green-600 hover:bg-green-700 text-white rounded shadow font-semibold transition"
                     >
                         <Download className="w-5 h-5" />
                         Download Excel
