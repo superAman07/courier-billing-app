@@ -57,6 +57,7 @@ export default function SmartBookingMasterPage() {
     const [importedRows, setImportedRows] = useState<any[]>([]);
     const [tableRows, setTableRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [search, setSearch] = useState("");
 
     const handleImport = async (rows: any[]) => {
         setLoading(true);
@@ -167,6 +168,23 @@ export default function SmartBookingMasterPage() {
         }
     };
 
+    const filteredRows = tableRows
+        .map((row, origIndex) => ({ ...row, __origIndex: origIndex })) // keep original index
+        .filter(row => {
+            if (!search) return true;
+            const s = search.toLowerCase();
+            return (
+                (row.awbNo || "").toString().toLowerCase().includes(s) ||
+                (row.receiverName || "").toLowerCase().includes(s) ||
+                (row.destinationCity || "").toLowerCase().includes(s) ||
+                (row.status || "").toLowerCase().includes(s) ||
+                (row.paymentStatus || "").toLowerCase().includes(s) ||
+                (row.city || "").toLowerCase().includes(s) ||
+                (row.customerName || "").toLowerCase().includes(s)
+                // Add more fields as needed
+            );
+        });
+
     const PAYMENT_STATUS_OPTIONS = ["PAID", "UNPAID", "PARTIAL"];
     const MODE_OPTIONS = ["A", "S", "R", "T"];
     const POD_STATUS_OPTIONS = ["Received", "Pending", "Not Required"];
@@ -184,143 +202,176 @@ export default function SmartBookingMasterPage() {
                 </button>
             </div>
             <BookingImportPanel onData={handleImport} />
-            {loading && <div className="text-blue-600 my-4">Processing import...</div>}
             {tableRows.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-4 items-center">
+                    <input
+                        type="text"
+                        placeholder="Search by AWB, Receiver, City, Status, etc."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="p-2 rounded text-gray-600 border border-gray-300 text-xs w-80"
+                    />
+                    <button
+                        className="px-3 py-1 rounded bg-gray-200 text-xs"
+                        onClick={() => setSearch("")}
+                    >
+                        Clear
+                    </button>
+                </div>
+            )}
+            {loading && (
+                <div className="flex items-center gap-2 text-blue-600 my-4">
+                    <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <span>Processing import... Please wait.</span>
+                </div>
+            )}
+            {filteredRows.length > 0 && (
                 <div className="mt-8 overflow-x-auto">
-                    <table className="min-w-full border rounded-lg">
-                        <thead>
-                            <tr>
-                                {columns.map(col => (
-                                    <th key={col} className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">
-                                        {COLUMN_MAP[col] || col}
-                                    </th>
-                                ))}
-                                <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Status</th>
-                                <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tableRows.map((row, idx) => (
-                                <tr key={idx} className={
-                                    !row._customerExists ? "bg-red-50" :
-                                        row._awbExists ? "bg-yellow-50" : ""
-                                }>
+                    <div className="max-h-[500px] overflow-auto border rounded-lg">
+                        <table className="min-w-full border rounded-lg">
+                            <thead>
+                                <tr>
                                     {columns.map(col => (
-                                        <td
-                                            key={col}
+                                        <th key={col} className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">
+                                            {COLUMN_MAP[col] || col}
+                                        </th>
+                                    ))}
+                                    <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Status</th>
+                                    <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredRows.map((row) => {
+                                    const idx = row.__origIndex; // original index in tableRows
+                                    return (
+                                        <tr
+                                            key={row.awbNo ?? idx}
                                             className={
-                                                "px-1 py-2 border-b " +
-                                                (col === "bookingDate" ? "w-32" :
-                                                    col === "awbNo" ? "w-40" :
-                                                        col === "dsrNdxPaper" ? "w-16" : "w-28")
+                                                !row._customerExists ? "bg-red-50" :
+                                                    row._awbExists ? "bg-yellow-50" : ""
                                             }
                                         >
-                                            {col === "paymentStatus" ? (
-                                                <select
-                                                    value={row[col] || ""}
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
-                                                >
-                                                    <option value="">Select</option>
-                                                    {PAYMENT_STATUS_OPTIONS.map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
-                                            ) : col === "mode" ? (
-                                                <select
-                                                    value={row[col] || ""}
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-24 p-1 cursor-pointer border text-gray-600 rounded text-xs"
-                                                >
-                                                    <option value="">Select</option>
-                                                    {MODE_OPTIONS.map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
-                                            ) : col === "podStatus" ? (
-                                                <select
-                                                    value={row[col] || ""}
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
-                                                >
-                                                    <option value="">Select</option>
-                                                    {POD_STATUS_OPTIONS.map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
-                                            ) : col === "status" ? (
-                                                <select
-                                                    value={row[col] || ""}
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-32 p-1 border cursor-pointer text-gray-600 rounded text-xs"
-                                                >
-                                                    <option value="">Select</option>
-                                                    {STATUS_OPTIONS.map(opt => (
-                                                        <option key={opt} value={opt}>{opt.replace("_", " ")}</option>
-                                                    ))}
-                                                </select>
-                                            ) : ["bookingDate", "statusDate", "createdAt"].includes(col) ? (
-                                                <input
-                                                    type="date"
-                                                    value={
-                                                        row[col]
-                                                            ? (() => {
-                                                                const d = new Date(row[col]);
-                                                                if (!isNaN(d.getTime())) {
-                                                                    return d.toISOString().slice(0, 10);
-                                                                }
-                                                                const parts = row[col].split(/[\/\-]/);
-                                                                if (parts.length === 3) {
-                                                                    const [dd, mm, yyyy] = parts;
-                                                                    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-                                                                }
-                                                                return "";
-                                                            })()
-                                                            : ""
-                                                    }
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
-                                                    className="w-28 p-1 border text-gray-600 rounded text-xs"
-                                                />
-                                            ) : (
-                                                <input
-                                                    value={row[col] || ""}
-                                                    onChange={e => handleEdit(idx, col, e.target.value)}
+                                            {columns.map(col => (
+                                                <td
+                                                    key={col}
                                                     className={
-                                                        (col === "awbNo" ? "w-36 " : "") +
-                                                        (col === "dsrNdxPaper" ? "w-12 text-center " : "") + (col === "srNo" ? "w-12 text-center " : "") +
-                                                        "p-1 border text-gray-600 rounded text-xs"
+                                                        "px-1 py-2 border-b " +
+                                                        (col === "bookingDate" ? "w-32" :
+                                                            col === "awbNo" ? "w-40" :
+                                                                col === "dsrNdxPaper" ? "w-16" : "w-28")
                                                     }
-                                                    disabled={col === "awbNo" && row._awbExists}
-                                                />
-                                            )}
-                                        </td>
-                                    ))}
-                                    <td className="px-3 py-2 border-b text-xs">
-                                        {!row._customerExists ? (
-                                            <span className="text-red-600 font-semibold">Missing Customer</span>
-                                        ) : row._awbExists ? (
-                                            <span className="text-yellow-600 font-semibold">Duplicate AWB (Update)</span>
-                                        ) : (
-                                            <span className="text-green-600 font-semibold">New</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2 border-b">
-                                        <button
-                                            className="bg-blue-600 text-white cursor-pointer px-3 py-1 rounded text-xs font-semibold hover:bg-blue-700"
-                                            onClick={() => handleSave(idx)}
-                                            disabled={!row._customerExists}
-                                        >
-                                            Save
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="text-xs text-gray-500 mt-2">
-                        <span className="mr-4"><span className="inline-block w-3 h-3 bg-green-200 mr-1"></span>New</span>
-                        <span className="mr-4"><span className="inline-block w-3 h-3 bg-yellow-200 mr-1"></span>Duplicate AWB (Update)</span>
-                        <span><span className="inline-block w-3 h-3 bg-red-200 mr-1"></span>Missing Customer</span>
+                                                >
+                                                    {col === "paymentStatus" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {PAYMENT_STATUS_OPTIONS.map(opt => (
+                                                                <option key={opt} value={opt}>{opt}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : col === "mode" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className="w-24 p-1 cursor-pointer border text-gray-600 rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {MODE_OPTIONS.map(opt => (
+                                                                <option key={opt} value={opt}>{opt}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : col === "podStatus" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className="w-28 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {POD_STATUS_OPTIONS.map(opt => (
+                                                                <option key={opt} value={opt}>{opt}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : col === "status" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className="w-32 p-1 border cursor-pointer text-gray-600 rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {STATUS_OPTIONS.map(opt => (
+                                                                <option key={opt} value={opt}>{opt.replace("_", " ")}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : ["bookingDate", "statusDate", "createdAt"].includes(col) ? (
+                                                        <input
+                                                            type="date"
+                                                            value={
+                                                                row[col]
+                                                                    ? (() => {
+                                                                        const d = new Date(row[col]);
+                                                                        if (!isNaN(d.getTime())) {
+                                                                            return d.toISOString().slice(0, 10);
+                                                                        }
+                                                                        const parts = row[col].split(/[\/\-]/);
+                                                                        if (parts.length === 3) {
+                                                                            const [dd, mm, yyyy] = parts;
+                                                                            return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+                                                                        }
+                                                                        return "";
+                                                                    })()
+                                                                    : ""
+                                                            }
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className="w-28 p-1 border text-gray-600 rounded text-xs"
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(idx, col, e.target.value)}
+                                                            className={
+                                                                (col === "awbNo" ? "w-36 " : "") +
+                                                                (col === "dsrNdxPaper" ? "w-12 text-center " : "") + (col === "srNo" ? "w-12 text-center " : "") +
+                                                                "p-1 border text-gray-600 rounded text-xs"
+                                                            }
+                                                            disabled={col === "awbNo" && row._awbExists}
+                                                        />
+                                                    )}
+                                                </td>
+                                            ))}
+                                            <td className="px-3 py-2 border-b text-xs">
+                                                {!row._customerExists ? (
+                                                    <span className="text-red-600 font-semibold">Missing Customer</span>
+                                                ) : row._awbExists ? (
+                                                    <span className="text-yellow-600 font-semibold">Duplicate AWB (Update)</span>
+                                                ) : (
+                                                    <span className="text-green-600 font-semibold">New</span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2 border-b">
+                                                <button
+                                                    className="bg-blue-600 text-white cursor-pointer px-3 py-1 rounded text-xs font-semibold hover:bg-blue-700"
+                                                    onClick={() => handleSave(idx)}
+                                                    disabled={!row._customerExists}
+                                                >
+                                                    Save
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                        <div className="text-xs text-gray-500 mt-2">
+                            <span className="mr-4"><span className="inline-block w-3 h-3 bg-green-200 mr-1"></span>New</span>
+                            <span className="mr-4"><span className="inline-block w-3 h-3 bg-yellow-200 mr-1"></span>Duplicate AWB (Update)</span>
+                            <span><span className="inline-block w-3 h-3 bg-red-200 mr-1"></span>Missing Customer</span>
+                        </div>
                     </div>
                 </div>
             )}
