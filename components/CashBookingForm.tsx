@@ -45,6 +45,7 @@ export default function CashBookingForm() {
   const [taxes, setTaxes] = useState<Tax[]>([]);
   const [pincodes, setPincodes] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchBookings();
@@ -149,6 +150,14 @@ export default function CashBookingForm() {
 
   const labelStyle = "block text-sm font-semibold text-blue-900 mb-1";
   const sectionHeader = "text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded mb-4 mt-6 border-l-4 border-blue-600";
+
+  const filteredBookings = bookings.filter(b =>
+    b.consignmentNo.toLowerCase().includes(search.toLowerCase()) ||
+    b.senderName.toLowerCase().includes(search.toLowerCase()) ||
+    b.receiverName.toLowerCase().includes(search.toLowerCase()) ||
+    b.city.toLowerCase().includes(search.toLowerCase())
+    // Add more fields as needed
+  );
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
@@ -275,6 +284,13 @@ export default function CashBookingForm() {
         </form>
         <div className="p-6">
           <div className={sectionHeader}>Booked Consignment Details for the Day</div>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by Consignment No, Sender, Receiver, City..."
+            className="mb-4 p-2 border rounded text-gray-700 w-full max-w-xs"
+          />
           <table className="min-w-full border">
             <thead className="bg-blue-50">
               <tr>
@@ -294,7 +310,7 @@ export default function CashBookingForm() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((b) => (
+              {filteredBookings.map((b) => (
                 <tr key={b.id}>
                   <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
                   <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
@@ -337,11 +353,11 @@ export default function CashBookingForm() {
                       }}
                     >
                       📩
-                    </button> 
+                    </button>
                   </td>
                 </tr>
               ))}
-              {bookings.length === 0 && (
+              {filteredBookings.length === 0 && (
                 <tr>
                   <td colSpan={12} className="text-center py-4 text-gray-400">No bookings found.</td>
                 </tr>
