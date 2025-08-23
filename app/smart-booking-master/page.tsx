@@ -260,12 +260,12 @@ export default function SmartBookingMasterPage() {
                             <thead>
                                 <tr>
                                     {columns.map(col => (
-                                        <th key={col} className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">
+                                        <th key={col} className="px-3 py-2 border-b bg-blue-100 text-xs font-semibold text-blue-900 uppercase">
                                             {COLUMN_MAP[col] || col}
                                         </th>
                                     ))}
-                                    <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Status</th>
-                                    <th className="px-3 py-2 border-b bg-gray-50 text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                                    <th className="px-3 py-2 border-b bg-blue-100 text-xs font-semibold text-blue-900 uppercase">Status</th>
+                                    <th className="px-3 py-2 border-b bg-blue-100 text-xs font-semibold text-blue-900 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
