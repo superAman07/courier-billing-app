@@ -200,6 +200,26 @@ export default function SmartBookingMasterPage() {
                 </div>
             </div>
             <BookingImportPanel onData={handleImport} />
+            {tableRows.length === 0 && !loading && (
+                <div className="flex flex-col items-center justify-center mt-24">
+                    <div className="bg-white rounded-2xl shadow-lg p-10 flex flex-col items-center border max-w-lg">
+                        <svg className="w-16 h-16 text-purple-400 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6" />
+                        </svg>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">No Data Imported</h2>
+                        <p className="text-gray-500 mb-4 text-center">
+                            To get started, please <span className="font-semibold text-purple-700">import an Excel file</span> containing your booking data.<br />
+                            You can download a sample format using the <span className="font-semibold text-green-700">Download Excel</span> button above.
+                        </p>
+                        <span className="inline-flex items-center gap-2 text-purple-700 font-medium">
+                            <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Click <span className="font-semibold">Import Excel</span> (bottom right)
+                        </span>
+                    </div>
+                </div>
+            )}
             {tableRows.length > 0 && (
                 <div className="flex justify-between bg-white py-12 px-6 rounded-xl shadow-sm border mt-10">
                     <div className="my-2 flex flex-wrap gap-4 items-center">
