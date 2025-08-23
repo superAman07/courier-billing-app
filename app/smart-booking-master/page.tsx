@@ -218,7 +218,7 @@ export default function SmartBookingMasterPage() {
                         />
                         <label
                             htmlFor="search"
-                            className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200 peer-focus:-translate-y-5.5 peer-focus:text-purple-600 peer-focus:text-xs peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs pointer-events-none bg-transparent px-1"
+                            className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200 peer-focus:-translate-y-5.5 peer-focus:text-purple-600 peer-focus:text-xs peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-purple-600 peer-[&:not(:placeholder-shown)]:text-xs peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs pointer-events-none bg-transparent px-1"
                             style={{ background: '#ededed' }}
                         >
                             Search by AWB, Receiver, City, Status, etc.
