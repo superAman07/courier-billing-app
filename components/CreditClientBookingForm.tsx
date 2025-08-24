@@ -27,6 +27,7 @@ export default function CreditClientBookingForm() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [pincodes, setPincodes] = useState<any>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         fetchBookings();
@@ -96,9 +97,17 @@ export default function CreditClientBookingForm() {
         }
     };
 
-    const totalRecords = bookings.length;
-    const totalWeight = bookings.reduce((sum, b) => sum + Number(b.weight || 0), 0);
-    const totalAmount = bookings.reduce((sum, b) => sum + Number(b.chargeAmount || 0), 0);
+    const filteredBookings = bookings.filter(b =>
+        b.consignmentNo?.toLowerCase().includes(search.toLowerCase()) ||
+        b.customer?.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+        b.consigneeName?.toLowerCase().includes(search.toLowerCase()) ||
+        b.city?.toLowerCase().includes(search.toLowerCase()) ||
+        b.pincode?.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const totalRecords = filteredBookings.length;
+    const totalWeight = filteredBookings.reduce((sum, b) => sum + Number(b.weight || 0), 0);
+    const totalAmount = filteredBookings.reduce((sum, b) => sum + Number(b.chargeAmount || 0), 0);
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
@@ -184,81 +193,106 @@ export default function CreditClientBookingForm() {
                 </form>
                 <div className="p-6">
                     <div className="text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded mb-4 border-l-4 border-blue-600">Booked Consignment Details</div>
-                    <table className="min-w-full border">
-                        <thead className="bg-blue-50">
-                            <tr>
-                                <th className="px-2 py-1 border text-blue-900">Consign. No</th>
-                                <th className="px-2 py-1 border text-blue-900">Customer</th>
-                                <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
-                                <th className="px-2 py-1 border text-blue-900">Service</th>
-                                <th className="px-2 py-1 border text-blue-900">Pincode</th>
-                                <th className="px-2 py-1 border text-blue-900">City</th>
-                                <th className="px-2 py-1 border text-blue-900">Weight</th>
-                                <th className="px-2 py-1 border text-blue-900">VAS</th>
-                                <th className="px-2 py-1 border text-blue-900">Courier Amt</th>
-                                <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
-                                <th className="px-2 py-1 border text-blue-900">Consignee</th>
-                                <th className="px-2 py-1 border text-blue-900">Edit</th>
-                                <th className="px-2 py-1 border text-blue-900">Delete</th>
-                                <th className="px-2 py-1 border text-blue-900">Send SMS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {bookings.map((b) => (
-                                <tr key={b.id}>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.customer?.customerName}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.serviceType}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.city}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.vasAmount}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.courierAmount}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.chargeAmount}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">{b.consigneeName}</td>
-                                    <td className="px-2 py-1 text-gray-600 border">
-                                        <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
-                                    </td>
-                                    <td className="px-2 py-1 text-gray-600 border">
-                                        <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
-                                    </td>
-                                    <td className="px-2 py-1 text-gray-600 border text-center">
-                                        {b.smsSent && (
-                                            <span
-                                                title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
-                                                className="mr-2"
-                                            >
-                                                ✅
-                                            </span>
-                                        )}
-                                        <button
-                                            title="Send SMS"
-                                            className="text-blue-600 cursor-pointer hover:underline"
-                                            onClick={async () => {
-                                                const { data: fullBooking } = await axios.get(`/api/credit-client-booking/${b.id}`);
-                                                await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.customer?.mobile });
-                                                await axios.put(`/api/credit-client-booking/${b.id}`, {
-                                                    ...fullBooking,
-                                                    smsSent: true,
-                                                    smsDate: new Date().toISOString(),
-                                                });
-                                                toast.success("SMS sent successfully!");
-                                                fetchBookings();
-                                            }}
-                                        >
-                                            📩
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {bookings.length === 0 && (
-                                <tr>
-                                    <td colSpan={13} className="text-center py-4 text-gray-400">No bookings found.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                    <div className="relative w-80 mb-4">
+                        <input
+                            type="text"
+                            id="search"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="peer p-2 pt-5 rounded text-gray-600 border border-gray-700 text-xs w-full focus:border-blue-500 focus:outline-none"
+                            placeholder=" "
+                        />
+                        <label
+                            htmlFor="search"
+                            className="absolute left-2 top-3.5 text-gray-600 text-xs transition-all duration-200
+                                peer-focus:-translate-y-5.5 peer-focus:text-blue-600 peer-focus:text-xs
+                                peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-blue-600 peer-[&:not(:placeholder-shown)]:text-xs
+                                peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs
+                                pointer-events-none bg-white px-1"
+                            style={{ background: 'white' }}
+                        >
+                            Search by Consignment No, Customer, Receiver, City...
+                        </label>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <div className="max-h-[540px] overflow-y-auto border">
+                            <table className="min-w-full border">
+                                <thead className="bg-blue-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="px-2 py-1 border text-blue-900">Consign. No</th>
+                                        <th className="px-2 py-1 border text-blue-900">Customer</th>
+                                        <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
+                                        <th className="px-2 py-1 border text-blue-900">Service</th>
+                                        <th className="px-2 py-1 border text-blue-900">Pincode</th>
+                                        <th className="px-2 py-1 border text-blue-900">City</th>
+                                        <th className="px-2 py-1 border text-blue-900">Weight</th>
+                                        <th className="px-2 py-1 border text-blue-900">VAS</th>
+                                        <th className="px-2 py-1 border text-blue-900">Courier Amt</th>
+                                        <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
+                                        <th className="px-2 py-1 border text-blue-900">Consignee</th>
+                                        <th className="px-2 py-1 border text-blue-900">Edit</th>
+                                        <th className="px-2 py-1 border text-blue-900">Delete</th>
+                                        <th className="px-2 py-1 border text-blue-900">Send SMS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredBookings.map((b) => (
+                                        <tr key={b.id}>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.customer?.customerName}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.serviceType}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.city}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.vasAmount}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.courierAmount}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.chargeAmount}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">{b.consigneeName}</td>
+                                            <td className="px-2 py-1 text-gray-600 border">
+                                                <button onClick={() => handleEdit(b)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
+                                            </td>
+                                            <td className="px-2 py-1 text-gray-600 border">
+                                                <button onClick={() => handleDelete(b.id)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
+                                            </td>
+                                            <td className="px-2 py-1 text-gray-600 border text-center">
+                                                {b.smsSent && (
+                                                    <span
+                                                        title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                                                        className="mr-2"
+                                                    >
+                                                        ✅
+                                                    </span>
+                                                )}
+                                                <button
+                                                    title="Send SMS"
+                                                    className="text-blue-600 cursor-pointer hover:underline"
+                                                    onClick={async () => {
+                                                        const { data: fullBooking } = await axios.get(`/api/credit-client-booking/${b.id}`);
+                                                        await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.customer?.mobile });
+                                                        await axios.put(`/api/credit-client-booking/${b.id}`, {
+                                                            ...fullBooking,
+                                                            smsSent: true,
+                                                            smsDate: new Date().toISOString(),
+                                                        });
+                                                        toast.success("SMS sent successfully!");
+                                                        fetchBookings();
+                                                    }}
+                                                >
+                                                    📩
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredBookings.length === 0 && (
+                                        <tr>
+                                            <td colSpan={13} className="text-center py-4 text-gray-400">No bookings found.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
                         <div className="bg-purple-600 rounded p-2 text-center font-bold">Total Records<br />{totalRecords}</div>
                         <div className="bg-purple-600 rounded p-2 text-center font-bold">Total Weight<br />{totalWeight.toFixed(3)}</div>
