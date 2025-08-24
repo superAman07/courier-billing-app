@@ -38,6 +38,7 @@ export default function InternationalCashBookingForm() {
   const [countries, setCountries] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [taxes, setTaxes] = useState<Tax[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchBookings();
@@ -90,7 +91,16 @@ export default function InternationalCashBookingForm() {
     fetchBookings();
   };
 
-  const totalWithoutTax = bookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
+  const filteredBookings = bookings.filter(b =>
+    b.consignmentNo?.toLowerCase().includes(search.toLowerCase()) ||
+    b.senderName?.toLowerCase().includes(search.toLowerCase()) ||
+    b.receiverName?.toLowerCase().includes(search.toLowerCase()) ||
+    b.city?.toLowerCase().includes(search.toLowerCase()) ||
+    b.country?.toLowerCase().includes(search.toLowerCase()) ||
+    b.pincode?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalWithoutTax = filteredBookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
 
   const cgst = 0;
   const sgst = 0;
@@ -209,77 +219,102 @@ export default function InternationalCashBookingForm() {
         </form>
         <div className="p-6">
           <div className="text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded mb-4 border-l-4 border-blue-600">Booked Consignment Details for the Day</div>
-          <table className="min-w-full border">
-            <thead className="bg-blue-50">
-              <tr>
-                <th className="px-2 py-1 border text-blue-900">Consign. No</th>
-                <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
-                <th className="px-2 py-1 border text-blue-900">Mode</th>
-                <th className="px-2 py-1 border text-blue-900">Country</th>
-                <th className="px-2 py-1 border text-blue-900">Pcs</th>
-                <th className="px-2 py-1 border text-blue-900">Contents</th>
-                <th className="px-2 py-1 border text-blue-900">Weight</th>
-                <th className="px-2 py-1 border text-blue-900">Courier</th>
-                <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
-                <th className="px-2 py-1 border text-blue-900">Edit</th>
-                <th className="px-2 py-1 border text-blue-900">Delete</th>
-                <th className="px-2 py-1 border text-blue-900 text-center">Send SMS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map((b) => (
-                <tr key={b.id}>
-                  <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.country}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
-                  <td className="px-2 py-1 text-gray-600 border">
-                    <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
-                  </td>
-                  <td className="px-2 py-1 text-gray-600 border">
-                    <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
-                  </td>
-                  <td className="px-2 py-1 text-gray-600 border text-center">
-                    {b.smsSent && (
-                      <span
-                        title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
-                        className="mr-2"
-                      >
-                        ✅
-                      </span>
-                    )}
-                    <button
-                      title="Send SMS"
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={async () => {
-                        const { data: fullBooking } = await axios.get(`/api/international-cash-booking/${b.id}`);
-                        await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
-                        await axios.put(`/api/international-cash-booking/${b.id}`, {
-                          ...fullBooking,
-                          smsSent: true,
-                          smsDate: new Date().toISOString(),
-                        });
-                        toast.success("SMS sent successfully!");
-                        fetchBookings();
-                      }}
-                    >
-                      📩
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {bookings.length === 0 && (
-                <tr>
-                  <td colSpan={11} className="text-center py-4 text-gray-400">No bookings found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="relative w-100 mb-4">
+            <input
+              type="text"
+              id="search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="peer p-2 pt-5 rounded text-gray-600 border border-gray-700 text-xs w-full focus:border-blue-500 focus:outline-none"
+              placeholder=" "
+            />
+            <label
+              htmlFor="search"
+              className="absolute left-2 top-3.5 text-gray-600 text-xs transition-all duration-200
+                peer-focus:-translate-y-5.5 peer-focus:text-blue-600 peer-focus:text-xs
+                peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-blue-600 peer-[&:not(:placeholder-shown)]:text-xs
+                peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs
+                pointer-events-none bg-white px-1"
+              style={{ background: 'white' }}
+            >
+              Search by Consignment No, Sender, Receiver, City, Country...
+            </label>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="max-h-[540px] overflow-y-auto border">
+              <table className="min-w-full border">
+                <thead className="bg-blue-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-2 py-1 border text-blue-900">Consign. No</th>
+                    <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
+                    <th className="px-2 py-1 border text-blue-900">Mode</th>
+                    <th className="px-2 py-1 border text-blue-900">Country</th>
+                    <th className="px-2 py-1 border text-blue-900">Pcs</th>
+                    <th className="px-2 py-1 border text-blue-900">Contents</th>
+                    <th className="px-2 py-1 border text-blue-900">Weight</th>
+                    <th className="px-2 py-1 border text-blue-900">Courier</th>
+                    <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
+                    <th className="px-2 py-1 border text-blue-900">Edit</th>
+                    <th className="px-2 py-1 border text-blue-900">Delete</th>
+                    <th className="px-2 py-1 border text-blue-900 text-center">Send SMS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map((b) => (
+                    <tr key={b.id}>
+                      <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.country}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
+                      <td className="px-2 py-1 text-gray-600 border">
+                        <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
+                      </td>
+                      <td className="px-2 py-1 text-gray-600 border">
+                        <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
+                      </td>
+                      <td className="px-2 py-1 text-gray-600 border text-center">
+                        {b.smsSent && (
+                          <span
+                            title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                            className="mr-2"
+                          >
+                            ✅
+                          </span>
+                        )}
+                        <button
+                          title="Send SMS"
+                          className="text-blue-600 cursor-pointer hover:underline"
+                          onClick={async () => {
+                            const { data: fullBooking } = await axios.get(`/api/international-cash-booking/${b.id}`);
+                            await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
+                            await axios.put(`/api/international-cash-booking/${b.id}`, {
+                              ...fullBooking,
+                              smsSent: true,
+                              smsDate: new Date().toISOString(),
+                            });
+                            toast.success("SMS sent successfully!");
+                            fetchBookings();
+                          }}
+                        >
+                          📩
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {bookings.length === 0 && (
+                    <tr>
+                      <td colSpan={11} className="text-center py-4 text-gray-400">No bookings found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="text-blue-900 font-semibold mb-2">Total Amount Without Tax:</div>
