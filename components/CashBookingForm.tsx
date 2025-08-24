@@ -142,7 +142,7 @@ export default function CashBookingForm() {
     b.receiverName.toLowerCase().includes(search.toLowerCase()) ||
     b.city.toLowerCase().includes(search.toLowerCase()) ||
     b.mode.toLowerCase().includes(search.toLowerCase()) ||
-    b.pincode.toLowerCase().includes(search.toLowerCase())  
+    b.pincode.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalWithoutTax = filteredBookings.reduce((sum, b) => sum + Number(b.amountCharged || 0), 0);
@@ -306,79 +306,83 @@ export default function CashBookingForm() {
               Search by Consignment No, Sender, Receiver, City...
             </label>
           </div>
-          <table className="min-w-full border">
-            <thead className="bg-blue-50">
-              <tr>
-                <th className="px-2 py-1 border text-blue-900">Consign. No</th>
-                <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
-                <th className="px-2 py-1 border text-blue-900">Mode</th>
-                <th className="px-2 py-1 border text-blue-900">Pincode</th>
-                <th className="px-2 py-1 border text-blue-900">Destination</th>
-                <th className="px-2 py-1 border text-blue-900">Pcs</th>
-                <th className="px-2 py-1 border text-blue-900">Contents</th>
-                <th className="px-2 py-1 border text-blue-900">Weight(kg)</th>
-                <th className="px-2 py-1 border text-blue-900">Courier</th>
-                <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
-                <th className="px-2 py-1 border text-blue-900">Edit</th>
-                <th className="px-2 py-1 border text-blue-900">Delete</th>
-                <th className="px-2 py-1 border text-blue-900">Send SMS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBookings.map((b) => (
-                <tr key={b.id}>
-                  <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.city.toUpperCase()}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
-                  <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
-                  <td className="px-2 py-1 text-gray-600 border">
-                    <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
-                  </td>
-                  <td className="px-2 py-1 text-gray-600 border">
-                    <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
-                  </td>
-                  <td className="px-2 py-1 text-gray-600 border text-center">
-                    {b.smsSent && (
-                      <span
-                        title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
-                        className="mr-2"
-                      >
-                        ✅
-                      </span>
-                    )}
-                    <button
-                      title="Send SMS"
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={async () => {
-                        const { data: fullBooking } = await axios.get(`/api/cash-booking/${b.id}`);
-                        await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
-                        await axios.put(`/api/cash-booking/${b.id}`, {
-                          ...fullBooking,
-                          smsSent: true,
-                          smsDate: new Date().toISOString(),
-                        });
-                        toast.success("SMS sent successfully!");
-                        fetchBookings();
-                      }}
-                    >
-                      📩
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredBookings.length === 0 && (
-                <tr>
-                  <td colSpan={12} className="text-center py-4 text-gray-400">No bookings found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <div className="max-h-[540px] overflow-y-auto border">
+              <table className="min-w-full border">
+                <thead className="bg-blue-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-2 py-1 border text-blue-900">Consign. No</th>
+                    <th className="px-2 py-1 border text-blue-900">Doc/NonDox</th>
+                    <th className="px-2 py-1 border text-blue-900">Mode</th>
+                    <th className="px-2 py-1 border text-blue-900">Pincode</th>
+                    <th className="px-2 py-1 border text-blue-900">Destination</th>
+                    <th className="px-2 py-1 border text-blue-900">Pcs</th>
+                    <th className="px-2 py-1 border text-blue-900">Contents</th>
+                    <th className="px-2 py-1 border text-blue-900">Weight(kg)</th>
+                    <th className="px-2 py-1 border text-blue-900">Courier</th>
+                    <th className="px-2 py-1 border text-blue-900">Chargeable Amt</th>
+                    <th className="px-2 py-1 border text-blue-900">Edit</th>
+                    <th className="px-2 py-1 border text-blue-900">Delete</th>
+                    <th className="px-2 py-1 border text-blue-900">Send SMS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map((b) => (
+                    <tr key={b.id}>
+                      <td className="px-2 py-1 text-gray-600 border">{b.consignmentNo}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.docType}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.mode}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.pincode}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.city.toUpperCase()}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.pieces}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.contents}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.weight}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.courierCharged}</td>
+                      <td className="px-2 py-1 text-gray-600 border">{b.amountCharged}</td>
+                      <td className="px-2 py-1 text-gray-600 border">
+                        <button onClick={() => handleEdit(b)} className="text-blue-600 cursor-pointer hover:underline">✏️</button>
+                      </td>
+                      <td className="px-2 py-1 text-gray-600 border">
+                        <button onClick={() => handleDelete(b.id)} className="text-red-600 cursor-pointer hover:underline">🗑️</button>
+                      </td>
+                      <td className="px-2 py-1 text-gray-600 border text-center">
+                        {b.smsSent && (
+                          <span
+                            title={`Last sent on ${b.smsDate ? new Date(b.smsDate).toLocaleString() : ''}`}
+                            className="mr-2"
+                          >
+                            ✅
+                          </span>
+                        )}
+                        <button
+                          title="Send SMS"
+                          className="text-blue-600 cursor-pointer hover:underline"
+                          onClick={async () => {
+                            const { data: fullBooking } = await axios.get(`/api/cash-booking/${b.id}`);
+                            await axios.post('/api/send-sms', { id: b.id, consignmentNo: b.consignmentNo, mobile: b.receiverMobile });
+                            await axios.put(`/api/cash-booking/${b.id}`, {
+                              ...fullBooking,
+                              smsSent: true,
+                              smsDate: new Date().toISOString(),
+                            });
+                            toast.success("SMS sent successfully!");
+                            fetchBookings();
+                          }}
+                        >
+                          📩
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredBookings.length === 0 && (
+                    <tr>
+                      <td colSpan={12} className="text-center py-4 text-gray-400">No bookings found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="text-blue-900 font-semibold mb-2">Total Amount Without Tax:</div>
