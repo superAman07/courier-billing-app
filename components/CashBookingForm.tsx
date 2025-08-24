@@ -291,12 +291,12 @@ export default function CashBookingForm() {
               id="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="peer p-2 pt-5 rounded text-gray-600 border border-gray-300 text-xs w-full focus:border-blue-500 focus:outline-none"
+              className="peer p-2 pt-5 rounded text-gray-600 border border-gray-700 text-xs w-full focus:border-blue-500 focus:outline-none"
               placeholder=" "
             />
             <label
               htmlFor="search"
-              className="absolute left-2 top-3.5 text-gray-400 text-xs transition-all duration-200
+              className="absolute left-2 top-3.5 text-gray-600 text-xs transition-all duration-200
                 peer-focus:-translate-y-5.5 peer-focus:text-blue-600 peer-focus:text-xs
                 peer-[&:not(:placeholder-shown)]:-translate-y-5.5 peer-[&:not(:placeholder-shown)]:text-blue-600 peer-[&:not(:placeholder-shown)]:text-xs
                 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-xs
