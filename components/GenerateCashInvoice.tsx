@@ -30,7 +30,6 @@ export default function GenerateCashInvoice() {
     }, []);
 
     const handleViewInvoice = (id: string) => {
-        // You can route to a preview/print page later
         window.open(`/invoice/preview/${id}`, '_blank');
     };
 
