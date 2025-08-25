@@ -1,20 +1,18 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import axios from 'axios';
 
-export default function InvoicePreview({ params }: { params: { id: string } }) {
+export default function InvoicePreview({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const [invoice, setInvoice] = useState<any>(null);
     const [company, setCompany] = useState<any>(null);
 
     useEffect(() => {
-        (async () => {
-            const id = typeof params.id === 'string' ? params.id : (await params).id;
-            axios.get(`/api/invoices/${id}`).then(res => setInvoice(res.data));
-            axios.get('/api/registration-details').then(res => {
-                setCompany(Array.isArray(res.data) ? res.data[0] : res.data);
-            });
-        })();
-    }, [params]);
+        axios.get(`/api/invoices/${id}`).then(res => setInvoice(res.data));
+        axios.get('/api/registration-details').then(res => {
+            setCompany(Array.isArray(res.data) ? res.data[0] : res.data);
+        });
+    }, [id]);
 
     if (!invoice || !company) {
         return (
