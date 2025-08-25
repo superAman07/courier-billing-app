@@ -7,19 +7,20 @@ export default function GenerateCashInvoice() {
     const [invoiceDate, setInvoiceDate] = useState('');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
-    const [bookings, setBookings] = useState([]);
+    const [bookings, setBookings] = useState<any[]>([]);
     const [selected, setSelected] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
+    const [type, setType] = useState<'CashBooking' | 'InternationalCashBooking'>('CashBooking');
 
     const fetchInvoices = async () => {
         setInvoiceLoading(true);
         try {
             const { data } = await axios.get('/api/invoices', {
-                params: { type: 'CashBooking' }
+                params: { type }
             });
-            setInvoices(data);
+            setInvoices(Array.isArray(data) ? data : data.data);
         } finally {
             setInvoiceLoading(false);
         }
@@ -27,7 +28,7 @@ export default function GenerateCashInvoice() {
 
     useEffect(() => {
         fetchInvoices();
-    }, []);
+    }, [type]);
 
     const handleViewInvoice = (id: string) => {
         window.open(`/invoice/preview/${id}`, '_blank');
@@ -59,8 +60,11 @@ export default function GenerateCashInvoice() {
         if (!invoiceDate || selected.length === 0) return alert('Select invoice date and at least one consignment');
         setLoading(true);
         try {
+            const selectedBookings = bookings.filter((b: any) => selected.includes(b.id));
+            const bookingType = selectedBookings[0]?.bookingType || 'CashBooking';
+
             await axios.post('/api/invoices', {
-                type: 'CashBooking',
+                type: bookingType,
                 invoiceDate,
                 bookingIds: selected
             });
@@ -130,7 +134,7 @@ export default function GenerateCashInvoice() {
                                 </td>
                                 <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
                                 <td className='text-gray-600 text-center'>{b.consignmentNo}</td>
-                                <td className='text-gray-600 text-center'>{b.city}</td>
+                                <td className='text-gray-600 text-center'>{b.city || b.country}</td>
                                 <td className='text-gray-600 text-center'>{b.amountCharged}</td>
                             </tr>
                         ))
@@ -151,6 +155,17 @@ export default function GenerateCashInvoice() {
                 <div className="mb-2 text-xs text-blue-700 italic">
                     <b>Note:</b> Only consignments with status <span className="font-semibold text-green-700">"BOOKED"</span> will be displayed here for invoice generation.<br />
                     If your consignment is missing, please update its status to <span className="font-semibold text-green-700">"BOOKED"</span> from the <span className="underline cursor-pointer" onClick={() => window.open('/update-and-send-delivery-status', '_blank')}>Update and Send Delivery Status</span> page.
+                </div>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700">Type</label>
+                    <select
+                        value={type}
+                        onChange={e => setType(e.target.value as 'CashBooking' | 'InternationalCashBooking')}
+                        className="border p-2 rounded text-gray-600"
+                    >
+                        <option value="CashBooking">Domestic (Cash Booking)</option>
+                        <option value="InternationalCashBooking">International (Cash Booking)</option>
+                    </select>
                 </div>
                 <table className="w-full border mb-2">
                     <thead>

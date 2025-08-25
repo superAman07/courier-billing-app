@@ -421,3 +421,8 @@ enum UserType {
   ADMIN
   USER
 }
+model InvoiceCounter {
+  type       String  @id
+  lastNumber Int     @default(0)
+  updatedAt  DateTime @updatedAt
+}

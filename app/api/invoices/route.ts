@@ -1,138 +1,414 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-async function getNextInvoiceNo(type: string) {
-  const settings = await prisma.invoiceSettings.findFirst();
-  const prefix = settings?.invoicePrefix || "INV";
-  const lastInvoice = await prisma.invoice.findFirst({
-    where: { type },
-    orderBy: { createdAt: "desc" }
-  });
-  let nextNo = 1;
-  if (lastInvoice) {
-    const match = lastInvoice.invoiceNo.match(/\d+$/);
-    if (match) nextNo = parseInt(match[0]) + 1;
+type CreateInvoiceBody = {
+  type: "CashBooking" | "InternationalCashBooking";
+  invoiceDate: string; 
+  bookingIds: string[];
+};
+
+const ALLOWED_TYPES = ["CashBooking", "InternationalCashBooking"];
+function parseInvoiceNumericPart(invoiceNo: string | undefined) {
+  if (!invoiceNo) return 0;
+  const m = invoiceNo.match(/(\d+)$/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+async function runWithRetries<T>(
+  fn: () => Promise<T>,
+  retries = 3
+): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const code = err?.code;
+      const retryable =
+        code === "P2002" ||
+        code === "40001" ||  
+        /deadlock|serialization/i.test(err?.message || "");
+
+      if (!retryable || attempt === retries) {
+        throw err;
+      }
+      await new Promise((res) => setTimeout(res, 50 * attempt));
+    }
   }
-  return `${prefix}${String(nextNo).padStart(5, "0")}`;
+  throw new Error("Failed after retries");
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { type, invoiceDate, bookingIds } = await req.json();
-    if (!["CashBooking", "InternationalCashBooking"].includes(type) || !Array.isArray(bookingIds) || bookingIds.length === 0) {
+    const body: CreateInvoiceBody = await req.json();
+    if (
+      !body ||
+      !body.type ||
+      !ALLOWED_TYPES.includes(body.type) ||
+      !Array.isArray(body.bookingIds) ||
+      body.bookingIds.length === 0
+    ) {
       return NextResponse.json({ message: "Invalid input" }, { status: 400 });
     }
 
-    // 1. Fetch bookings from correct table
-    let bookings: any[] = [];
-    if (type === "CashBooking") {
-      bookings = await prisma.cashBooking.findMany({ where: { id: { in: bookingIds } } });
-    } else if (type === "InternationalCashBooking") {
-      bookings = await prisma.internationalCashBooking.findMany({ where: { id: { in: bookingIds } } });
+    const invoiceDate = new Date(body.invoiceDate);
+    if (isNaN(invoiceDate.getTime())) {
+      return NextResponse.json({ message: "Invalid invoiceDate" }, { status: 400 });
     }
 
-    if (bookings.length === 0) {
-      return NextResponse.json({ message: "No bookings found" }, { status: 404 });
-    }
+    const createdInvoice = await runWithRetries(async () => {
+      return await prisma.$transaction(async (tx) => {
+        const { type, bookingIds } = body;
 
-    // 2. Prevent double invoicing
-    const alreadyInvoicedIds = await prisma.invoiceBooking.findMany({
-      where: { bookingId: { in: bookingIds } },
-      select: { bookingId: true }
-    });
-    const alreadyInvoicedSet = new Set(alreadyInvoicedIds.map(b => b.bookingId));
-    const toInvoice = bookings.filter(b => !alreadyInvoicedSet.has(b.id));
-    if (toInvoice.length === 0) {
-      return NextResponse.json({ message: "All selected bookings are already invoiced" }, { status: 400 });
-    }
+        const settings = await tx.invoiceSettings.findFirst();
+        const prefix = settings?.invoicePrefix || "INV";
 
-    // 3. Calculate totals and tax
-    const totalAmount = toInvoice.reduce((sum, b) => sum + Number(b.amountCharged), 0);
-    let totalTax = 0;
-    let taxBreakdown: any[] = [];
+        const lastInvoice = await tx.invoice.findFirst({
+          where: { type },
+          orderBy: { createdAt: "desc" },
+          select: { invoiceNo: true },
+        });
+        const maxExistingNumber = parseInvoiceNumericPart(lastInvoice?.invoiceNo) || 0;
 
-    if (type === "CashBooking") {
-      // Domestic: Calculate GST
-      const taxes = await prisma.taxMaster.findMany({ where: { active: true } });
-      // Assume all bookings are same state for cash booking (use first booking)
-      const isWithinState = toInvoice.every(b => b.sourceState === b.state);
-      const applicableTaxes = taxes.filter(t =>
-        isWithinState ? t.withinState : t.forOtherState
-      );
-      taxBreakdown = applicableTaxes.map(tax => {
-        const amount = totalAmount * Number(tax.ratePercent) / 100;
-        totalTax += amount;
-        return { taxCode: tax.taxCode, rate: Number(tax.ratePercent), amount };
-      });
-    } else {
-      // International: No GST
-      totalTax = 0;
-      taxBreakdown = [{ taxCode: "EXPORT", rate: 0, amount: 0 }];
-    }
+        const counter = await tx.invoiceCounter.upsert({
+          where: { type },
+          create: { type, lastNumber: maxExistingNumber + 1 },
+          update: { lastNumber: { increment: 1 } },
+        });
 
-    const netAmount = totalAmount + totalTax;
-    const invoiceNo = await getNextInvoiceNo(type);
+        const nextNumber = counter.lastNumber;
+        const invoiceNo = `${prefix}${String(nextNumber).padStart(5, "0")}`;
 
-    // 4. Create invoice and invoice bookings
-    const invoice = await prisma.invoice.create({
-      data: {
-        invoiceNo,
-        type,
-        invoiceDate: new Date(invoiceDate),
-        totalAmount,
-        totalTax,
-        netAmount,
-        // Optionally: store taxBreakdown as JSON if you want
-        bookings: {
-          create: toInvoice.map(b => ({
-            bookingId: b.id,
-            bookingType: type,
-            consignmentNo: b.consignmentNo,
-            bookingDate: b.bookingDate,
-            senderName: b.senderName,
-            receiverName: b.receiverName,
-            city: type === "CashBooking" ? b.city : b.country,
-            amountCharged: b.amountCharged,
-            taxAmount: type === "CashBooking" ? totalTax : 0
-          }))
+        let bookings: any[] = [];
+        if (type === "CashBooking") {
+          bookings = await tx.cashBooking.findMany({
+            where: { id: { in: bookingIds } },
+          });
+        } else {
+          bookings = await tx.internationalCashBooking.findMany({
+            where: { id: { in: bookingIds } },
+          });
         }
-      },
-      include: { bookings: true }
-    });
 
-    if (type === "CashBooking") {
-      await prisma.cashBooking.updateMany({
-        where: { id: { in: toInvoice.map(b => b.id) } },
-        data: { status: "INVOICED" }
-      });
-    } else if (type === "InternationalCashBooking") {
-      await prisma.internationalCashBooking.updateMany({
-        where: { id: { in: toInvoice.map(b => b.id) } },
-        data: { status: "INVOICED" }
-      });
+        if (!bookings || bookings.length === 0) {
+          throw new Error("No bookings found");
+        }
+
+        const alreadyInvoiced = await tx.invoiceBooking.findMany({
+          where: {
+            bookingId: { in: bookingIds },
+            bookingType: type,
+          },
+          select: { bookingId: true },
+        });
+        const alreadyInvoicedSet = new Set(alreadyInvoiced.map((r) => r.bookingId));
+        const toInvoice = bookings.filter((b) => !alreadyInvoicedSet.has(b.id));
+
+        if (toInvoice.length === 0) {
+          throw new Error("All selected bookings are already invoiced");
+        }
+        const totalAmount = toInvoice.reduce(
+          (s, b) => s + Number(b.amountCharged ?? 0),
+          0
+        );
+
+        if (totalAmount <= 0) {
+          throw new Error("Total amount is zero or invalid");
+        }
+
+        let totalTax = 0;
+        if (type === "CashBooking") {
+          const defaultTaxRate = 0.18; 
+          totalTax = Number((totalAmount * defaultTaxRate).toFixed(2));
+        } else {
+          totalTax = 0;
+        }
+
+        const netAmount = Number((totalAmount + totalTax).toFixed(2));
+        const taxAllocations: Record<string, number> = {};
+        let allocatedTax = 0;
+        toInvoice.forEach((b, idx) => {
+          const share = Number(b.amountCharged ?? 0) / totalAmount;
+          const tax = Math.round((share * totalTax) * 100) / 100;
+          taxAllocations[b.id] = tax;
+          allocatedTax += tax;
+        });
+
+        
+        const roundingRemainder = Number((totalTax - allocatedTax).toFixed(2));
+        if (Math.abs(roundingRemainder) >= 0.01) {
+          const firstId = toInvoice[0].id;
+          taxAllocations[firstId] = Number((taxAllocations[firstId] + roundingRemainder).toFixed(2));
+          allocatedTax = Number((allocatedTax + roundingRemainder).toFixed(2));
+        }
+
+        const createdInvoice = await tx.invoice.create({
+          data: {
+            invoiceNo,
+            type,
+            invoiceDate,
+            totalAmount: Number(totalAmount.toFixed(2)),
+            totalTax: Number(totalTax.toFixed(2)),
+            netAmount: Number(netAmount.toFixed(2)),
+            bookings: {
+              create: toInvoice.map((b) => ({
+                bookingId: b.id,
+                bookingType: type,
+                consignmentNo: b.consignmentNo,
+                bookingDate: b.bookingDate,
+                senderName: b.senderName,
+                receiverName: b.receiverName,
+                city: type === "CashBooking" ? (b.city ?? "N/A") : (b.country ?? "N/A"),
+                amountCharged: Number(b.amountCharged ?? 0),
+                taxAmount: Number((taxAllocations[b.id] ?? 0).toFixed(2)),
+              })),
+            },
+          },
+          include: { bookings: true },
+        });
+
+        const idsToUpdate = toInvoice.map((b) => b.id);
+        if (type === "CashBooking") {
+          await tx.cashBooking.updateMany({
+            where: { id: { in: idsToUpdate } },
+            data: { status: "INVOICED", statusDate: new Date() },
+          });
+        } else {
+          await tx.internationalCashBooking.updateMany({
+            where: { id: { in: idsToUpdate } },
+            data: { status: "INVOICED", statusDate: new Date() },
+          });
+        }
+
+        return createdInvoice;
+      }, { timeout: 15000 });
+    }, 3); 
+
+    return NextResponse.json(createdInvoice, { status: 201 });
+  } catch (error: any) {
+    console.error("Invoice generation error:", error);
+
+    if (error.code === "P2002" && String(error.meta?.target || "").includes("invoiceNo")) {
+      return NextResponse.json(
+        { message: "Invoice number collision detected. Please try again." },
+        { status: 409 }
+      );
     }
 
-    return NextResponse.json(invoice, { status: 201 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: "Error generating invoice" }, { status: 500 });
+    if (error.message === "No bookings found") {
+      return NextResponse.json({ message: error.message }, { status: 404 });
+    }
+
+    if (error.message === "All selected bookings are already invoiced") {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
+    if (error.message === "Total amount is zero or invalid") {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      { message: `Error generating invoice: ${error.message || "unknown"}` },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const type = url.searchParams.get("type") || undefined;
-  const customerId = url.searchParams.get("customerId") || undefined;
+  try {
+    const url = new URL(req.url);
+    const type = url.searchParams.get("type") || undefined;
+    const customerId = url.searchParams.get("customerId") || undefined;
+    const pageParam = url.searchParams.get("page") || "1";
+    const limitParam = url.searchParams.get("limit") || "50";
 
-  const where: any = {};
-  if (type) where.type = type;
-  if (customerId) where.customerId = customerId;
+    const page = Math.max(1, parseInt(pageParam, 10) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(limitParam, 10) || 50));
+    const skip = (page - 1) * limit;
 
-  const invoices = await prisma.invoice.findMany({
-    where,
-    orderBy: { invoiceDate: "desc" },
-    include: { bookings: true, customer: true },
-  });
+    const where: any = {};
+    if (type) where.type = type;
+    if (customerId) where.customerId = customerId;
 
-  return NextResponse.json(invoices);
+    const [total, invoices] = await Promise.all([
+      prisma.invoice.count({ where }),
+      prisma.invoice.findMany({
+        where,
+        orderBy: { invoiceDate: "desc" },
+        include: {
+          bookings: true,
+          customer: true,
+        },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return NextResponse.json({
+      meta: { total, page, limit },
+      data: invoices,
+    });
+  } catch (error: any) {
+    console.error("Get invoices error:", error);
+    return NextResponse.json({ message: "Error fetching invoices" }, { status: 500 });
+  }
 }
+
+
+
+
+
+// import { NextRequest, NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+
+// // Robust invoice number generator: always finds the max number for the prefix
+// async function getNextInvoiceNo(type: string) {
+//   const settings = await prisma.invoiceSettings.findFirst();
+//   const prefix = settings?.invoicePrefix || "INV";
+//   // Fetch all invoice numbers for this type
+//   const invoices = await prisma.invoice.findMany({
+//     where: { type },
+//     select: { invoiceNo: true },
+//   });
+//   let maxNo = 0;
+//   for (const inv of invoices) {
+//     const match = inv.invoiceNo.replace(prefix, "");
+//     const num = parseInt(match, 10);
+//     if (!isNaN(num) && num > maxNo) maxNo = num;
+//   }
+//   return `${prefix}${String(maxNo + 1).padStart(5, "0")}`;
+// }
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     const { type, invoiceDate, bookingIds } = await req.json();
+//     if (!["CashBooking", "InternationalCashBooking"].includes(type) || !Array.isArray(bookingIds) || bookingIds.length === 0) {
+//       return NextResponse.json({ message: "Invalid input" }, { status: 400 });
+//     }
+
+//     // Fetch bookings from the correct table
+//     let bookings: any[] = [];
+//     if (type === "CashBooking") {
+//       bookings = await prisma.cashBooking.findMany({ where: { id: { in: bookingIds } } });
+//     } else if (type === "InternationalCashBooking") {
+//       bookings = await prisma.internationalCashBooking.findMany({ where: { id: { in: bookingIds } } });
+//     }
+
+//     if (bookings.length === 0) {
+//       return NextResponse.json({ message: "No bookings found" }, { status: 404 });
+//     }
+
+//     // Prevent double invoicing
+//     const alreadyInvoicedIds = await prisma.invoiceBooking.findMany({
+//       where: { bookingId: { in: bookingIds } },
+//       select: { bookingId: true }
+//     });
+//     const alreadyInvoicedSet = new Set(alreadyInvoicedIds.map(b => b.bookingId));
+//     const toInvoice = bookings.filter(b => !alreadyInvoicedSet.has(b.id));
+//     if (toInvoice.length === 0) {
+//       return NextResponse.json({ message: "All selected bookings are already invoiced" }, { status: 400 });
+//     }
+
+//     // Calculate totals and tax
+//     const totalAmount = toInvoice.reduce((sum, b) => sum + Number(b.amountCharged), 0);
+//     let totalTax = 0;
+//     let taxBreakdown: any[] = [];
+
+//     if (type === "CashBooking") {
+//       const taxes = await prisma.taxMaster.findMany({ where: { active: true } });
+//       const isWithinState = toInvoice.every(b => b.sourceState === b.state);
+//       const applicableTaxes = taxes.filter(t =>
+//         isWithinState ? t.withinState : t.forOtherState
+//       );
+//       taxBreakdown = applicableTaxes.map(tax => {
+//         const amount = totalAmount * Number(tax.ratePercent) / 100;
+//         totalTax += amount;
+//         return { taxCode: tax.taxCode, rate: Number(tax.ratePercent), amount };
+//       });
+//     } else {
+//       totalTax = 0;
+//       taxBreakdown = [{ taxCode: "EXPORT", rate: 0, amount: 0 }];
+//     }
+
+//     const netAmount = totalAmount + totalTax;
+
+//     // Retry logic for unique invoiceNo
+//     let invoice;
+//     let attempts = 0;
+//     const maxAttempts = 5;
+//     while (!invoice && attempts < maxAttempts) {
+//       const invoiceNo = await getNextInvoiceNo(type);
+//       try {
+//         invoice = await prisma.invoice.create({
+//           data: {
+//             invoiceNo,
+//             type,
+//             invoiceDate: new Date(invoiceDate),
+//             totalAmount,
+//             totalTax,
+//             netAmount,
+//             // Optionally: store taxBreakdown as JSON if you want
+//             bookings: {
+//               create: toInvoice.map(b => ({
+//                 bookingId: b.id,
+//                 bookingType: type,
+//                 consignmentNo: b.consignmentNo,
+//                 bookingDate: b.bookingDate,
+//                 senderName: b.senderName,
+//                 receiverName: b.receiverName,
+//                 city: type === "CashBooking" ? b.city : b.country,
+//                 amountCharged: b.amountCharged,
+//                 taxAmount: type === "CashBooking" ? totalTax : 0
+//               }))
+//             }
+//           },
+//           include: { bookings: true }
+//         });
+//       } catch (error: any) {
+//         if (error.code === "P2002" && error.meta?.target?.includes("invoiceNo")) {
+//           attempts++;
+//           continue;
+//         }
+//         throw error;
+//       }
+//     }
+
+//     if (!invoice) {
+//       return NextResponse.json({ message: "Failed to generate unique invoice number after several attempts." }, { status: 500 });
+//     }
+
+//     // Update booking statuses
+//     if (type === "CashBooking") {
+//       await prisma.cashBooking.updateMany({
+//         where: { id: { in: toInvoice.map(b => b.id) } },
+//         data: { status: "INVOICED" }
+//       });
+//     } else if (type === "InternationalCashBooking") {
+//       await prisma.internationalCashBooking.updateMany({
+//         where: { id: { in: toInvoice.map(b => b.id) } },
+//         data: { status: "INVOICED" }
+//       });
+//     }
+
+//     return NextResponse.json(invoice, { status: 201 });
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json({ message: "Error generating invoice" }, { status: 500 });
+//   }
+// }
+
+// export async function GET(req: NextRequest) {
+//   const url = new URL(req.url);
+//   const type = url.searchParams.get("type") || undefined;
+//   const customerId = url.searchParams.get("customerId") || undefined;
+
+//   const where: any = {};
+//   if (type) where.type = type;
+//   if (customerId) where.customerId = customerId;
+
+//   const invoices = await prisma.invoice.findMany({
+//     where,
+//     orderBy: { invoiceDate: "desc" },
+//     include: { bookings: true, customer: true },
+//   });
+
+//   return NextResponse.json(invoices);
+// }
