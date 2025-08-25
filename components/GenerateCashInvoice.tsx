@@ -148,6 +148,10 @@ export default function GenerateCashInvoice() {
             </div>
             <div className="mt-10">
                 <h3 className="text-lg font-bold mb-2 text-blue-900">Generated Cash Invoices</h3>
+                <div className="mb-2 text-xs text-blue-700 italic">
+                    <b>Note:</b> Only consignments with status <span className="font-semibold text-green-700">"BOOKED"</span> will be displayed here for invoice generation.<br />
+                    If your consignment is missing, please update its status to <span className="font-semibold text-green-700">"BOOKED"</span> from the <span className="underline cursor-pointer" onClick={() => window.open('/update-and-send-delivery-status', '_blank')}>Update and Send Delivery Status</span> page.
+                </div>
                 <table className="w-full border mb-2">
                     <thead>
                         <tr className="bg-gray-100 text-xs">
