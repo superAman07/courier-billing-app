@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "No bookings found" }, { status: 404 });
     }
 
+    const alreadyInvoicedIds = await prisma.invoiceBooking.findMany({
+      where: { bookingId: { in: bookingIds } },
+      select: { bookingId: true }
+    });
+    const alreadyInvoicedSet = new Set(alreadyInvoicedIds.map(b => b.bookingId));
+    const toInvoice = bookings.filter(b => !alreadyInvoicedSet.has(b.id));
+    if (toInvoice.length === 0) {
+      return NextResponse.json({ message: "All selected bookings are already invoiced" }, { status: 400 });
+    }
+
     const totalAmount = bookings.reduce((sum, b) => sum + Number(b.amountCharged), 0);
     const totalTax = 0;
     const netAmount = totalAmount + totalTax;
