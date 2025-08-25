@@ -163,7 +163,8 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
     { value: 'DELIVERED', label: 'Delivered' },
     { value: 'FAILED_ATTEMPT', label: 'Failed Attempt' },
-    { value: 'RETURNED', label: 'Returned' }
+    { value: 'RETURNED', label: 'Returned' },
+    { value: 'INVOICED', label: 'Invoiced' }
   ]
 
   if (loading) {

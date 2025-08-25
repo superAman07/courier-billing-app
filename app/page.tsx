@@ -4,7 +4,7 @@ export default function Home() {
     <main className="space-x-3">
       <div className="flex h-screen space-y-4">
         <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-4 text-center">Masters</h1>
+          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Masters</h1>
           <div className="flex flex-col space-y-2">
             <button onClick={() => { window.location.href = '/customer' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Master</button>
             <button onClick={() => { window.location.href = '/all-customers' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Customers</button>
@@ -27,7 +27,7 @@ export default function Home() {
           </div>
         </section>
         <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-4 text-center">Billings</h1>
+          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Booking</h1>
           <div className="flex flex-col space-y-2">
             <button onClick={() => { window.location.href = '/cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking (Domestic)</button>
             <button onClick={() => { window.location.href = '/credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (Domestic)</button>
@@ -37,6 +37,12 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/smart-booking-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Smart Booking Master</button>
             <button onClick={() => { window.location.href = '/all-bookings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Bookings / Bulk Booking</button>
             <button onClick={() => { window.location.href = '/update-and-send-delivery-status' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Update Delivery Status / Send Delivery SMS</button>
+          </div>
+        </section>
+        <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
+          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Billings</h1>
+          <div className="flex flex-col space-y-2">
+            <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
           </div>
         </section>
       </div>

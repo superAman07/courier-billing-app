@@ -36,6 +36,7 @@ model CustomerMaster {
   internationalCreditClientBookings InternationalCreditClientBooking[]
 
   bookings BookingMaster[] @relation("CustomerMasterToBookingMaster")
+  invoices Invoice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -380,6 +381,40 @@ model InternationalCreditClientBooking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id          String          @id @default(cuid())
+  invoiceNo   String          @unique
+  type        String
+  invoiceDate DateTime
+  totalAmount Float
+  totalTax    Float
+  netAmount   Float
+  customerId  String?
+  customer    CustomerMaster? @relation(fields: [customerId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  bookings InvoiceBooking[]
+}
+
+model InvoiceBooking {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  bookingId     String
+  bookingType   String
+  consignmentNo String
+  bookingDate   DateTime
+  senderName    String
+  receiverName  String
+  city          String
+  amountCharged Float
+  taxAmount     Float?
+  // Add more fields if you want to snapshot
+
+  createdAt DateTime @default(now())
 }
 
 enum UserType {
