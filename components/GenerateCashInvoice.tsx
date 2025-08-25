@@ -112,15 +112,30 @@ export default function GenerateCashInvoice() {
                     </tr>
                 </thead>
                 <tbody>
-                    {bookings.map((b: any) => (
-                        <tr key={b.id} className="text-xs">
-                            <td className='text-center'><input type="checkbox" className='cursor-pointer' checked={selected.includes(b.id)} onChange={() => handleSelect(b.id)} /></td>
-                            <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
-                            <td className='text-gray-600 text-center'>{b.consignmentNo}</td>
-                            <td className='text-gray-600 text-center'>{b.city}</td>
-                            <td className='text-gray-600 text-center'>{b.amountCharged}</td>
+                    {bookings.length === 0 ? (
+                        <tr>
+                            <td colSpan={5} className="text-center py-4 text-gray-400">
+                                No consignments found for the selected date range.
+                            </td>
                         </tr>
-                    ))}
+                    ) : (
+                        bookings.map((b: any) => (
+                            <tr key={b.id} className="text-xs">
+                                <td className='text-center'>
+                                    <input
+                                        type="checkbox"
+                                        className='cursor-pointer'
+                                        checked={selected.includes(b.id)}
+                                        onChange={() => handleSelect(b.id)}
+                                    />
+                                </td>
+                                <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
+                                <td className='text-gray-600 text-center'>{b.consignmentNo}</td>
+                                <td className='text-gray-600 text-center'>{b.city}</td>
+                                <td className='text-gray-600 text-center'>{b.amountCharged}</td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </table>
             <div className="flex justify-between items-center mt-2">
