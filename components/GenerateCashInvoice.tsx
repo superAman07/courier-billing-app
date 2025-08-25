@@ -104,7 +104,7 @@ export default function GenerateCashInvoice() {
             <table className="w-full border mb-2">
                 <thead>
                     <tr className="bg-gray-100 text-xs">
-                        <th><input type="checkbox" checked={selected.length === bookings.length && bookings.length > 0} onChange={handleSelectAll} /></th>
+                        <th><input type="checkbox" className='cursor-pointer' checked={selected.length === bookings.length && bookings.length > 0} onChange={handleSelectAll} /></th>
                         <th className='text-gray-600'>Booking Date</th>
                         <th className='text-gray-600'>Consignment No</th>
                         <th className='text-gray-600'>Destination</th>
@@ -114,11 +114,11 @@ export default function GenerateCashInvoice() {
                 <tbody>
                     {bookings.map((b: any) => (
                         <tr key={b.id} className="text-xs">
-                            <td><input type="checkbox" checked={selected.includes(b.id)} onChange={() => handleSelect(b.id)} /></td>
-                            <td className='text-gray-600'>{b.bookingDate?.slice(0, 10)}</td>
-                            <td className='text-gray-600'>{b.consignmentNo}</td>
-                            <td className='text-gray-600'>{b.city}</td>
-                            <td className='text-gray-600'>{b.amountCharged}</td>
+                            <td className='text-center'><input type="checkbox" className='cursor-pointer' checked={selected.includes(b.id)} onChange={() => handleSelect(b.id)} /></td>
+                            <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
+                            <td className='text-gray-600 text-center'>{b.consignmentNo}</td>
+                            <td className='text-gray-600 text-center'>{b.city}</td>
+                            <td className='text-gray-600 text-center'>{b.amountCharged}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -151,12 +151,12 @@ export default function GenerateCashInvoice() {
                         ) : (
                             invoices.map((inv: any) => (
                                 <tr key={inv.id} className="text-xs">
-                                    <td className='text-gray-600'>{inv.invoiceNo}</td>
-                                    <td className='text-gray-600'>{inv.invoiceDate?.slice(0, 10)}</td>
-                                    <td className='text-gray-600'>{inv.netAmount}</td>
-                                    <td>
+                                    <td className='text-gray-600 text-center'>{inv.invoiceNo}</td>
+                                    <td className='text-gray-600 text-center'>{inv.invoiceDate?.slice(0, 10)}</td>
+                                    <td className='text-gray-600 text-center'>{inv.netAmount}</td>
+                                    <td className='text-center'>
                                         <button
-                                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                                            className="px-2 py-1 bg-blue-500 hover:bg-blue-600 cursor-pointer text-white rounded text-xs"
                                             onClick={() => handleViewInvoice(inv.id)}
                                         >
                                             View
