@@ -43,7 +43,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             </div>
             <table className="w-full border mb-4">
                 <thead>
-                    <tr className="bg-gray-600 text-gray-100 text-xs">
+                    <tr className="bg-gray-600 text-gray-100 text-xs print-bg-gray-600 print-text-gray-100">
                         <th className="border px-2 py-1">S. No.</th>
                         <th className="border px-2 py-1">Booking Date</th>
                         <th className="border px-2 py-1">Consignment No</th>

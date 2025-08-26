@@ -70,3 +70,14 @@ body {
  80%,
  100% {left:100%}
 }
+
+@media print {
+  .print-bg-gray-600 {
+    background-color: #4b5563 !important; /* Tailwind's gray-600 */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .print-text-gray-100 {
+    color: #f3f4f6 !important; /* Tailwind's gray-100 */
+  }
+}
