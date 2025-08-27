@@ -45,6 +45,7 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
             <button onClick={() => { window.location.href = '/modify-delete-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Cash Booking)</button>
             <button onClick={() => { window.location.href = '/generate-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Credit Client Booking)</button>
+            <button onClick={() => { window.location.href = '/modify-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Credit Client Booking)</button>
           </div>
         </section>
       </div>
