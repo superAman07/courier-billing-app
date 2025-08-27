@@ -395,6 +395,8 @@ model Invoice {
   customer    CustomerMaster? @relation(fields: [customerId], references: [id])
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  periodFrom  DateTime?
+  periodTo    DateTime?
 
   bookings InvoiceBooking[]
 }
@@ -421,8 +423,9 @@ enum UserType {
   ADMIN
   USER
 }
+
 model InvoiceCounter {
-  type       String  @id
-  lastNumber Int     @default(0)
+  type       String   @id
+  lastNumber Int      @default(0)
   updatedAt  DateTime @updatedAt
 }

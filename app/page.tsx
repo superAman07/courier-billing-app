@@ -43,6 +43,7 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Billings</h1>
           <div className="flex flex-col space-y-2">
             <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
+            <button onClick={() => { window.location.href = '/modify-delete-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Cash Booking)</button>
           </div>
         </section>
       </div>

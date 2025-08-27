@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 
 type CreateInvoiceBody = {
   type: "CashBooking" | "InternationalCashBooking";
-  invoiceDate: string; 
+  invoiceDate: string;
   bookingIds: string[];
 };
 
@@ -24,7 +24,7 @@ async function runWithRetries<T>(
       const code = err?.code;
       const retryable =
         code === "P2002" ||
-        code === "40001" ||  
+        code === "40001" ||
         /deadlock|serialization/i.test(err?.message || "");
 
       if (!retryable || attempt === retries) {
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
         let totalTax = 0;
         if (type === "CashBooking") {
-          const defaultTaxRate = 0.18; 
+          const defaultTaxRate = 0.18;
           totalTax = Number((totalAmount * defaultTaxRate).toFixed(2));
         } else {
           totalTax = 0;
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
           allocatedTax += tax;
         });
 
-        
+
         const roundingRemainder = Number((totalTax - allocatedTax).toFixed(2));
         if (Math.abs(roundingRemainder) >= 0.01) {
           const firstId = toInvoice[0].id;
@@ -140,11 +140,21 @@ export async function POST(req: NextRequest) {
           allocatedTax = Number((allocatedTax + roundingRemainder).toFixed(2));
         }
 
+        const periodFrom = toInvoice.length > 0
+          ? toInvoice.reduce((min, b) => b.bookingDate < min ? b.bookingDate : min, toInvoice[0].bookingDate)
+          : null;
+
+        const periodTo = toInvoice.length > 0
+          ? toInvoice.reduce((max, b) => b.bookingDate > max ? b.bookingDate : max, toInvoice[0].bookingDate)
+          : null;
+
         const createdInvoice = await tx.invoice.create({
           data: {
             invoiceNo,
             type,
             invoiceDate,
+            periodFrom,
+            periodTo,
             totalAmount: Number(totalAmount.toFixed(2)),
             totalTax: Number(totalTax.toFixed(2)),
             netAmount: Number(netAmount.toFixed(2)),
@@ -180,7 +190,7 @@ export async function POST(req: NextRequest) {
 
         return createdInvoice;
       }, { timeout: 15000 });
-    }, 3); 
+    }, 3);
 
     return NextResponse.json(createdInvoice, { status: 201 });
   } catch (error: any) {
