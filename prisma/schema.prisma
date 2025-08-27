@@ -414,8 +414,7 @@ model InvoiceBooking {
   city          String
   amountCharged Float
   taxAmount     Float?
-  // Add more fields if you want to snapshot
-
+  
   createdAt DateTime @default(now())
 }
 
