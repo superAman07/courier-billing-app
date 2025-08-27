@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 type CreateInvoiceBody = {
-  type: "CashBooking" | "InternationalCashBooking";
+  type: "CashBooking" | "InternationalCashBooking" | "CreditClientBooking" | "InternationalCreditClientBooking";
   invoiceDate: string;
   bookingIds: string[];
+  customerId?: string;
 };
 
-const ALLOWED_TYPES = ["CashBooking", "InternationalCashBooking"];
+const ALLOWED_TYPES = ["CashBooking", "InternationalCashBooking", "CreditClientBooking", "InternationalCreditClientBooking"];
 function parseInvoiceNumericPart(invoiceNo: string | undefined) {
   if (!invoiceNo) return 0;
   const m = invoiceNo.match(/(\d+)$/);
@@ -44,7 +45,11 @@ export async function POST(req: NextRequest) {
       !body.type ||
       !ALLOWED_TYPES.includes(body.type) ||
       !Array.isArray(body.bookingIds) ||
-      body.bookingIds.length === 0
+      body.bookingIds.length === 0 ||
+      (
+        (body.type === "CreditClientBooking" || body.type === "InternationalCreditClientBooking") &&
+        !body.customerId
+      )
     ) {
       return NextResponse.json({ message: "Invalid input" }, { status: 400 });
     }
@@ -82,9 +87,19 @@ export async function POST(req: NextRequest) {
           bookings = await tx.cashBooking.findMany({
             where: { id: { in: bookingIds } },
           });
-        } else {
+        } else if (type === "InternationalCashBooking") {
           bookings = await tx.internationalCashBooking.findMany({
             where: { id: { in: bookingIds } },
+          });
+        } else if (type === "CreditClientBooking") {
+          bookings = await tx.creditClientBooking.findMany({
+            where: { id: { in: bookingIds }, customerId: body.customerId },
+            include: { customer: true }
+          });
+        } else if (type === "InternationalCreditClientBooking") {
+          bookings = await tx.internationalCreditClientBooking.findMany({
+            where: { id: { in: bookingIds }, customerId: body.customerId },
+            include: { customer: true }
           });
         }
 
@@ -106,7 +121,13 @@ export async function POST(req: NextRequest) {
           throw new Error("All selected bookings are already invoiced");
         }
         const totalAmount = toInvoice.reduce(
-          (s, b) => s + Number(b.amountCharged ?? 0),
+          (s, b) =>
+            s +
+            Number(
+              type === "CashBooking" || type === "InternationalCashBooking"
+                ? b.amountCharged ?? 0
+                : b.chargeAmount ?? 0
+            ),
           0
         );
 
@@ -155,6 +176,7 @@ export async function POST(req: NextRequest) {
             invoiceDate,
             periodFrom,
             periodTo,
+            customerId: (type === "CreditClientBooking" || type === "InternationalCreditClientBooking") ? body.customerId : undefined,
             totalAmount: Number(totalAmount.toFixed(2)),
             totalTax: Number(totalTax.toFixed(2)),
             netAmount: Number(netAmount.toFixed(2)),
@@ -164,11 +186,26 @@ export async function POST(req: NextRequest) {
                 bookingType: type,
                 consignmentNo: b.consignmentNo,
                 bookingDate: b.bookingDate,
-                senderName: b.senderName,
-                receiverName: b.receiverName,
-                city: type === "CashBooking" ? (b.city ?? "N/A") : (b.country ?? "N/A"),
-                amountCharged: Number(b.amountCharged ?? 0),
-                taxAmount: Number((taxAllocations[b.id] ?? 0).toFixed(2)),
+                senderName:
+                  type === "CreditClientBooking" || type === "InternationalCreditClientBooking"
+                    ? b.customer?.customerName || ""
+                    : b.senderName,
+                receiverName:
+                  type === "CreditClientBooking" || type === "InternationalCreditClientBooking"
+                    ? b.consigneeName || b.receiverName || ""
+                    : b.receiverName,
+                city:
+                  type === "CashBooking"
+                    ? b.city ?? "N/A"
+                    : type === "InternationalCashBooking"
+                      ? b.country ?? "N/A"
+                      : b.city ?? b.country ?? "N/A",
+                amountCharged: Number(
+                  type === "CashBooking" || type === "InternationalCashBooking"
+                    ? b.amountCharged ?? 0
+                    : b.chargeAmount ?? 0
+                ),
+                taxAmount: type === "CashBooking" ? Number((taxAllocations[b.id] ?? 0).toFixed(2)) : 0,
               })),
             },
           },
@@ -181,8 +218,18 @@ export async function POST(req: NextRequest) {
             where: { id: { in: idsToUpdate } },
             data: { status: "INVOICED", statusDate: new Date() },
           });
-        } else {
+        } else if (type === "InternationalCashBooking") {
           await tx.internationalCashBooking.updateMany({
+            where: { id: { in: idsToUpdate } },
+            data: { status: "INVOICED", statusDate: new Date() },
+          });
+        } else if (type === "CreditClientBooking") {
+          await tx.creditClientBooking.updateMany({
+            where: { id: { in: idsToUpdate } },
+            data: { status: "INVOICED", statusDate: new Date() },
+          });
+        } else if (type === "InternationalCreditClientBooking") {
+          await tx.internationalCreditClientBooking.updateMany({
             where: { id: { in: idsToUpdate } },
             data: { status: "INVOICED", statusDate: new Date() },
           });
