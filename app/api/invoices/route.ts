@@ -233,10 +233,13 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(pageParam, 10) || 1);
     const limit = Math.min(200, Math.max(1, parseInt(limitParam, 10) || 50));
     const skip = (page - 1) * limit;
+    const invoiceNo = url.searchParams.get("invoiceNo") || undefined;
 
     const where: any = {};
     if (type) where.type = type;
     if (customerId) where.customerId = customerId;
+    if (invoiceNo) where.invoiceNo = { contains: invoiceNo, mode: "insensitive" };
+
 
     const [total, invoices] = await Promise.all([
       prisma.invoice.count({ where }),
