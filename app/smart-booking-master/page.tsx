@@ -69,10 +69,9 @@ export default function SmartBookingMasterPage() {
 
     async function fetchAndCalculateRate(row: any) {
         if (!row.customerId || !row.mode || !row.consignmentType || !row.city || !row.chargeWeight) {
-            return null; // Skip if required fields are missing
+            return null; 
         }
         try {
-            // Step 1: Fetch stateId and zoneId from city
             const { data: cityMap } = await axios.get('/api/city-to-zone-state', {
                 params: { city: row.city }
             });
@@ -82,7 +81,6 @@ export default function SmartBookingMasterPage() {
 
             const dbMode = MODE_MAP[row.mode] || row.mode;
 
-            // Step 2: Fetch rate slabs from Rate Master
             const { data: slabs } = await axios.get('/api/rates/templates/slabs', {
                 params: {
                     customerId: row.customerId,
@@ -95,7 +93,6 @@ export default function SmartBookingMasterPage() {
             });
             console.log("Fetched from slab api /api/rates/templates/slabs ",slabs);
 
-            // Step 3: Calculate the rate
             const weight = Number(row.chargeWeight);
             const slab = slabs.find((s: any) => weight >= s.fromWeight && weight <= s.toWeight);
             if (!slab) {
@@ -110,10 +107,10 @@ export default function SmartBookingMasterPage() {
                 amount += extraUnits * slab.additionalRate;
             }
             console.log("Slab found:", slab, "Weight:", weight, "Amount:", amount);
-            return amount; // Return calculated amount
+            return amount;
         } catch (error) {
             console.error("Rate fetch error:", error);
-            return null; // Return null on error
+            return null; 
         }
     }
 
@@ -163,7 +160,6 @@ export default function SmartBookingMasterPage() {
                 Object.assign(mapped, awbMap[awbNo], { awbNo, srNo: mapped.srNo });
             }
 
-            // --- Customer auto-fill (existing logic) ---
             const excelCustomerCode = row["Customer Code"] || row["CustomerCode"];
             const cust = excelCustomerCode && customerMap[excelCustomerCode];
 
@@ -171,8 +167,6 @@ export default function SmartBookingMasterPage() {
                 mapped.customerId = cust.id;
                 mapped.receiverName = cust.customerName;
                 mapped.receiverContactNo = cust.mobile;
-                // mapped.city = cust.city;
-                // mapped.pincode = cust.pincode;
                 mapped.city = mapped.destinationCity || mapped.city || cust.city;
                 mapped.pincode = mapped.pincode || cust.pincode;
             }
@@ -187,7 +181,6 @@ export default function SmartBookingMasterPage() {
             };
         });
 
-        // --- NEW: Auto-fill rates for each row ---
         for (const mapped of mappedRows) {
             mapped.creditCustomerAmount = await fetchAndCalculateRate(mapped);
         }
@@ -197,92 +190,11 @@ export default function SmartBookingMasterPage() {
         setLoading(false);
     };
 
-    // const handleImport = async (rows: any[]) => {
-    //     setLoading(true);
-    //     let customers: any[] = [];
-    //     try {
-    //         const { data } = await axios.get("/api/customers");
-    //         customers = data;
-    //     } catch {
-    //         toast.error("Failed to fetch customers for auto-fill");
-    //     }
-    //     const customerMap = Object.fromEntries(customers.map((c: any) => [c.customerCode, c]));
-
-    //     let allBookings: any[] = [];
-    //     try {
-    //         const { data } = await axios.get("/api/booking-master");
-    //         allBookings = data;
-    //     } catch {
-    //         toast.error("Failed to fetch bookings for AWB check");
-    //     }
-    //     const awbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
-
-    //     const mappedRows = rows.map((row, idx) => {
-    //         const mapped: any = {};
-    //         columns.forEach(col => {
-    //             const excelKey = Object.keys(row).find(
-    //                 k =>
-    //                     k.replace(/[\s_]/g, '').toLowerCase() === col.replace(/[\s_]/g, '').toLowerCase() ||
-    //                     k.replace(/[\s_]/g, '').toLowerCase() === (COLUMN_MAP[col] || '').replace(/[\s_]/g, '').toLowerCase()
-    //             );
-    //             if (col === "bookingDate" && excelKey) {
-    //                 mapped[col] = parseDateString(row[excelKey]);
-    //             } else {
-    //                 mapped[col] = excelKey ? row[excelKey] : "";
-    //             }
-    //         });
-
-    //         mapped.srNo = idx + 1;
-
-    //         const awbNo = mapped.awbNo?.toString();
-    //         let awbExists = false;
-    //         let bookingId = null;
-    //         if (awbNo && awbMap[awbNo]) {
-    //             awbExists = true;
-    //             bookingId = awbMap[awbNo].id;
-    //             Object.assign(mapped, awbMap[awbNo], { awbNo, srNo: mapped.srNo });
-    //         }
-
-    //         // --- Customer auto-fill ---
-    //         const excelCustomerCode = row["Customer Code"] || row["CustomerCode"];
-    //         const cust = excelCustomerCode && customerMap[excelCustomerCode];
-
-    //         if (cust) {
-    //             mapped.customerId = cust.id;
-    //             mapped.receiverName = cust.customerName;
-    //             mapped.receiverContactNo = cust.mobile;
-    //             mapped.city = cust.city;
-    //             mapped.pincode = cust.pincode;
-    //         }
-    //         let customerExists = !!cust;
-
-    //         return {
-    //             ...mapped,
-    //             _awbExists: awbExists,
-    //             _bookingId: bookingId,
-    //             _customerExists: customerExists,
-    //             _rowStatus: !customerExists ? "missing-customer" : "new"
-    //         };
-    //     });
-
-    //     setImportedRows(mappedRows);
-    //     setTableRows(mappedRows);
-    //     setLoading(false);
-    // };
-
-    // const handleEdit = (idx: number, field: string, value: string) => {
-    //     setTableRows(rows =>
-    //         rows.map((row, i) => i === idx ? { ...row, [field]: value } : row)
-    //     );
-    // };
-
     const handleEdit = (idx: number, field: string, value: string) => {
         setTableRows(rows =>
             rows.map((row, i) => {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
-
-                // --- NEW: Recalculate rate if relevant field changed ---
                 if (["city", "mode", "consignmentType", "chargeWeight"].includes(field)) {
                     fetchAndCalculateRate(updated).then(amount => {
                         setTableRows(rows2 =>
@@ -339,7 +251,6 @@ export default function SmartBookingMasterPage() {
                 (row.paymentStatus || "").toLowerCase().includes(s) ||
                 (row.city || "").toLowerCase().includes(s) ||
                 (row.customerName || "").toLowerCase().includes(s)
-                // Add more fields as needed
             );
         });
 
