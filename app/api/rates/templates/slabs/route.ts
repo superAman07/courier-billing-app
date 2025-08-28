@@ -10,14 +10,30 @@ export async function GET(request: Request) {
   const stateId = searchParams.get("stateId") || "";
   const city = searchParams.get("city") ?? "";
 
+  console.log("City:", city);
+
   if (!customerId || !mode || !consignmentType || !zoneId || !stateId || city === null) {
     return NextResponse.json({ message: "missing params" }, { status: 400 });
   }
 
   const slabs = await prisma.rateMaster.findMany({
-    where: { customerId, mode, consignmentType, zoneId, stateId, city },
+    where: {
+      customerId,
+      mode,
+      consignmentType,
+      zoneId,
+      stateId,
+      city: { equals: city, mode: "insensitive" },
+    },
     orderBy: [{ fromWeight: "asc" }],
   });
+
+  console.log("Slabs fetched:", slabs);
+
+  // const slabs = await prisma.rateMaster.findMany({
+  //   where: { customerId, mode, consignmentType, zoneId, stateId, city },
+  //   orderBy: [{ fromWeight: "asc" }],
+  // });
 
   return NextResponse.json(slabs);
 }

@@ -267,7 +267,7 @@ export default function RateMasterForm() {
                                 >
                                     <option value="ALL">ALL</option>
                                     {cities.map(city => (
-                                        <option key={city.id} value={city.code}>{city.code.toUpperCase()}</option>
+                                        <option key={city.id} value={city.name.toUpperCase()}>{city.code.toUpperCase()}</option>
                                     ))}
                                 </select>
                             </div>
