@@ -1,7 +1,7 @@
 import RateMasterForm from "@/components/RateMasterForm";
 
-export default function (){
+export default function () {
     return <>
-    <RateMasterForm/>
+        <RateMasterForm />
     </>
 }
