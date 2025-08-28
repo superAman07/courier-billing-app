@@ -9,50 +9,71 @@ import { handleDownload } from "@/lib/downloadExcel";
 import { Download, Users } from "lucide-react";
 
 const columns = [
-    "srNo", "bookingDate", "awbNo", "destinationCity", "mode", "pcs", "pin", "dsrContents", "dsrNdxPaper", "invoiceValue",
-    "actualWeight", "chargeWeight", "invoiceWt", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
-    "childCustomer", "parentCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo", "customerAttendBy",
-    "status", "statusDate", "pendingDaysNotDelivered", "receiverName", "receiverContactNo", "complainNo",
-    "shipmentCostOtherMode", "podStatus", "remarks", "countryName", "domesticInternational", "internationalMode", "consignmentType"
+    "srNo",
+    "bookingDate",
+    "awbNo",
+    "location",
+    "destinationCity",
+    "mode",
+    "pcs",
+    "pin",
+    "dsrContents",
+    "dsrNdxPaper",
+    "invoiceValue",
+    "actualWeight",
+    "valumetric",
+    "invoiceWt",
+    "clientBillingValue",
+    "creditCustomerAmount",
+    "regularCustomerAmount",
+    "customerType",
+    "senderDetail",
+    "paymentStatus",
+    "senderContactNo",
+    "address",
+    "adhaarNo",
+    "customerAttendBy",
+    "delivered",
+    "dateOfDelivery",
+    "todayDate",
+    "pendingDaysNotDelivered",
+    "receiverName",
+    "receiverContactNo",
+    "ref"
 ];
 
 const COLUMN_MAP: Record<string, string> = {
     srNo: "SR NO.",
     bookingDate: "Booking Date",
-    awbNo: "AwbNo",
-    destinationCity: "Destination City",
+    awbNo: "Docket",
+    location: "Location",
+    destinationCity: "Destination",
     mode: "Mode",
-    pcs: "PCS",
-    pin: "Pin Code",
-    dsrContents: "DSR_CONTENTS",
-    dsrNdxPaper: "DSR_NDX_PAPER",
-    invoiceValue: "Invoice Value",
-    actualWeight: "Actual Weight",
-    chargeWeight: "Charge Weight",
+    pcs: "No of Pcs",
+    pin: "Pincode",
+    dsrContents: "Content",
+    dsrNdxPaper: "Dox / Non Dox",
+    invoiceValue: "Material Value",
+    actualWeight: "FR Weight",
+    valumetric: "Valumatric",
     invoiceWt: "Invoice Wt",
-    clientBillingValue: "Client Billing Value",
-    creditCustomerAmount: "Credit Customer Amount",
-    regularCustomerAmount: "Regular Customer Amount",
-    childCustomer: "Child Customer",
-    parentCustomer: "Parent Customer",
-    paymentStatus: "Payment Status",
+    clientBillingValue: "Clinet Billing Value",
+    creditCustomerAmount: "Credit Cust.  Amt",
+    regularCustomerAmount: "Regular Cust. Amt",
+    customerType: "Customer Type",
+    senderDetail: "Sender Detail",
+    paymentStatus: "PAYMENT STATUS",
     senderContactNo: "Sender Contact No",
     address: "Address",
     adhaarNo: "Adhaar No",
     customerAttendBy: "Customer Attend By",
-    status: "Status",
-    statusDate: "Status Date",
-    pendingDaysNotDelivered: "Pending Days of Not Delivered",
+    delivered: "DELIVERED",
+    dateOfDelivery: "Date of Delivery",
+    todayDate: "Today Date",
+    pendingDaysNotDelivered: "Pending Days",
     receiverName: "Receiver Name",
     receiverContactNo: "Receiver Contact No",
-    complainNo: "Complain No.",
-    shipmentCostOtherMode: "Shipment Cost by other Mode",
-    podStatus: "POD Status",
-    remarks: "Remarks",
-    countryName: "Country Name",
-    domesticInternational: "Domestic / International",
-    internationalMode: "International Mode",
-    consignmentType: "Consignment Type",
+    ref: "Ref"
 };
 
 export default function SmartBookingMasterPage() {
@@ -69,7 +90,7 @@ export default function SmartBookingMasterPage() {
 
     async function fetchAndCalculateRate(row: any) {
         if (!row.customerId || !row.mode || !row.consignmentType || !row.city || !row.chargeWeight) {
-            return null; 
+            return null;
         }
         try {
             const { data: cityMap } = await axios.get('/api/city-to-zone-state', {
@@ -91,7 +112,7 @@ export default function SmartBookingMasterPage() {
                     city: row.city,
                 }
             });
-            console.log("Fetched from slab api /api/rates/templates/slabs ",slabs);
+            console.log("Fetched from slab api /api/rates/templates/slabs ", slabs);
 
             const weight = Number(row.chargeWeight);
             const slab = slabs.find((s: any) => weight >= s.fromWeight && weight <= s.toWeight);
@@ -110,7 +131,7 @@ export default function SmartBookingMasterPage() {
             return amount;
         } catch (error) {
             console.error("Rate fetch error:", error);
-            return null; 
+            return null;
         }
     }
 

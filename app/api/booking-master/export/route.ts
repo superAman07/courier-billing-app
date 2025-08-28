@@ -27,6 +27,10 @@ export async function GET() {
             { header: "Clinet Billing Value", key: "clientBillingValue", width: 18 },
             { header: "Credit Cust.  Amt", key: "creditCustomerAmount", width: 20 },
             { header: "Regular Cust. Amt", key: "regularCustomerAmount", width: 20 },
+            { header: "Fuel Surcharge", key: "fuelSurcharge", width: 14 },      // NEW
+            { header: "Shipper Cost", key: "shipperCost", width: 14 },          // NEW
+            { header: "Other Exp", key: "otherExp", width: 14 },                // NEW
+            { header: "GST", key: "gst", width: 10 },                           // NEW
             { header: "Customer Type", key: "customerType", width: 16 },
             { header: "Sender Detail", key: "senderDetail", width: 18 },
             { header: "PAYMENT STATUS", key: "paymentStatus", width: 16 },
