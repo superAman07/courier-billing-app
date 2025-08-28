@@ -78,6 +78,7 @@ export default function SmartBookingMasterPage() {
             });
             row.stateId = cityMap.stateId;
             row.zoneId = cityMap.zoneId;
+            console.log("Fetched from /api/city-to-zone-state: ", cityMap);
 
             const dbMode = MODE_MAP[row.mode] || row.mode;
 
@@ -92,6 +93,7 @@ export default function SmartBookingMasterPage() {
                     city: row.city,
                 }
             });
+            console.log("Fetched from slab api /api/rates/templates/slabs ",slabs);
 
             // Step 3: Calculate the rate
             const weight = Number(row.chargeWeight);
@@ -107,6 +109,7 @@ export default function SmartBookingMasterPage() {
                 const extraUnits = Math.ceil(extraWeight / slab.additionalWeight);
                 amount += extraUnits * slab.additionalRate;
             }
+            console.log("Slab found:", slab, "Weight:", weight, "Amount:", amount);
             return amount; // Return calculated amount
         } catch (error) {
             console.error("Rate fetch error:", error);

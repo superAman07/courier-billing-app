@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     orderBy: [{ fromWeight: "asc" }],
   });
 
-  console.log("Slabs fetched:", slabs);
+  console.log("Slabs fetched From API :", slabs);
 
   // const slabs = await prisma.rateMaster.findMany({
   //   where: { customerId, mode, consignmentType, zoneId, stateId, city },
