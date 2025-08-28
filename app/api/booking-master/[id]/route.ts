@@ -19,12 +19,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const id = (await params).id;
     const data = await req.json();
-    console.log("Updating booking:", id, data);
-   const updateData: any = {};
-    
-    // Handle each field individually
+    const updateData: any = {};
+
     if (data.bookingDate !== undefined) updateData.bookingDate = new Date(data.bookingDate);
     if (data.awbNo !== undefined) updateData.awbNo = String(data.awbNo);
+    if (data.location !== undefined) updateData.location = data.location;
     if (data.destinationCity !== undefined) updateData.destinationCity = data.destinationCity;
     if (data.mode !== undefined) updateData.mode = data.mode;
     if (data.pcs !== undefined) updateData.pcs = Number(data.pcs);
@@ -35,12 +34,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.invoiceValue !== undefined) updateData.invoiceValue = data.invoiceValue ? Number(data.invoiceValue) : null;
     if (data.actualWeight !== undefined) updateData.actualWeight = data.actualWeight ? Number(data.actualWeight) : null;
     if (data.chargeWeight !== undefined) updateData.chargeWeight = data.chargeWeight ? Number(data.chargeWeight) : null;
+    if (data.valumetric !== undefined) updateData.valumetric = data.valumetric ? Number(data.valumetric) : null;
     if (data.invoiceWt !== undefined) updateData.invoiceWt = data.invoiceWt ? Number(data.invoiceWt) : null;
     if (data.clientBillingValue !== undefined) updateData.clientBillingValue = data.clientBillingValue ? Number(data.clientBillingValue) : null;
     if (data.creditCustomerAmount !== undefined) updateData.creditCustomerAmount = data.creditCustomerAmount ? Number(data.creditCustomerAmount) : null;
     if (data.regularCustomerAmount !== undefined) updateData.regularCustomerAmount = data.regularCustomerAmount ? Number(data.regularCustomerAmount) : null;
-    if (data.childCustomer !== undefined) updateData.childCustomer = data.childCustomer;
-    if (data.parentCustomer !== undefined) updateData.parentCustomer = data.parentCustomer;
+    if (data.customerType !== undefined) updateData.customerType = data.customerType;
+    if (data.senderDetail !== undefined) updateData.senderDetail = data.senderDetail;
     if (data.paymentStatus !== undefined) updateData.paymentStatus = data.paymentStatus;
     if (data.senderContactNo !== undefined) updateData.senderContactNo = data.senderContactNo;
     if (data.address !== undefined) updateData.address = data.address;
@@ -51,27 +51,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.pendingDaysNotDelivered !== undefined) updateData.pendingDaysNotDelivered = data.pendingDaysNotDelivered ? Number(data.pendingDaysNotDelivered) : null;
     if (data.receiverName !== undefined) updateData.receiverName = data.receiverName;
     if (data.receiverContactNo !== undefined) updateData.receiverContactNo = data.receiverContactNo;
-    if (data.complainNo !== undefined) updateData.complainNo = data.complainNo;
-    if (data.shipmentCostOtherMode !== undefined) updateData.shipmentCostOtherMode = data.shipmentCostOtherMode ? Number(data.shipmentCostOtherMode) : null;
-    if (data.podStatus !== undefined) updateData.podStatus = data.podStatus;
-    if (data.remarks !== undefined) updateData.remarks = data.remarks;
-    if (data.countryName !== undefined) updateData.countryName = data.countryName;
-    if (data.domesticInternational !== undefined) updateData.domesticInternational = data.domesticInternational;
-    if (data.internationalMode !== undefined) updateData.internationalMode = data.internationalMode;
+    if (data.ref !== undefined) updateData.ref = data.ref;
+    if (data.delivered !== undefined) updateData.delivered = data.delivered;
+    if (data.dateOfDelivery !== undefined) updateData.dateOfDelivery = data.dateOfDelivery ? new Date(data.dateOfDelivery) : null;
+    if (data.todayDate !== undefined) updateData.todayDate = data.todayDate ? new Date(data.todayDate) : null;
     if (data.customerId !== undefined) updateData.customerId = data.customerId;
-
-    console.log("Clean update data:", updateData);
 
     const booking = await prisma.bookingMaster.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
 
-    console.log("Updated booking:", booking);
     return NextResponse.json(booking);
   } catch (error: any) {
-    console.error("Error updating booking:", error);
-    return NextResponse.json({ message: "Error updating booking" }, { status: 500 });
+    return NextResponse.json({ message: "Error updating booking", error: error.message }, { status: 500 });
   }
 }
 
