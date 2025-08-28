@@ -234,10 +234,11 @@ model SmsTemplate {
 }
 
 model BookingMaster {
-  id                      String    @id @default(cuid())
+  id                      String          @id @default(cuid())
   srNo                    Int?
   bookingDate             DateTime
-  awbNo                   String    @unique
+  awbNo                   String          @unique
+  location                String?
   destinationCity         String
   mode                    String
   pcs                     Int
@@ -247,12 +248,13 @@ model BookingMaster {
   invoiceValue            Float?
   actualWeight            Float?
   chargeWeight            Float?
+  valumetric              Float? 
   invoiceWt               Float?
   clientBillingValue      Float?
   creditCustomerAmount    Float?
   regularCustomerAmount   Float?
-  childCustomer           String?
-  parentCustomer          String?
+  customerType            String?
+  senderDetail            String?
   paymentStatus           String?
   senderContactNo         String?
   address                 String?
@@ -263,17 +265,14 @@ model BookingMaster {
   pendingDaysNotDelivered Int?
   receiverName            String?
   receiverContactNo       String?
-  complainNo              String?
-  shipmentCostOtherMode   Float?
-  podStatus               String?
-  remarks                 String?
-  countryName             String?
-  domesticInternational   String?
-  internationalMode       String?
-
-  createdAt  DateTime        @default(now())
-  customerId String?
-  customer   CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
+  ref                     String?
+  delivered               String?
+  dateOfDelivery          DateTime?
+  todayDate               DateTime?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  customerId              String?
+  customer                CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
 }
 
 model CashBooking {
@@ -414,7 +413,7 @@ model InvoiceBooking {
   city          String
   amountCharged Float
   taxAmount     Float?
-  
+
   createdAt DateTime @default(now())
 }
 

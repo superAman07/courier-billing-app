@@ -52,7 +52,7 @@ const COLUMN_MAP: Record<string, string> = {
     countryName: "Country Name",
     domesticInternational: "Domestic / International",
     internationalMode: "International Mode",
-    consignmentType: "Consignment Type"
+    consignmentType: "Consignment Type",
 };
 
 export default function SmartBookingMasterPage() {
