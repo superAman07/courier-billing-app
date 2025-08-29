@@ -202,12 +202,10 @@ export default function SmartBookingMasterPage() {
                 const { data } = await axios.get("/api/city-master");
                 setCities(data);
 
-                // Create bidirectional mapping
                 const nameToCode: Record<string, string> = {};
                 const codeToName: Record<string, string> = {};
 
-                data.forEach((city: any) => {
-                    // Case-insensitive mapping
+                data.forEach((city: any) => { 
                     nameToCode[city.name.toLowerCase()] = city.code;
                     codeToName[city.code.toLowerCase()] = city.name;
                 });
