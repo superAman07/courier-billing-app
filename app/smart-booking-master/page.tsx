@@ -488,7 +488,7 @@ export default function SmartBookingMasterPage() {
                                 type="text"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg"
+                                className="w-full p-3 border border-gray-300 text-gray-600 rounded-lg"
                                 placeholder="Search by AWB, Customer, Status..."
                             />
                         </div>
