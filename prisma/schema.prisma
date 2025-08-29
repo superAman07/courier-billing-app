@@ -247,7 +247,7 @@ model BookingMaster {
   dsrNdxPaper             String?
   invoiceValue            Float? // Material Value
   actualWeight            Float? // Fr weight
-  chargeWeight            Float?
+  chargeWeight            Float? // Base Fr weight
   fuelSurcharge           Float?
   shipperCost             Float?
   otherExp                Float?
