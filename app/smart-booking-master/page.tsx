@@ -175,8 +175,15 @@ export default function SmartBookingMasterPage() {
 
             const awbNo = mapped.awbNo?.toString();
             if (awbNo && awbMap[awbNo]) {
-                return { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
+                const existingRow = { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
+                existingRow.pendingDaysNotDelivered = calculatePendingDays(existingRow.bookingDate, existingRow.status);
+                existingRow.todayDate = getCurrentDate();
+                return existingRow;
+                // return { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
             }
+
+            mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
+            mapped.todayDate = getCurrentDate();
 
             return { ...mapped, _awbExists: false };
         });
@@ -278,6 +285,21 @@ export default function SmartBookingMasterPage() {
             console.log(`🌍 Inter-state GST: IGST(${igstRate}%)`);
             return `${igstRate}%`;
         }
+    };
+
+    const calculatePendingDays = (bookingDate: string, status: string): number => {
+        if (status === "DELIVERED" || !bookingDate) return 0;
+
+        const booking = new Date(bookingDate);
+        const today = new Date();
+        const diffTime = today.getTime() - booking.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays > 0 ? diffDays : 0;
+    };
+
+    const getCurrentDate = (): string => {
+        return new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
     };
 
     const handleCustomerSearch = async (idx: number, searchTerm: string) => {
@@ -402,6 +424,7 @@ export default function SmartBookingMasterPage() {
                     receiverContactNo: customer.mobile || customer.phone || "",
                     fuelSurcharge: customer.fuelSurchargePercent || 0,
                     address: customer.address || "",
+                    todayDate: getCurrentDate(),
                 };
             })
         );
@@ -424,16 +447,6 @@ export default function SmartBookingMasterPage() {
                 })
             );
             toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}`);
-            // setTableRows(rows =>
-            //     rows.map((row, i) => {
-            //         if (i !== idx) return row;
-            //         return {
-            //             ...row,
-            //             clientBillingValue: calculatedRate
-            //         };
-            //     })
-            // );
-            // toast.success(`Rate calculated: ₹${calculatedRate}`);
         }
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
         toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
@@ -486,11 +499,6 @@ export default function SmartBookingMasterPage() {
                                     } : r2
                                 )
                             );
-                            // setTableRows(rows2 =>
-                            //     rows2.map((r2, j) =>
-                            //         j === idx ? { ...r2, clientBillingValue: amount } : r2
-                            //     )
-                            // );
                         }
                     });
                 }
@@ -501,7 +509,13 @@ export default function SmartBookingMasterPage() {
                         updated.gst = gstPercentage;
                     }
                 }
-
+                if (field === "status" || field === "bookingDate") {
+                    updated.pendingDaysNotDelivered = calculatePendingDays(
+                        field === "bookingDate" ? value : updated.bookingDate,
+                        field === "status" ? value : updated.status
+                    );
+                }
+                updated.todayDate = getCurrentDate();
                 return updated;
             })
         );
@@ -669,13 +683,19 @@ export default function SmartBookingMasterPage() {
                                                         </div>
                                                     ) : (
                                                         <input
-                                                            value={row[col] || ""}
+                                                            value={col === "todayDate" ? getCurrentDate() :
+                                                                col === "pendingDaysNotDelivered" ?
+                                                                    calculatePendingDays(row.bookingDate, row.status) : row[col] || ""}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className={`w-full p-1 border rounded text-xs ${col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" : (col === "location" || col === "destinationCity") &&
+                                                            className={`w-full p-1 border rounded text-xs ${
+                                                                col === "todayDate" ? "bg-blue-50 border-blue-300" : 
+                                                                col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "bg-red-50 border-red-300" : 
+                                                                col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" : 
+                                                                (col === "location" || col === "destinationCity") &&
                                                                 row.location === row.destinationCity && row.location ?
                                                                 "bg-green-50 border-green-300" : ""
                                                                 }`}
-                                                            disabled={col === "awbNo" && row._awbExists}
+                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered"}
                                                             title={col === "gst" ? "Auto-calculated GST percentage" : ""}
                                                         />
                                                     )}
