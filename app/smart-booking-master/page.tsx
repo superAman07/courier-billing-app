@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BookingImportPanel from "@/components/BookingImportPanel";
 import { toast } from "sonner";
 import axios from "axios";
@@ -33,7 +33,7 @@ const COLUMN_MAP: Record<string, string> = {
     receiverContactNo: "Receiver Contact No", ref: "Ref", delivered: "DELIVERED",
     dateOfDelivery: "Date of Delivery", todayDate: "Today Date", customerCode: "Customer Code"
 };
- 
+
 const IMPORT_ALIASES: Record<string, string[]> = {
     awbNo: ["AwbNo", "Docket"],
     ref: ["CustRefNo", "Ref"],
@@ -59,10 +59,59 @@ export default function SmartBookingMasterPage() {
     const [search, setSearch] = useState("");
     const [customers, setCustomers] = useState<any[]>([]);
     const [customerSuggestions, setCustomerSuggestions] = useState<{ [key: number]: any[] }>({});
+    const [cities, setCities] = useState<any[]>([]);
+    const [cityNameToCodeMap, setCityNameToCodeMap] = useState<Record<string, string>>({});
+    const [cityCodeToNameMap, setCityCodeToNameMap] = useState<Record<string, string>>({});
+
+    const extractCityName = (locationString: string): string => {
+        if (!locationString) return "";
+
+        // Clean the string
+        const cleaned = locationString.trim();
+
+        // Method 1: Try to find exact match in city master first
+        const directMatch = cities.find(city =>
+            city.name.toLowerCase() === cleaned.toLowerCase()
+        );
+        if (directMatch) {
+            return directMatch.name;
+        }
+
+        // Method 2: Split by comma and check each part against city master
+        const parts = cleaned.split(',').map(part => part.trim());
+
+        for (const part of parts) {
+            const cityMatch = cities.find(city =>
+                city.name.toLowerCase() === part.toLowerCase() ||
+                city.code.toLowerCase() === part.toLowerCase()
+            );
+            if (cityMatch) {
+                console.log(`✅ Extracted city: "${part}" → "${cityMatch.name}" from "${locationString}"`);
+                return cityMatch.name;
+            }
+        }
+
+        // Method 3: If no exact match, take first part (assuming city comes first)
+        const firstPart = parts[0];
+
+        // Check if first part contains any city name
+        const partialMatch = cities.find(city =>
+            firstPart.toLowerCase().includes(city.name.toLowerCase()) ||
+            city.name.toLowerCase().includes(firstPart.toLowerCase())
+        );
+
+        if (partialMatch) {
+            console.log(`✅ Partial match: "${firstPart}" → "${partialMatch.name}" from "${locationString}"`);
+            return partialMatch.name;
+        }
+
+        console.log(`⚠️ Could not extract city from: "${locationString}", using first part: "${firstPart}"`);
+        return firstPart;
+    };
 
     const handleImport = async (rows: any[]) => {
         setLoading(true);
- 
+
         try {
             const { data } = await axios.get("/api/customers");
             setCustomers(data);
@@ -101,6 +150,11 @@ export default function SmartBookingMasterPage() {
                 if (importKey) {
                     if (col === "bookingDate" || col === "statusDate") {
                         mapped[col] = parseDateString(row[importKey]);
+                    } else if (col === "location") {
+                        // ✅ Extract only city name from location field
+                        const rawLocation = row[importKey];
+                        mapped[col] = extractCityName(rawLocation);
+                        console.log(`Location processed: "${rawLocation}" → "${mapped[col]}"`);
                     } else {
                         mapped[col] = row[importKey];
                     }
@@ -108,6 +162,19 @@ export default function SmartBookingMasterPage() {
                     mapped[col] = "";
                 }
             });
+
+            if (mapped.location) {
+                const cityCode = getCityCode(mapped.location);
+                mapped.destinationCity = cityCode;
+
+                console.log(`Auto-mapped: Location "${mapped.location}" → Destination "${mapped.destinationCity}"`);
+            } else if (mapped.destinationCity) {
+                // Handle destination-only case
+                const extractedCity = extractCityName(mapped.destinationCity);
+                mapped.location = extractedCity;
+                mapped.destinationCity = getCityCode(extractedCity);
+            }
+
             const awbNo = mapped.awbNo?.toString();
             if (awbNo && awbMap[awbNo]) {
                 return { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
@@ -118,6 +185,55 @@ export default function SmartBookingMasterPage() {
 
         setTableRows(mappedRows);
         setLoading(false);
+
+        const extractionResults = mappedRows
+            .filter(row => row.location)
+            .map(row => `${row.location}${row.destinationCity !== row.location ? ` → ${row.destinationCity}` : ''}`)
+            .slice(0, 3);
+
+        if (extractionResults.length > 0) {
+            toast.success(`Cities extracted: ${extractionResults.join(", ")}${extractionResults.length > 3 ? " +more..." : ""}`);
+        }
+    };
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            try {
+                const { data } = await axios.get("/api/city-master");
+                setCities(data);
+
+                // Create bidirectional mapping
+                const nameToCode: Record<string, string> = {};
+                const codeToName: Record<string, string> = {};
+
+                data.forEach((city: any) => {
+                    // Case-insensitive mapping
+                    nameToCode[city.name.toLowerCase()] = city.code;
+                    codeToName[city.code.toLowerCase()] = city.name;
+                });
+
+                setCityNameToCodeMap(nameToCode);
+                setCityCodeToNameMap(codeToName);
+
+                console.log("City mappings:", { nameToCode, codeToName });
+            } catch (error) {
+                console.error("Failed to fetch cities:", error);
+            }
+        };
+
+        fetchCities();
+    }, []);
+
+    const getCityCode = (cityName: string): string => {
+        if (!cityName) return "";
+        const code = cityNameToCodeMap[cityName.toLowerCase()];
+        return code || cityName;
+    };
+
+    const getCityName = (cityCode: string): string => {
+        if (!cityCode) return "";
+        const name = cityCodeToNameMap[cityCode.toLowerCase()];
+        return name || cityCode;
     };
 
     const handleCustomerSearch = async (idx: number, searchTerm: string) => {
@@ -135,7 +251,68 @@ export default function SmartBookingMasterPage() {
         setCustomerSuggestions(prev => ({ ...prev, [idx]: filtered }));
     };
 
-    const handleCustomerSelect = (idx: number, customer: any) => {
+    const MODE_MAP: Record<string, string> = {
+        A: "AIR",
+        S: "SURFACE",
+        R: "ROAD",
+        T: "TRAIN"
+    };
+
+    async function fetchAndCalculateRate(row: any) {
+        if (!row.customerId || !row.mode || !row.destinationCity || !row.chargeWeight) {
+            return null;
+        }
+
+        try {
+            const cityNameForRate = getCityName(row.destinationCity);
+            const { data: cityMap } = await axios.get('/api/city-to-zone-state', {
+                params: { city: cityNameForRate }
+            });
+
+            const dbMode = MODE_MAP[row.mode] || row.mode;
+
+            const { data: slabs } = await axios.get('/api/rates/templates/slabs', {
+                params: {
+                    customerId: row.customerId,
+                    mode: dbMode,
+                    consignmentType: row.dsrNdxPaper || "DOCUMENT",
+                    zoneId: cityMap.zoneId,
+                    stateId: cityMap.stateId,
+                    city: cityNameForRate,
+                }
+            });
+
+            if (!slabs || slabs.length === 0) {
+                console.warn("No rate slabs found for this combination");
+                return null;
+            }
+
+            const weight = Number(row.chargeWeight);
+            const slab = slabs.find((s: any) => weight >= s.fromWeight && weight <= s.toWeight);
+
+            if (!slab) {
+                console.warn("No rate slab found for weight:", weight);
+                return null;
+            }
+
+            let amount = slab.rate;
+
+            if (slab.hasAdditionalRate && weight > slab.toWeight) {
+                const extraWeight = weight - slab.toWeight;
+                const extraUnits = Math.ceil(extraWeight / slab.additionalWeight);
+                amount += extraUnits * slab.additionalRate;
+            }
+
+            console.log("Rate calculated:", { weight, slab, amount });
+            return amount;
+
+        } catch (error) {
+            console.error("Rate calculation error:", error);
+            return null;
+        }
+    }
+
+    const handleCustomerSelect = async (idx: number, customer: any) => {
         setTableRows(rows =>
             rows.map((row, i) => {
                 if (i !== idx) return row;
@@ -151,6 +328,23 @@ export default function SmartBookingMasterPage() {
                 };
             })
         );
+
+        const updatedRow = tableRows[idx];
+        updatedRow.customerId = customer.id;
+
+        const calculatedRate = await fetchAndCalculateRate(updatedRow);
+        if (calculatedRate !== null) {
+            setTableRows(rows =>
+                rows.map((row, i) => {
+                    if (i !== idx) return row;
+                    return {
+                        ...row,
+                        clientBillingValue: calculatedRate
+                    };
+                })
+            );
+            toast.success(`Rate calculated: ₹${calculatedRate}`);
+        }
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
         toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
     };
@@ -161,6 +355,18 @@ export default function SmartBookingMasterPage() {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
 
+                if (field === "location") {
+                    updated.location = getCityName(value);
+                    updated.destinationCity = getCityCode(updated.location);
+                } else if (field === "destinationCity") {
+                    updated.destinationCity = value;
+                    updated.location = getCityName(value);
+
+                    if (getCityCode(value) !== value) {
+                        updated.destinationCity = getCityCode(value);
+                    }
+                }
+
                 if (field === "customerCode") {
                     handleCustomerSearch(idx, value);
                     if (!value) {
@@ -170,7 +376,20 @@ export default function SmartBookingMasterPage() {
                         updated.receiverContactNo = "";
                         updated.fuelSurcharge = "";
                         updated.address = "";
+                        updated.clientBillingValue = "";
                     }
+                }
+
+                if (["mode", "destinationCity", "location", "chargeWeight", "dsrNdxPaper"].includes(field) && updated.customerId) {
+                    fetchAndCalculateRate(updated).then(amount => {
+                        if (amount !== null) {
+                            setTableRows(rows2 =>
+                                rows2.map((r2, j) =>
+                                    j === idx ? { ...r2, clientBillingValue: amount } : r2
+                                )
+                            );
+                        }
+                    });
                 }
 
                 return updated;
@@ -342,7 +561,10 @@ export default function SmartBookingMasterPage() {
                                                         <input
                                                             value={row[col] || ""}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs"
+                                                            className={`w-full p-1 border rounded text-xs ${(col === "location" || col === "destinationCity") &&
+                                                                row.location === row.destinationCity && row.location ?
+                                                                "bg-green-50 border-green-300" : ""
+                                                                }`}
                                                             disabled={col === "awbNo" && row._awbExists}
                                                         />
                                                     )}
