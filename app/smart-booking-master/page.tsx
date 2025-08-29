@@ -24,7 +24,7 @@ const COLUMN_MAP: Record<string, string> = {
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", fuelSurcharge: "Fuel Surcharge (in %)",
     shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", valumetric: "Valumatric",
-    invoiceWt: "Invoice Wt", clientBillingValue: "Clinet Billing Value",
+    invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
     creditCustomerAmount: "Credit Cust.  Amt", regularCustomerAmount: "Regular Cust. Amt",
     customerType: "Customer Type", senderDetail: "Sender Detail", paymentStatus: "PAYMENT STATUS",
     senderContactNo: "Sender Contact No", address: "Address", adhaarNo: "Adhaar No",
