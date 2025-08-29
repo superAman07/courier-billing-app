@@ -62,14 +62,15 @@ export default function SmartBookingMasterPage() {
     const [cities, setCities] = useState<any[]>([]);
     const [cityNameToCodeMap, setCityNameToCodeMap] = useState<Record<string, string>>({});
     const [cityCodeToNameMap, setCityCodeToNameMap] = useState<Record<string, string>>({});
+    const [taxMaster, setTaxMaster] = useState<any[]>([]);
+    const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
+    const [companyState, setCompanyState] = useState<string>("delhi");
 
     const extractCityName = (locationString: string): string => {
         if (!locationString) return "";
 
-        // Clean the string
         const cleaned = locationString.trim();
 
-        // Method 1: Try to find exact match in city master first
         const directMatch = cities.find(city =>
             city.name.toLowerCase() === cleaned.toLowerCase()
         );
@@ -77,7 +78,6 @@ export default function SmartBookingMasterPage() {
             return directMatch.name;
         }
 
-        // Method 2: Split by comma and check each part against city master
         const parts = cleaned.split(',').map(part => part.trim());
 
         for (const part of parts) {
@@ -91,10 +91,8 @@ export default function SmartBookingMasterPage() {
             }
         }
 
-        // Method 3: If no exact match, take first part (assuming city comes first)
         const firstPart = parts[0];
 
-        // Check if first part contains any city name
         const partialMatch = cities.find(city =>
             firstPart.toLowerCase().includes(city.name.toLowerCase()) ||
             city.name.toLowerCase().includes(firstPart.toLowerCase())
@@ -205,7 +203,7 @@ export default function SmartBookingMasterPage() {
                 const nameToCode: Record<string, string> = {};
                 const codeToName: Record<string, string> = {};
 
-                data.forEach((city: any) => { 
+                data.forEach((city: any) => {
                     nameToCode[city.name.toLowerCase()] = city.code;
                     codeToName[city.code.toLowerCase()] = city.name;
                 });
@@ -218,8 +216,29 @@ export default function SmartBookingMasterPage() {
                 console.error("Failed to fetch cities:", error);
             }
         };
+        const fetchTaxMaster = async () => {
+            try {
+                const { data } = await axios.get("/api/tax-master");
+                setTaxMaster(data);
+                console.log("Tax Master loaded:", data);
+            } catch (error) {
+                console.error("Failed to fetch tax master:", error);
+            }
+        };
+
+        const fetchPincodeMaster = async () => {
+            try {
+                const { data } = await axios.get("/api/pincode-master");
+                setPincodeMaster(data);
+                console.log("Pincode Master loaded:", data);
+            } catch (error) {
+                console.error("Failed to fetch pincode master:", error);
+            }
+        };
 
         fetchCities();
+        fetchTaxMaster();
+        fetchPincodeMaster();
     }, []);
 
     const getCityCode = (cityName: string): string => {
@@ -232,6 +251,33 @@ export default function SmartBookingMasterPage() {
         if (!cityCode) return "";
         const name = cityCodeToNameMap[cityCode.toLowerCase()];
         return name || cityCode;
+    };
+
+    const getGSTPercentage = (customerPincode: string): string => {
+        if (!customerPincode) return "";
+
+        const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
+        const customerState = pincodeData?.state?.name || "";
+
+        if (!customerState) return "";
+
+        if (customerState.toLowerCase() === companyState.toLowerCase()) {
+            const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
+            const cgstTax = taxMaster.find(tax => tax.taxCode === 'CGST');
+
+            const sgstRate = sgstTax ? parseFloat(sgstTax.ratePercent) : 9;
+            const cgstRate = cgstTax ? parseFloat(cgstTax.ratePercent) : 9;
+            const totalRate = sgstRate + cgstRate;
+
+            console.log(`📍 Intra-state GST: SGST(${sgstRate}%) + CGST(${cgstRate}%) = ${totalRate}%`);
+            return `${totalRate}%`;
+        } else {
+            const igstTax = taxMaster.find(tax => tax.taxCode === 'IGST');
+            const igstRate = igstTax ? parseFloat(igstTax.ratePercent) : 18;
+
+            console.log(`🌍 Inter-state GST: IGST(${igstRate}%)`);
+            return `${igstRate}%`;
+        }
     };
 
     const handleCustomerSearch = async (idx: number, searchTerm: string) => {
@@ -365,16 +411,29 @@ export default function SmartBookingMasterPage() {
 
         const calculatedRate = await fetchAndCalculateRate(updatedRow);
         if (calculatedRate !== null) {
+            const gstPercentage = getGSTPercentage(customer.pincode || "");
+
             setTableRows(rows =>
                 rows.map((row, i) => {
                     if (i !== idx) return row;
                     return {
                         ...row,
-                        clientBillingValue: calculatedRate
+                        clientBillingValue: calculatedRate,
+                        gst: gstPercentage
                     };
                 })
             );
-            toast.success(`Rate calculated: ₹${calculatedRate}`);
+            toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}`);
+            // setTableRows(rows =>
+            //     rows.map((row, i) => {
+            //         if (i !== idx) return row;
+            //         return {
+            //             ...row,
+            //             clientBillingValue: calculatedRate
+            //         };
+            //     })
+            // );
+            // toast.success(`Rate calculated: ₹${calculatedRate}`);
         }
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
         toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
@@ -408,19 +467,39 @@ export default function SmartBookingMasterPage() {
                         updated.fuelSurcharge = "";
                         updated.address = "";
                         updated.clientBillingValue = "";
+                        updated.gst = "";
                     }
                 }
 
                 if (["mode", "destinationCity", "location", "chargeWeight", "dsrNdxPaper"].includes(field) && updated.customerId) {
                     fetchAndCalculateRate(updated).then(amount => {
                         if (amount !== null) {
+                            const customer = customers.find(c => c.id === updated.customerId);
+                            const gstPercentage = customer ? getGSTPercentage(customer.pincode || "") : "";
+
                             setTableRows(rows2 =>
                                 rows2.map((r2, j) =>
-                                    j === idx ? { ...r2, clientBillingValue: amount } : r2
+                                    j === idx ? {
+                                        ...r2,
+                                        clientBillingValue: amount,
+                                        gst: gstPercentage // ✅ Auto-update GST
+                                    } : r2
                                 )
                             );
+                            // setTableRows(rows2 =>
+                            //     rows2.map((r2, j) =>
+                            //         j === idx ? { ...r2, clientBillingValue: amount } : r2
+                            //     )
+                            // );
                         }
                     });
+                }
+                if (field === "clientBillingValue" && updated.customerId) {
+                    const customer = customers.find(c => c.id === updated.customerId);
+                    if (customer) {
+                        const gstPercentage = getGSTPercentage(customer.pincode || "");
+                        updated.gst = gstPercentage;
+                    }
                 }
 
                 return updated;
@@ -592,11 +671,12 @@ export default function SmartBookingMasterPage() {
                                                         <input
                                                             value={row[col] || ""}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className={`w-full p-1 border rounded text-xs ${(col === "location" || col === "destinationCity") &&
+                                                            className={`w-full p-1 border rounded text-xs ${col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" : (col === "location" || col === "destinationCity") &&
                                                                 row.location === row.destinationCity && row.location ?
                                                                 "bg-green-50 border-green-300" : ""
                                                                 }`}
                                                             disabled={col === "awbNo" && row._awbExists}
+                                                            title={col === "gst" ? "Auto-calculated GST percentage" : ""}
                                                         />
                                                     )}
                                                 </td>
