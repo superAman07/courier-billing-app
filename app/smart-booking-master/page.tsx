@@ -271,11 +271,17 @@ export default function SmartBookingMasterPage() {
 
             const dbMode = MODE_MAP[row.mode] || row.mode;
 
+            const consignmentTypeMap: Record<string, string> = {
+                "Dox": "DOCUMENT", "Non Dox": "PARCEL", "DOX": "DOCUMENT",
+                "NON DOX": "PARCEL", "DOCUMENT": "DOCUMENT", "PARCEL": "PARCEL"
+            };
+            const consignmentType = consignmentTypeMap[row.dsrNdxPaper] || "DOCUMENT";
+
             const { data: slabs } = await axios.get('/api/rates/templates/slabs', {
                 params: {
                     customerId: row.customerId,
                     mode: dbMode,
-                    consignmentType: row.dsrNdxPaper || "DOCUMENT",
+                    consignmentType: consignmentType,
                     zoneId: cityMap.zoneId,
                     stateId: cityMap.stateId,
                     city: cityNameForRate,
@@ -295,16 +301,43 @@ export default function SmartBookingMasterPage() {
                 return null;
             }
 
-            let amount = slab.rate;
-
+            let baseAmount = slab.rate;
+            let additionalAmount = 0;
             if (slab.hasAdditionalRate && weight > slab.toWeight) {
                 const extraWeight = weight - slab.toWeight;
                 const extraUnits = Math.ceil(extraWeight / slab.additionalWeight);
-                amount += extraUnits * slab.additionalRate;
+                additionalAmount = extraUnits * slab.additionalRate;
             }
 
-            console.log("Rate calculated:", { weight, slab, amount });
-            return amount;
+            const subtotal = baseAmount + additionalAmount;
+
+            const customer = customers.find(c => c.id === row.customerId);
+            if (!customer) return subtotal;
+
+            const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
+            const discountPercent = customer.discountPercent || 0;
+
+            const fuelSurchargeAmount = (subtotal * fuelSurchargePercent) / 100;
+            const discountAmount = (subtotal * discountPercent) / 100;
+
+            const finalAmount = subtotal + fuelSurchargeAmount - discountAmount;
+
+            console.log("💼 Billing Calculation:", {
+                customer: customer.customerName,
+                weight: `${weight} kg`,
+                mode: dbMode,
+                city: cityNameForRate,
+                breakdown: {
+                    baseRate: `₹${baseAmount}`,
+                    additionalCharges: `₹${additionalAmount}`,
+                    subtotal: `₹${subtotal}`,
+                    fuelSurcharge: `₹${fuelSurchargeAmount} (${fuelSurchargePercent}%)`,
+                    discount: `₹${discountAmount} (${discountPercent}%)`,
+                    finalAmount: `₹${finalAmount.toFixed(2)}`
+                }
+            });
+
+            return parseFloat(finalAmount.toFixed(2));
 
         } catch (error) {
             console.error("Rate calculation error:", error);
