@@ -9,12 +9,12 @@ import { handleDownload } from "@/lib/downloadExcel";
 import { Download, Users } from "lucide-react";
 
 const columns = [
-    "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin", 
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", 
-    "fuelSurcharge", "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt", 
-    "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType", 
-    "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo", 
-    "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName", 
+    "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight",
+    "fuelSurcharge", "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
+    "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
+    "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
+    "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
     "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate", "customerCode"
 ];
 
@@ -22,9 +22,9 @@ const COLUMN_MAP: Record<string, string> = {
     srNo: "SR NO.", bookingDate: "Booking Date", awbNo: "Docket", location: "Location",
     destinationCity: "Destination", mode: "Mode", pcs: "No of Pcs", pin: "Pincode",
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
-    actualWeight: "FR Weight", chargeWeight: "Charge Weight", fuelSurcharge: "Fuel Surcharge",
+    actualWeight: "FR Weight", chargeWeight: "Charge Weight", fuelSurcharge: "Fuel Surcharge (in %)",
     shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", valumetric: "Valumatric",
-    invoiceWt: "Invoice Wt", clientBillingValue: "Clinet Billing Value", 
+    invoiceWt: "Invoice Wt", clientBillingValue: "Clinet Billing Value",
     creditCustomerAmount: "Credit Cust.  Amt", regularCustomerAmount: "Regular Cust. Amt",
     customerType: "Customer Type", senderDetail: "Sender Detail", paymentStatus: "PAYMENT STATUS",
     senderContactNo: "Sender Contact No", address: "Address", adhaarNo: "Adhaar No",
@@ -52,7 +52,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     statusDate: ["Status Date"],
     dsrNdxPaper: ["Dox / Non Dox"],
     dsrContents: ["DSR_CONTENTS", "Content"],
-    customerCode: ["Customer Code"]
+    // customerCode: ["Customer Code"]
 };
 
 export default function SmartBookingMasterPage() {
@@ -64,7 +64,7 @@ export default function SmartBookingMasterPage() {
 
     const handleImport = async (rows: any[]) => {
         setLoading(true);
-        
+
         // Fetch customers for suggestions
         try {
             const { data } = await axios.get("/api/customers");
@@ -85,11 +85,17 @@ export default function SmartBookingMasterPage() {
 
         const mappedRows = rows.map((row, idx) => {
             const mapped: any = { srNo: idx + 1 };
-            
+
             // Auto-fill common data from import file
             columns.forEach(col => {
                 if (col === "srNo") return;
-                
+                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge"];
+                if (customerFields.includes(col)) {
+                    mapped[col] = "";
+                    return;
+                }
+
+
                 let importKey = Object.keys(row).find(k =>
                     IMPORT_ALIASES[col]?.some(alias =>
                         k.replace(/[\s_]/g, '').toLowerCase() === alias.replace(/[\s_]/g, '').toLowerCase()
@@ -107,8 +113,6 @@ export default function SmartBookingMasterPage() {
                     mapped[col] = "";
                 }
             });
-
-            // Check if AWB already exists
             const awbNo = mapped.awbNo?.toString();
             if (awbNo && awbMap[awbNo]) {
                 return { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
@@ -127,9 +131,10 @@ export default function SmartBookingMasterPage() {
             return;
         }
 
-        const filtered = customers.filter(c => 
+        const filtered = customers.filter(c =>
             c.customerCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+            c.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase())
         ).slice(0, 10);
 
         setCustomerSuggestions(prev => ({ ...prev, [idx]: filtered }));
@@ -145,12 +150,15 @@ export default function SmartBookingMasterPage() {
                     customerId: customer.id,
                     customerName: customer.customerName,
                     // Auto-fill customer related data
-                    fuelSurcharge: customer.fuelSurchargePercent,
-                    // Add other customer fields as needed
+                    receiverName: customer.contactPerson || "",
+                    receiverContactNo: customer.mobile || customer.phone || "",
+                    fuelSurcharge: customer.fuelSurchargePercent || 0,
+                    address: customer.address || "",
                 };
             })
         );
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
+        toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
     };
 
     const handleEdit = (idx: number, field: string, value: string) => {
@@ -158,12 +166,20 @@ export default function SmartBookingMasterPage() {
             rows.map((row, i) => {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
-                
+
                 // Handle customer search
                 if (field === "customerCode") {
                     handleCustomerSearch(idx, value);
+                    if (!value) {
+                        updated.customerId = "";
+                        updated.customerName = "";
+                        updated.receiverName = "";
+                        updated.receiverContactNo = "";
+                        updated.fuelSurcharge = "";
+                        updated.address = "";
+                    }
                 }
-                
+
                 return updated;
             })
         );
@@ -171,7 +187,7 @@ export default function SmartBookingMasterPage() {
 
     const handleSave = async (idx: number) => {
         const row = tableRows[idx];
-        
+
         if (!row.customerId) {
             toast.error("Please select a customer first");
             return;
@@ -181,18 +197,19 @@ export default function SmartBookingMasterPage() {
         delete cleanRow._awbExists;
         delete cleanRow._bookingId;
         delete cleanRow.__origIndex;
+        delete cleanRow.customerName;
 
         // Convert data types
         cleanRow.bookingDate = new Date(cleanRow.bookingDate);
         cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
         cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
-        
-        ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "fuelSurcharge", 
-         "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt", 
-         "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", 
-         "pendingDaysNotDelivered"].forEach(field => {
-            cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
-        });
+
+        ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "fuelSurcharge",
+            "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
+            "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+            "pendingDaysNotDelivered"].forEach(field => {
+                cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
+            });
 
         try {
             if (row._awbExists && row._bookingId) {
@@ -210,7 +227,7 @@ export default function SmartBookingMasterPage() {
     const filteredRows = tableRows.filter(row => {
         if (!search) return true;
         const s = search.toLowerCase();
-        return Object.values(row).some(val => 
+        return Object.values(row).some(val =>
             val && val.toString().toLowerCase().includes(s)
         );
     }).map((row, idx) => ({ ...row, __origIndex: tableRows.indexOf(row) }));
@@ -898,7 +915,7 @@ export default function SmartBookingMasterPage() {
 //                                                         />
 //                                                     )}
 //                                                 </td>
-//                                             ))} 
+//                                             ))}
 //                                             <td className="px-3 py-2 border-b">
 //                                                 <button
 //                                                     className="bg-blue-600 text-white cursor-pointer px-3 py-1 rounded text-xs font-semibold hover:bg-blue-700"
