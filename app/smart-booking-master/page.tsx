@@ -225,7 +225,7 @@ export default function SmartBookingMasterPage() {
         };
         const fetchTaxMaster = async () => {
             try {
-                const { data } = await axios.get("/api/tax-master");
+                const { data } = await axios.get("/api/taxMaster");
                 setTaxMaster(data);
                 console.log("Tax Master loaded:", data);
             } catch (error) {
@@ -544,7 +544,7 @@ export default function SmartBookingMasterPage() {
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
             "pendingDaysNotDelivered"].forEach(field => {
                 // cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
-                if (field === "gst") { 
+                if (field === "gst") {
                     const gstValue = cleanRow[field];
                     if (typeof gstValue === 'string' && gstValue.includes('%')) {
                         cleanRow[field] = parseFloat(gstValue.replace('%', ''));
@@ -696,8 +696,11 @@ export default function SmartBookingMasterPage() {
                                                             value={col === "todayDate" ? getCurrentDate() :
                                                                 col === "pendingDaysNotDelivered" ?
                                                                     calculatePendingDays(row.bookingDate, row.status) :
-                                                                    col === "gst" && row.gst ? `${row.gst}%` :
-                                                                        row[col] || ""}
+                                                                    col === "gst" && row.gst && document.activeElement !== document.getElementById(`gst-input-${row.__origIndex}`)
+                                                                        ? `${row.gst}%`
+                                                                        : row[col] || ""
+                                                            }
+                                                            id={col === "gst" ? `gst-input-${row.__origIndex}` : undefined}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
                                                             className={`w-full p-1 border rounded text-xs ${col === "todayDate" ? "bg-blue-50 border-blue-300" :
                                                                 col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "bg-red-50 border-red-300" :
