@@ -668,6 +668,27 @@ export default function SmartBookingMasterPage() {
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
                                                             className="w-full p-1 border rounded text-xs"
                                                         />
+                                                    ) : col === "dsrNdxPaper" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                            className="w-full p-1 border rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            <option value="DOCUMENT">Document / Dox</option>
+                                                            <option value="PARCEL">Parcel / Non Dox</option>
+                                                        </select>
+                                                    ) : col === "customerType" ? (
+                                                        <select
+                                                            value={row[col] || ""}
+                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                            className="w-full p-1 border rounded text-xs"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            <option value="REGULAR">Regular</option>
+                                                            <option value="CREDIT">Credit</option>
+                                                            <option value="WALK-IN">Walk-in</option>
+                                                        </select>
                                                     ) : col === "customerCode" ? (
                                                         <div className="relative">
                                                             <input
