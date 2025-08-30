@@ -626,7 +626,7 @@ export default function SmartBookingMasterPage() {
                                 placeholder="Search by AWB, Customer, Status..."
                             />
                         </div>
-                        <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                        <button onClick={handleDownload} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                             <Download className="w-5 h-5" />
                             Download Excel
                         </button>
