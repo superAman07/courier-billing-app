@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
+import { handleDownload } from "@/lib/downloadExcel";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -227,6 +228,18 @@ export default function AllBookingsPage() {
             className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
             placeholder="Booking Date"
           />
+        </div>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => {
+              toast('Downloading Excel...');
+              handleDownload();
+            }}
+            className="px-5 py-2 cursor-pointer bg-blue-700 text-white rounded-md shadow-md hover:bg-blue-800 transition"
+            disabled={loading}
+          >
+            Download Excel
+          </button>
         </div>
       </div>
 
