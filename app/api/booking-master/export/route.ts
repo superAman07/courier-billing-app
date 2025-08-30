@@ -47,18 +47,154 @@ export async function GET() {
             { header: "Ref", key: "ref", width: 12 },
         ];
 
-        bookings.forEach((b, idx) => {
-            worksheet.addRow({ ...b, srNo: idx + 1 });
+        //         bookings.forEach((b, idx) => {
+        //             worksheet.addRow({ ...b, srNo: idx + 1 });
+        //         });
+        //         worksheet.getRow(1).eachCell(cell => {
+        //             cell.fill = {
+        //                 type: "pattern",
+        //                 pattern: "solid",
+        //                 fgColor: { argb: "DEE6EF" }
+        //             };
+        //             cell.font = { bold: true };
+        //             cell.alignment = { horizontal: "center", vertical: "middle" };
+        //         });
+
+        //         const buf = await workbook.xlsx.writeBuffer();
+
+        //         return new NextResponse(buf, {
+        //             status: 200,
+        //             headers: {
+        //                 "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        //                 "Content-Disposition": `attachment; filename="BookingMaster.xlsx"`,
+        //             },
+        //         });
+        //     } catch (error) {
+        //         return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
+        //     }
+        // }
+        worksheet.mergeCells('A1:AI1');
+        worksheet.getCell('A1').value = 'BOOKING MASTER REPORT';
+        worksheet.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFF' } };
+        worksheet.getCell('A1').fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '1f4e79' }
+        };
+        worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+        worksheet.getRow(1).height = 35;
+
+        worksheet.mergeCells('A2:AI2');
+        worksheet.getCell('A2').value = `Generated on: ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}`;
+        worksheet.getCell('A2').font = { size: 11, italic: true, color: { argb: '666666' } };
+        worksheet.getCell('A2').alignment = { horizontal: 'center' };
+        worksheet.getRow(2).height = 20;
+
+        const headerRow = worksheet.getRow(4);
+        worksheet.columns.forEach((col, index) => {
+            const headerValue = Array.isArray(col.header) ? col.header.join(" ") : (col.header ?? "");
+            headerRow.getCell(index + 1).value = headerValue;
         });
-        worksheet.getRow(1).eachCell(cell => {
+
+        headerRow.eachCell(cell => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "DEE6EF" }
+                fgColor: { argb: "4472C4" }
             };
-            cell.font = { bold: true };
-            cell.alignment = { horizontal: "center", vertical: "middle" };
+            cell.font = {
+                bold: true,
+                color: { argb: "FFFFFF" },
+                size: 11
+            };
+            cell.alignment = {
+                horizontal: "center",
+                vertical: "middle",
+                wrapText: true
+            };
+            cell.border = {
+                top: { style: 'thin', color: { argb: '333333' } },
+                left: { style: 'thin', color: { argb: '333333' } },
+                bottom: { style: 'thin', color: { argb: '333333' } },
+                right: { style: 'thin', color: { argb: '333333' } }
+            };
         });
+        headerRow.height = 25;
+
+        bookings.forEach((booking, idx) => {
+            const rowNum = idx + 5;
+            const dataRow = worksheet.getRow(rowNum);
+
+            const formattedBooking = {
+                ...booking,
+                srNo: idx + 1,
+                bookingDate: booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-IN') : '',
+                statusDate: booking.statusDate ? new Date(booking.statusDate).toLocaleDateString('en-IN') : '',
+                dateOfDelivery: booking.dateOfDelivery ? new Date(booking.dateOfDelivery).toLocaleDateString('en-IN') : '',
+                todayDate: booking.todayDate ? new Date(booking.todayDate).toLocaleDateString('en-IN') : '',
+                gst: booking.gst ? `${booking.gst}%` : '',
+                mode: booking.mode === 'A' ? 'AIR' :
+                    booking.mode === 'S' ? 'SURFACE' :
+                        booking.mode === 'R' ? 'ROAD' :
+                            booking.mode === 'T' ? 'TRAIN' : booking.mode,
+            };
+
+            worksheet.addRow(formattedBooking);
+
+            if (idx % 2 === 0) {
+                dataRow.eachCell(cell => {
+                    cell.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "F8F9FA" }
+                    };
+                });
+            }
+
+            if (booking.status === 'DELIVERED') {
+                dataRow.eachCell(cell => {
+                    cell.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "D4EDDA" }
+                    };
+                });
+            } else if (booking.status === 'RETURNED') {
+                dataRow.eachCell(cell => {
+                    cell.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "F8D7DA" }
+                    };
+                });
+            }
+
+            dataRow.eachCell(cell => {
+                cell.alignment = { vertical: "middle" };
+                cell.font = { size: 10 };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'E5E5E5' } },
+                    left: { style: 'thin', color: { argb: 'E5E5E5' } },
+                    bottom: { style: 'thin', color: { argb: 'E5E5E5' } },
+                    right: { style: 'thin', color: { argb: 'E5E5E5' } }
+                };
+            });
+
+            dataRow.height = 20;
+        });
+
+        const lastRow = bookings.length + 6;
+        worksheet.mergeCells(`A${lastRow}:E${lastRow}`);
+        worksheet.getCell(`A${lastRow}`).value = `Total Records: ${bookings.length}`;
+        worksheet.getCell(`A${lastRow}`).font = { bold: true, size: 12, color: { argb: '1f4e79' } };
+        worksheet.getCell(`A${lastRow}`).alignment = { horizontal: 'left', vertical: 'middle' };
+
+        worksheet.autoFilter = {
+            from: { row: 4, column: 1 },
+            to: { row: bookings.length + 4, column: worksheet.columns.length }
+        };
+
+        worksheet.views = [{ state: 'frozen', ySplit: 4 }];
 
         const buf = await workbook.xlsx.writeBuffer();
 
@@ -66,10 +202,11 @@ export async function GET() {
             status: 200,
             headers: {
                 "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "Content-Disposition": `attachment; filename="BookingMaster.xlsx"`,
+                "Content-Disposition": `attachment; filename="BookingMaster_${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.xlsx"`,
             },
         });
     } catch (error) {
+        console.error("Excel export error:", error);
         return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
     }
 }
