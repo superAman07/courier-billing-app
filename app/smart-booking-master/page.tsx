@@ -149,7 +149,7 @@ export default function SmartBookingMasterPage() {
                     if (col === "bookingDate" || col === "statusDate") {
                         mapped[col] = parseDateString(row[importKey]);
                     } else if (col === "location") {
-                        // ✅ Extract only city name from location field
+                        // Extract only city name from location field
                         const rawLocation = row[importKey];
                         mapped[col] = extractCityName(rawLocation);
                         console.log(`Location processed: "${rawLocation}" → "${mapped[col]}"`);
@@ -167,7 +167,6 @@ export default function SmartBookingMasterPage() {
 
                 console.log(`Auto-mapped: Location "${mapped.location}" → Destination "${mapped.destinationCity}"`);
             } else if (mapped.destinationCity) {
-                // Handle destination-only case
                 const extractedCity = extractCityName(mapped.destinationCity);
                 mapped.location = extractedCity;
                 mapped.destinationCity = getCityCode(extractedCity);
@@ -179,7 +178,6 @@ export default function SmartBookingMasterPage() {
                 existingRow.pendingDaysNotDelivered = calculatePendingDays(existingRow.bookingDate, existingRow.status);
                 existingRow.todayDate = getCurrentDate();
                 return existingRow;
-                // return { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
             }
 
             mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
@@ -495,7 +493,7 @@ export default function SmartBookingMasterPage() {
                                     j === idx ? {
                                         ...r2,
                                         clientBillingValue: amount,
-                                        gst: gstPercentage // ✅ Auto-update GST
+                                        gst: gstPercentage  
                                     } : r2
                                 )
                             );
@@ -543,7 +541,6 @@ export default function SmartBookingMasterPage() {
             "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
             "pendingDaysNotDelivered"].forEach(field => {
-                // cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
                 if (field === "gst") {
                     const gstValue = cleanRow[field];
                     if (typeof gstValue === 'string' && gstValue.includes('%')) {
