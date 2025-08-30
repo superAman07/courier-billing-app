@@ -520,6 +520,7 @@ export default function SmartBookingMasterPage() {
     };
 
     const handleSave = async (idx: number) => {
+        setLoading(true);
         const row = tableRows[idx];
 
         if (!row.customerId) {
@@ -563,6 +564,8 @@ export default function SmartBookingMasterPage() {
             }
         } catch {
             toast.error("Failed to save booking");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -736,9 +739,9 @@ export default function SmartBookingMasterPage() {
                                             <td className="px-3 py-2 border-b">
                                                 <button
                                                     onClick={() => handleSave(row.__origIndex)}
-                                                    className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
+                                                    className="bg-blue-600 text-white px-3 cursor-pointer py-1 rounded text-xs hover:bg-blue-700"
                                                 >
-                                                    Save
+                                                    {loading ? "Saving..." : "Save"}
                                                 </button>
                                             </td>
                                         </tr>
