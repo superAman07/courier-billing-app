@@ -260,13 +260,13 @@ export default function SmartBookingMasterPage() {
         return name || cityCode;
     };
 
-    const getGSTPercentage = (customerPincode: string): string => {
-        if (!customerPincode) return "";
+    const getGSTPercentage = (customerPincode: string): number => {
+        if (!customerPincode) return 0;
 
         const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
         const customerState = pincodeData?.state?.name || "";
 
-        if (!customerState) return "";
+        if (!customerState) return 0;
 
         if (customerState.toLowerCase() === companyState.toLowerCase()) {
             const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
@@ -277,13 +277,13 @@ export default function SmartBookingMasterPage() {
             const totalRate = sgstRate + cgstRate;
 
             console.log(`📍 Intra-state GST: SGST(${sgstRate}%) + CGST(${cgstRate}%) = ${totalRate}%`);
-            return `${totalRate}%`;
+            return totalRate;
         } else {
             const igstTax = taxMaster.find(tax => tax.taxCode === 'IGST');
             const igstRate = igstTax ? parseFloat(igstTax.ratePercent) : 18;
 
             console.log(`🌍 Inter-state GST: IGST(${igstRate}%)`);
-            return `${igstRate}%`;
+            return igstRate;
         }
     };
 
@@ -446,7 +446,7 @@ export default function SmartBookingMasterPage() {
                     };
                 })
             );
-            toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}`);
+            toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}%`);
         }
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
         toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
@@ -543,7 +543,17 @@ export default function SmartBookingMasterPage() {
             "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
             "pendingDaysNotDelivered"].forEach(field => {
-                cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
+                // cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
+                if (field === "gst") { 
+                    const gstValue = cleanRow[field];
+                    if (typeof gstValue === 'string' && gstValue.includes('%')) {
+                        cleanRow[field] = parseFloat(gstValue.replace('%', ''));
+                    } else {
+                        cleanRow[field] = gstValue ? Number(gstValue) : null;
+                    }
+                } else {
+                    cleanRow[field] = cleanRow[field] ? Number(cleanRow[field]) : null;
+                }
             });
 
         try {
@@ -685,15 +695,16 @@ export default function SmartBookingMasterPage() {
                                                         <input
                                                             value={col === "todayDate" ? getCurrentDate() :
                                                                 col === "pendingDaysNotDelivered" ?
-                                                                    calculatePendingDays(row.bookingDate, row.status) : row[col] || ""}
+                                                                    calculatePendingDays(row.bookingDate, row.status) :
+                                                                    col === "gst" && row.gst ? `${row.gst}%` :
+                                                                        row[col] || ""}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className={`w-full p-1 border rounded text-xs ${
-                                                                col === "todayDate" ? "bg-blue-50 border-blue-300" : 
-                                                                col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "bg-red-50 border-red-300" : 
-                                                                col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" : 
-                                                                (col === "location" || col === "destinationCity") &&
-                                                                row.location === row.destinationCity && row.location ?
-                                                                "bg-green-50 border-green-300" : ""
+                                                            className={`w-full p-1 border rounded text-xs ${col === "todayDate" ? "bg-blue-50 border-blue-300" :
+                                                                col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "bg-red-50 border-red-300" :
+                                                                    col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" :
+                                                                        (col === "location" || col === "destinationCity") &&
+                                                                            row.location === row.destinationCity && row.location ?
+                                                                            "bg-green-50 border-green-300" : ""
                                                                 }`}
                                                             disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered"}
                                                             title={col === "gst" ? "Auto-calculated GST percentage" : ""}
