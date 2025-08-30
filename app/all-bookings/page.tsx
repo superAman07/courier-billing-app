@@ -91,10 +91,13 @@ export default function AllBookingsPage() {
   const applyFilters = () => {
     let filtered = [...bookings];
 
-    if (filters.customerName)
+    if (filters.customerName) {
+      const term = filters.customerName.toLowerCase();
       filtered = filtered.filter(b =>
-        (b.childCustomer + b.parentCustomer).toLowerCase().includes(filters.customerName.toLowerCase())
+        (b.customer?.customerName && b.customer.customerName.toLowerCase().includes(term)) ||
+        (b.receiverName && b.receiverName.toLowerCase().includes(term))
       );
+    }
     if (filters.consignStartNo)
       filtered = filtered.filter(b => b.awbNo?.startsWith(filters.consignStartNo));
     if (filters.consignEndNo)
@@ -164,45 +167,67 @@ export default function AllBookingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <h1 className="text-3xl text-blue-900 font-bold mb-6">All Bookings</h1>
-
-      <div className="mb-6 rounded-md p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 text-gray-900 font-medium text-sm">
-        <input
-          name="customerName"
-          value={filters.customerName}
-          onChange={handleFilterChange}
-          placeholder="Customer Name"
-          className="p-2 rounded-md border border-gray-300"
-        />
-        <input
-          name="consignStartNo"
-          value={filters.consignStartNo}
-          onChange={handleFilterChange}
-          placeholder="Consignment Start No"
-          className="p-2 rounded-md border border-gray-300"
-        />
-        <input
-          name="consignEndNo"
-          value={filters.consignEndNo}
-          onChange={handleFilterChange}
-          placeholder="Consignment End No"
-          className="p-2 rounded-md border border-gray-300"
-        />
-        <input
-          name="consignNo"
-          value={filters.consignNo}
-          onChange={handleFilterChange}
-          placeholder="Consignment No"
-          className="p-2 rounded-md border border-gray-300"
-        />
-        <input
-          name="bookingDate"
-          type="date"
-          value={filters.bookingDate}
-          onChange={handleFilterChange}
-          className="p-2 rounded-md border border-gray-300"
-          placeholder="Booking Date"
-        />
+      <h1 className="text-4xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-700 drop-shadow-sm">
+        All Bookings
+      </h1>
+      <div className="mb-8 bg-white rounded-2xl shadow-md px-6 py-6 flex flex-col md:flex-row md:items-end gap-6 border border-blue-100">
+        <div className="flex-1">
+          <label htmlFor="customerName" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Customer Name</label>
+          <input
+            name="customerName"
+            id="customerName"
+            value={filters.customerName}
+            onChange={handleFilterChange}
+            placeholder="Search for Customer"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+            autoComplete="off"
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="consignStartNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment Start No</label>
+          <input
+            name="consignStartNo"
+            id="consignStartNo"
+            value={filters.consignStartNo}
+            onChange={handleFilterChange}
+            placeholder="Start No"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="consignEndNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment End No</label>
+          <input
+            name="consignEndNo"
+            id="consignEndNo"
+            value={filters.consignEndNo}
+            onChange={handleFilterChange}
+            placeholder="End No"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="consignNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment No</label>
+          <input
+            name="consignNo"
+            id="consignNo"
+            value={filters.consignNo}
+            onChange={handleFilterChange}
+            placeholder="Contains…"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="bookingDate" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Booking Date</label>
+          <input
+            name="bookingDate"
+            id="bookingDate"
+            type="date"
+            value={filters.bookingDate}
+            onChange={handleFilterChange}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+            placeholder="Booking Date"
+          />
+        </div>
       </div>
 
       {loading && <div className="p-6 flex justify-center text-center font-medium text-blue-700"><div className="loader"></div></div>}
@@ -227,6 +252,19 @@ export default function AllBookingsPage() {
               {filteredBookings.map((row, idx) => (
                 <tr key={row.id || idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                   {columns.map(col => {
+                    if (col === "receiverName") {
+                      return (
+                        <td
+                          key={col}
+                          className="px-3 py-2 border-b font-semibold whitespace-nowrap text-gray-700"
+                          title={`${row.customer?.customerName || ""} (${row.customer?.customerCode || ""}) - ${row.receiverName || ""}`}
+                        >
+                          {row.customer?.customerName && row.customer?.customerCode
+                            ? `${row.customer.customerName} (${row.customer.customerCode}) - ${row.receiverName || ""}`
+                            : row.receiverName}
+                        </td>
+                      );
+                    }
                     const isDateField = ["bookingDate", "statusDate", "createdAt", "dateOfDelivery", "todayDate"].includes(col);
                     return editingId === row.id ? (
                       <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
