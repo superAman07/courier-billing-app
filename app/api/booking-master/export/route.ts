@@ -47,32 +47,6 @@ export async function GET() {
             { header: "Ref", key: "ref", width: 12 },
         ];
 
-        //         bookings.forEach((b, idx) => {
-        //             worksheet.addRow({ ...b, srNo: idx + 1 });
-        //         });
-        //         worksheet.getRow(1).eachCell(cell => {
-        //             cell.fill = {
-        //                 type: "pattern",
-        //                 pattern: "solid",
-        //                 fgColor: { argb: "DEE6EF" }
-        //             };
-        //             cell.font = { bold: true };
-        //             cell.alignment = { horizontal: "center", vertical: "middle" };
-        //         });
-
-        //         const buf = await workbook.xlsx.writeBuffer();
-
-        //         return new NextResponse(buf, {
-        //             status: 200,
-        //             headers: {
-        //                 "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        //                 "Content-Disposition": `attachment; filename="BookingMaster.xlsx"`,
-        //             },
-        //         });
-        //     } catch (error) {
-        //         return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
-        //     }
-        // }
         worksheet.mergeCells('A1:AI1');
         worksheet.getCell('A1').value = 'BOOKING MASTER REPORT';
         worksheet.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFF' } };
