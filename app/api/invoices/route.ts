@@ -138,7 +138,14 @@ export async function POST(req: NextRequest) {
                 city: b.destinationCity || b.location || "",
                 amountCharged: getAmount(b),
                 taxAmount: 0,
-                weight: Number(b.actualWeight) || Number(b.chargeWeight) || 0
+                weight: Number(b.actualWeight) || Number(b.chargeWeight) || 0,
+                consignmentValue: b.invoiceValue || 0,
+                doxType: b.dsrNdxPaper || '',
+                numPcs: b.pcs || 0,
+                serviceType: b.mode === "A" ? "AIR" : (b.mode === "S" ? "SURFACE" : (b.mode || '')),
+                shipperCost: b.shipperCost || 0,
+                otherExp: b.otherExp || 0,
+                waybillSurcharge: +(getAmount(b) * 0.002).toFixed(2)                
               }))
             }
           },
