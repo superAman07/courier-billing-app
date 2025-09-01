@@ -22,20 +22,17 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             </div>
         );
     }
-
-    // Helper variables for new logic
+ 
     const bookings = invoice.bookings || [];
     const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
     const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
-    const fuelSurcharge = 0; // set as needed
+    const fuelSurcharge = 0;
     const taxableValue = subtotal + fuelSurcharge;
     const igstRate = 0.18;
     const igstAmount = taxableValue * igstRate;
     const totalAfterTax = taxableValue + igstAmount;
     const roundOff = Math.round(totalAfterTax) - totalAfterTax;
     const finalAmount = Math.round(totalAfterTax);
-
-    // New summary for new fields
     const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
     const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
     const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
@@ -57,7 +54,6 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </p>
             </div>
 
-            {/* Invoice Details */}
             <div className="grid grid-cols-2 gap-8 mb-6 border-b border-black pb-4">
                 <div>
                     <div className="mb-2">
@@ -84,7 +80,6 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </div>
             </div>
 
-            {/* Customer Details */}
             <div className="mb-6 border-b border-black pb-4">
                 <div className="mb-2">
                     <span className="font-semibold text-black">To,</span>
@@ -104,7 +99,6 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </div>
             </div>
 
-            {/* Invoice Table */}
             <div className="mb-6 overflow-x-auto">
                 <table className="w-full border-collapse border-2 border-black">
                     <thead>
@@ -144,7 +138,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged ?? ''}</td>
                             </tr>
                         ))}
-                        {/* Summary Rows */}
+
                         <tr>
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{subtotal.toFixed(2)}</td>
@@ -185,14 +179,12 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </table>
             </div>
 
-            {/* Notes Section */}
             <div className="mb-8 text-sm text-gray-500">
                 <p className="mb-2"><strong>Note:</strong> All Billing related issues must be raised and must be clarified within 5 days of Bill submission.</p>
                 <p className="mb-2">For Non insured (No Risk) shipment, Consigner or Consignee will not be right to claim any shortage / misplaced / damage.</p>
                 <p className="mb-2">For Lost of Non insured shipment, Company will provide FIR Copy.</p>
             </div>
 
-            {/* Signature Section */}
             <div className="flex justify-between items-end mt-8">
                 <div className="text-left">
                     <img
@@ -208,8 +200,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                     </div>
                 </div>
             </div>
-
-            {/* Print Button */}
+ 
             <div className="flex justify-center mt-8 print:hidden">
                 <button
                     onClick={() => window.print()}
