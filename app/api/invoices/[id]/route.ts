@@ -21,23 +21,53 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const id = (await params).id;
   try {
     const data = await req.json();
-    const allowedFields = ["invoiceDate"];
+
+    const allowedHeaderFields = ["invoiceDate", "periodFrom", "periodTo"];
     const updateData: any = {};
-    for (const key of allowedFields) {
+    for (const key of allowedHeaderFields) {
       if (data[key] !== undefined && data[key] !== "") {
-        updateData[key] = key === "invoiceDate" ? new Date(data[key]) : data[key];
+        updateData[key] = new Date(data[key]);
       }
     }
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ message: "No valid fields to update" }, { status: 400 });
+
+    let updatedInvoice = null;
+    if (Object.keys(updateData).length > 0) {
+      updatedInvoice = await prisma.invoice.update({
+        where: { id },
+        data: updateData,
+        include: { bookings: true, customer: true }
+      });
     }
-    const invoice = await prisma.invoice.update({
+
+    if (Array.isArray(data.bookings)) {
+      for (const updatedLine of data.bookings) {
+        const allowedBookingFields = [
+          "amountCharged", "weight", "consignmentValue", "doxType",
+          "numPcs", "serviceType", "shipperCost", "waybillSurcharge", "otherExp"
+        ];
+        const bookingUpdate: any = {};
+        for (const key of allowedBookingFields) {
+          if (updatedLine[key] !== undefined) {
+            bookingUpdate[key] = updatedLine[key];
+          }
+        }
+        if (Object.keys(bookingUpdate).length > 0 && updatedLine.id) {
+          await prisma.invoiceBooking.update({
+            where: { id: updatedLine.id },
+            data: bookingUpdate,
+          });
+        }
+      }
+    }
+
+    const refreshedInvoice = await prisma.invoice.findUnique({
       where: { id },
-      data: updateData,
+      include: { bookings: true, customer: true },
     });
-    return NextResponse.json(invoice);
+
+    return NextResponse.json(refreshedInvoice);
   } catch (error) {
-    console.log("Error updating invoice:", error);
+    console.error("Error updating invoice:", error);
     return NextResponse.json({ message: "Error updating invoice" }, { status: 500 });
   }
 }
@@ -45,7 +75,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
   try {
-    // Find invoice and its bookings
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: { bookings: true },
@@ -53,20 +82,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!invoice) {
       return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
     }
-    // Update bookings' status back to BOOKED
     const bookingIds = invoice.bookings.map(b => b.bookingId);
-    if (invoice.type === "CashBooking") {
-      await prisma.cashBooking.updateMany({
+    if (
+      invoice.type === "BookingMaster_CREDIT" ||
+      invoice.type === "BookingMaster_CASH"
+    ) {
+      await prisma.bookingMaster.updateMany({
         where: { id: { in: bookingIds } },
-        data: { status: "BOOKED" },
-      });
-    } else if (invoice.type === "InternationalCashBooking") {
-      await prisma.internationalCashBooking.updateMany({
-        where: { id: { in: bookingIds } },
-        data: { status: "BOOKED" },
+        data: { status: "BOOKED", statusDate: new Date() },
       });
     }
-    // Delete invoice (cascades to invoiceBooking if FK is set)
     await prisma.invoice.delete({ where: { id } });
     return NextResponse.json({ message: "Invoice deleted" });
   } catch (error) {

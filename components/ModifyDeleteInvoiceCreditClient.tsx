@@ -31,7 +31,12 @@ export default function ModifyDeleteInvoiceCreditClient() {
     const fetchInvoices = async () => {
         setLoading(true);
         try {
-            const params: any = { type };
+            const params: any = {};
+            if (type === 'CreditClientBooking') {
+                params.type = "BookingMaster_CREDIT";  
+            } else if (type === "InternationalCreditClientBooking") {
+                params.type = "BookingMaster_CREDIT"; 
+            }
             if (fromDate) params.fromDate = fromDate;
             if (toDate) params.toDate = toDate;
             if (invoiceNo) params.invoiceNo = invoiceNo;

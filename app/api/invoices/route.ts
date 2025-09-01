@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
                 serviceType: b.mode === "A" ? "AIR" : (b.mode === "S" ? "SURFACE" : (b.mode || '')),
                 shipperCost: b.shipperCost || 0,
                 otherExp: b.otherExp || 0,
-                waybillSurcharge: +(getAmount(b) * 0.002).toFixed(2)                
+                waybillSurcharge: +(getAmount(b) * 0.002).toFixed(2)
               }))
             }
           },
@@ -185,10 +185,10 @@ export async function GET(req: NextRequest) {
 
     const where: any = {};
 
-    // Handle new BookingMaster invoice types
     if (type) {
-      if (type === "Domestic" || type === "International") {
-        // Map UI types to DB types for BookingMaster invoices
+      if (type === "Domestic" || type === "BookingMaster_CREDIT") {
+        where.type = "BookingMaster_CREDIT";
+      } else if (type === "International" || type === "InternationalCreditClientBooking") {
         where.type = "BookingMaster_CREDIT";
       } else {
         where.type = type;
