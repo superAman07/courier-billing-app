@@ -405,19 +405,26 @@ model Invoice {
 }
 
 model InvoiceBooking {
-  id            String   @id @default(cuid())
-  invoiceId     String
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  bookingId     String
-  bookingType   String
-  consignmentNo String
-  bookingDate   DateTime
-  senderName    String
-  receiverName  String
-  city          String
-  amountCharged Float
-  taxAmount     Float?
-  weight        Float?
+  id               String   @id @default(cuid())
+  invoiceId        String
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  bookingId        String
+  bookingType      String
+  consignmentNo    String
+  bookingDate      DateTime
+  senderName       String
+  receiverName     String
+  city             String
+  amountCharged    Float
+  taxAmount        Float?
+  weight           Float?
+  consignmentValue Float?
+  doxType          String?
+  numPcs           Int?
+  serviceType      String?
+  shipperCost      Float?
+  waybillSurcharge Float?
+  otherExp         Float?
 
   createdAt DateTime @default(now())
 }
