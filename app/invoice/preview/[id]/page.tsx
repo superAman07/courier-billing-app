@@ -54,7 +54,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             <div className="grid grid-cols-2 gap-8 mb-6 border-b border-black pb-4">
                 <div>
                     <div className="mb-2">
-                        <span className="font-semibold text-black">Invoice No</span>
+                        <span className="font-semibold text-black">Invoice No :</span>
                         <span className="ml-8 text-gray-600">{invoice.invoiceNo}</span>
                     </div>
                     <div className="mb-2">
@@ -71,7 +71,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                         </span>
                     </div>
                     <div className="mb-2">
-                        <span className="font-semibold text-black">SAC Code</span>
+                        <span className="font-semibold text-black">SAC Code :</span>
                         <span className="ml-8 text-gray-600">{company?.hsnSacCode || 'N/A'}</span>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                     <span className="ml-12 text-gray-600">{invoice.customer?.customerName || 'Appropriate Diet Therapy'}</span>
                 </div>
                 <div className="mb-2">
-                    <span className="font-semibold text-black">Address</span>
+                    <span className="font-semibold text-black">Address :</span>
                     <span className="ml-6 text-gray-600">{invoice.customer?.address || 'Plot No. B-5/8, Butibori Industrial Area, Butibori, Midc, Nagpur, MH'}</span>
                 </div>
                 <div className="mb-2">
@@ -121,10 +121,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.city}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {/* You can add weight from BookingMaster if available */}
-                                    0.31
-                                </td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight || 0}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged}</td>
                             </tr>
                         ))}

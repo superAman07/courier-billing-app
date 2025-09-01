@@ -417,6 +417,7 @@ model InvoiceBooking {
   city          String
   amountCharged Float
   taxAmount     Float?
+  weight        Float?
 
   createdAt DateTime @default(now())
 }
