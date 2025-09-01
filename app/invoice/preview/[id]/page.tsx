@@ -72,6 +72,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                     </div>
                     <div className="mb-2">
                         <span className="font-semibold text-black">SAC Code</span>
+                        <span className="ml-8 text-gray-600">{company?.hsnSacCode || 'N/A'}</span>
                     </div>
                 </div>
             </div>
@@ -88,6 +89,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="mb-2">
                     <span className="font-semibold text-black">Phone :</span>
+                    <span className="ml-4 text-gray-600">
+                        {invoice.customer?.phone} , {invoice.customer?.mobile || 'N/A'}
+                    </span>
                 </div>
                 <div className="mb-2">
                     <span className="font-semibold text-black">GSTN No-</span>
@@ -170,18 +174,11 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             {/* Signature Section */}
             <div className="flex justify-between items-end mt-8">
                 <div className="text-left">
-                    {/* Space for signature stamp/image */}
-                    {company?.signatureImageUrl && (
-                        <img
-                            src={company.signatureImageUrl}
-                            alt="Company Signature"
-                            className="max-w-32 max-h-20 object-contain"
-                        />
-                    )}
-                    <div className="text-sm font-semibold text-blue-600 mt-2">
-                        For Awdhoot Global Solutions<br />
-                        Proprietor
-                    </div>
+                    <img
+                        src={'/image.png'}
+                        alt="Company Signature"
+                        className="max-w-36 max-h-26 object-contain"
+                    />
                 </div>
                 <div className="text-right">
                     <div className="text-sm text-gray-600">
