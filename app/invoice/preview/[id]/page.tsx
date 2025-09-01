@@ -192,7 +192,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             <div className="flex justify-center mt-8 print:hidden">
                 <button
                     onClick={() => window.print()}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer rounded-lg font-medium"
                 >
                     Print Invoice
                 </button>
