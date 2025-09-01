@@ -176,7 +176,7 @@ export async function GET(req: NextRequest) {
     const invoiceNo = url.searchParams.get("invoiceNo") || undefined;
 
     const where: any = {};
-    
+
     // Handle new BookingMaster invoice types
     if (type) {
       if (type === "Domestic" || type === "International") {
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
         where.type = type;
       }
     }
-    
+
     if (customerId) where.customerId = customerId;
     if (invoiceNo) where.invoiceNo = { contains: invoiceNo, mode: "insensitive" };
 

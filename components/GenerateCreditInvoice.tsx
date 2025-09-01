@@ -57,7 +57,10 @@ export default function GenerateCreditInvoice() {
     setInvoiceLoading(true);
     try {
       const { data } = await axios.get('/api/invoices', {
-        params: { type, customerId }
+        params: {
+          type: 'BookingMaster_CREDIT',  // ← Use the actual DB type
+          customerId
+        }
       });
       setInvoices(Array.isArray(data) ? data : data.data);
     } finally {
@@ -86,10 +89,10 @@ export default function GenerateCreditInvoice() {
     setLoading(true);
     try {
       await axios.post('/api/invoices', {
-        type,
-        invoiceDate,
         bookingIds: selected,
-        customerId
+        customerId,
+        invoiceDate,
+        customerType: 'CREDIT'
       });
       toast.success('Invoice generated!');
       setBookings([]);
