@@ -23,18 +23,25 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
         );
     }
 
-    // Calculate totals
-    const subtotal = invoice.bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
-    const fuelSurcharge = 0; // Can be calculated or fetched from data
+    // Helper variables for new logic
+    const bookings = invoice.bookings || [];
+    const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
+    const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
+    const fuelSurcharge = 0; // set as needed
     const taxableValue = subtotal + fuelSurcharge;
-    const igstRate = 0.18; // 18%
+    const igstRate = 0.18;
     const igstAmount = taxableValue * igstRate;
     const totalAfterTax = taxableValue + igstAmount;
     const roundOff = Math.round(totalAfterTax) - totalAfterTax;
     const finalAmount = Math.round(totalAfterTax);
 
+    // New summary for new fields
+    const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
+    const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
+    const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
+
     return (
-        <div className="max-w-4xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
+        <div className="max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
             {/* Header */}
             <div className="text-center border-b-2 border-black pb-4 mb-6">
                 <h1 className="text-2xl font-bold text-black">{company?.companyName || 'Awdhoot Global Solutions'}</h1>
@@ -42,11 +49,11 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                     Shop No.: {company?.address || '570/326, VIP Road, Sainik Nagar,'}
                 </p>
                 <p className="text-sm text-gray-700">
-                    {company?.city || 'Lucknow'} - {company?.pincode || '226002'} - {company?.state.toUpperCase() || 'Uttar Pradesh'}
+                    {company?.city || 'Lucknow'} - {company?.pincode || '226002'} - {(company?.state || 'Uttar Pradesh').toUpperCase()}
                 </p>
                 <p className="text-sm text-gray-700">Phone : {company?.phone || company?.mobile || '8853099924'}</p>
                 <p className="text-sm font-semibold text-black">
-                    GST No : {company?.gstNo || '09BLUPS9727E1Z7'}, {company?.state.toUpperCase() || 'Uttar Pradesh'}
+                    GST No : {company?.gstNo || '09BLUPS9727E1Z7'}, {(company?.state || 'Uttar Pradesh').toUpperCase()}
                 </p>
             </div>
 
@@ -66,13 +73,13 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                         <span className="ml-8 text-gray-600">
                             {invoice.periodFrom && invoice.periodTo
                                 ? `${new Date(invoice.periodFrom).toLocaleDateString('en-GB')} to ${new Date(invoice.periodTo).toLocaleDateString('en-GB')}`
-                                : '1 Jul 25 to 31 Jul 25'
+                                : ''
                             }
                         </span>
                     </div>
                     <div className="mb-2">
                         <span className="font-semibold text-black">SAC Code :</span>
-                        <span className="ml-8 text-gray-600">{company?.hsnSacCode || 'N/A'}</span>
+                        <span className="ml-6 text-gray-600">{company?.hsnSacCode || 'N/A'}</span>
                     </div>
                 </div>
             </div>
@@ -81,39 +88,43 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             <div className="mb-6 border-b border-black pb-4">
                 <div className="mb-2">
                     <span className="font-semibold text-black">To,</span>
-                    <span className="ml-12 text-gray-600">{invoice.customer?.customerName || 'Appropriate Diet Therapy'}</span>
+                    <span className="ml-12 text-gray-600">{invoice.customer?.customerName || ''}</span>
                 </div>
                 <div className="mb-2">
                     <span className="font-semibold text-black">Address :</span>
-                    <span className="ml-6 text-gray-600">{invoice.customer?.address || 'Plot No. B-5/8, Butibori Industrial Area, Butibori, Midc, Nagpur, MH'}</span>
+                    <span className="ml-6 text-gray-600">{invoice.customer?.address || ''}</span>
                 </div>
                 <div className="mb-2">
                     <span className="font-semibold text-black">Phone :</span>
-                    <span className="ml-4 text-gray-600">
-                        {invoice.customer?.phone} , {invoice.customer?.mobile || 'N/A'}
-                    </span>
+                    <span className="ml-4 text-gray-600">{invoice.customer?.phone || invoice.customer?.mobile || 'N/A'}</span>
                 </div>
                 <div className="mb-2">
                     <span className="font-semibold text-black">GSTN No-</span>
-                    <span className="ml-4 text-gray-600">{invoice.customer?.gstNo || '27FZPPS9093L1Z0'}</span>
+                    <span className="ml-4 text-gray-600">{invoice.customer?.gstNo || ''}</span>
                 </div>
             </div>
 
             {/* Invoice Table */}
-            <div className="mb-6">
+            <div className="mb-6 overflow-x-auto">
                 <table className="w-full border-collapse border-2 border-black">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Sr.</th>
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Booking Date</th>
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Consignment No.</th>
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Destination City</th>
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Weight or No.</th>
-                            <th className="border border-black px-2 py-2 text-sm font-semibold text-gray-600 text-center">Amt.</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Sr.</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Booking Date</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Consignment No.</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Destination City</th>
+                            {showConsignmentValue && (
+                                <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Consignment Value</th>
+                            )}
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Dox/Non Dox</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">No. of Pcs</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Service Type</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Weight</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Amt.</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {invoice.bookings.map((booking: any, index: number) => (
+                        {bookings.map((booking: any, index: number) => (
                             <tr key={booking.id}>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{index + 1}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
@@ -121,34 +132,53 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.city}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight || 0}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged}</td>
+                                {showConsignmentValue && (
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {booking.consignmentValue > 0 ? booking.consignmentValue : ''}
+                                    </td>
+                                )}
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.doxType || ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.serviceType || ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight ?? ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged ?? ''}</td>
                             </tr>
                         ))}
-
                         {/* Summary Rows */}
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{subtotal}</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{subtotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge @ 0 %</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{shipperCostTotal.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Way Bill Surcharge @ 0.2%</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{waybillSurchargeTotal.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Other Exp.</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{otherExpTotal.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge @ 0 %</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{fuelSurcharge}</td>
                         </tr>
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue}</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST 18%</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(1)}</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST 18%</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total :</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{totalAfterTax.toFixed(1)}</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total :</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{totalAfterTax.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={5} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Round Off</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Round Off</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{finalAmount}</td>
                         </tr>
                     </tbody>
@@ -157,15 +187,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
 
             {/* Notes Section */}
             <div className="mb-8 text-sm text-gray-500">
-                <p className="mb-2">
-                    <strong>Note:</strong> All Billing related issues must be raised and must be clarified within 5 days of Bill submission.
-                </p>
-                <p className="mb-2">
-                    For Non insured (No Risk) shipment, Consigner or Consignee will not be right to claim any shortage / misplaced / damage.
-                </p>
-                <p className="mb-2">
-                    For Lost of Non insured shipment, Company will provide FIR Copy.
-                </p>
+                <p className="mb-2"><strong>Note:</strong> All Billing related issues must be raised and must be clarified within 5 days of Bill submission.</p>
+                <p className="mb-2">For Non insured (No Risk) shipment, Consigner or Consignee will not be right to claim any shortage / misplaced / damage.</p>
+                <p className="mb-2">For Lost of Non insured shipment, Company will provide FIR Copy.</p>
             </div>
 
             {/* Signature Section */}

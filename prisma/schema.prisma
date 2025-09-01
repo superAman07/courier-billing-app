@@ -245,7 +245,7 @@ model BookingMaster {
   pin                     String
   dsrContents             String?
   dsrNdxPaper             String?
-  invoiceValue            Float? // Material Value
+  invoiceValue            Float? // Material/Consignment Value
   actualWeight            Float? // Fr weight
   chargeWeight            Float? // Base Fr weight
   fuelSurcharge           Float?
