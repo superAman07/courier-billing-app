@@ -7,6 +7,7 @@ import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import { Download, Users } from "lucide-react";
+import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -591,6 +592,8 @@ export default function SmartBookingMasterPage() {
                     <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
                 </div>
             </div>
+
+            <UploadStatusExcelButton/>
 
             <BookingImportPanel onData={handleImport} />
 

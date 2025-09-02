@@ -13,6 +13,8 @@
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "exceljs": "^4.4.0",
+    "formidable": "^3.5.4",
+    "formidable-serverless": "^1.1.1",
     "lucide-react": "^0.540.0",
     "next": "15.4.4",
     "react": "19.1.0",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20.19.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
