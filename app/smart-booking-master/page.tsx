@@ -592,7 +592,6 @@ export default function SmartBookingMasterPage() {
                     <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
                 </div>
             </div>
-
             <UploadStatusExcelButton/>
 
             <BookingImportPanel onData={handleImport} />

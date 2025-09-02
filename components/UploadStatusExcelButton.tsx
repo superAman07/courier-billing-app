@@ -58,15 +58,20 @@ export default function UploadStatusExcelButton({ apiEndpoint = '/api/booking-ma
             toast.error(msg);
         } finally {
             setUploading(false);
-            event.target.value = ''; 
+            event.target.value = '';
         }
     };
 
 
     return (
-        <div className="inline-block">
-            <label className="cursor-pointer inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+        <div
+            className="fixed bottom-4 left-4 z-50"
+            style={{ zIndex: 9999 }}
+        >
+            <label className="cursor-pointer inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium shadow-lg">
+                <svg
+                    className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true"
+                >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v16h16" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 20l7-7 4 4 5-5" />
                 </svg>
