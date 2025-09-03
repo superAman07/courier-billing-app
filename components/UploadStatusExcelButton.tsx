@@ -61,8 +61,6 @@ export default function UploadStatusExcelButton({ apiEndpoint = '/api/booking-ma
             event.target.value = '';
         }
     };
-
-
     return (
         <div
             className="fixed bottom-4 left-4 z-50"
