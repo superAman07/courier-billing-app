@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export async function GET(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status');
+
+    try {
+        const whereClause: any = {};
+        if (status && (status.toUpperCase() === 'UNUSED' || status.toUpperCase() === 'USED')) {
+            whereClause.status = status.toUpperCase();
+        }
+
+        const dockets = await prisma.docketStock.findMany({
+            where: whereClause,
+            orderBy: {
+                awbNo: 'asc'
+            }
+        });
+
+        const count = await prisma.docketStock.count({ where: whereClause });
+
+        return NextResponse.json({
+            data: dockets,
+            count: count
+        });
+
+    } catch (error) {
+        console.error("Failed to fetch docket stock:", error);
+        return NextResponse.json({ error: "Failed to fetch docket stock." }, { status: 500 });
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { awbNumbers } = await req.json();
