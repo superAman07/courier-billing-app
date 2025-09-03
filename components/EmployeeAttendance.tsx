@@ -103,7 +103,7 @@ export default function EmployeeAttendancePage() {
             }));
             await axios.post('/api/employee-attendance', { date: attendanceDate, attendanceData: payload });
             toast.success('Attendance saved successfully!');
-            fetchAttendance(attendanceDate); // Re-fetch to get saved calculated values
+            fetchAttendance(attendanceDate);
         } catch (error: any) {
             const msg = error?.response?.data?.error || 'Failed to save attendance.';
             toast.error(msg);
