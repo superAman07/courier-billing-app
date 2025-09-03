@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Calendar, Save, UserCheck, Clock, AlertTriangle, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { Calendar, Save, UserCheck, Clock, AlertTriangle, DollarSign, FileText, Loader2, Search } from 'lucide-react';
 
 interface AttendanceRecord {
     employeeId: string;
@@ -32,6 +32,7 @@ export default function EmployeeAttendancePage() {
     const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [search, setSearch] = useState('');
 
     const fetchAttendance = async (date: string) => {
         setLoading(true);
@@ -55,6 +56,15 @@ export default function EmployeeAttendancePage() {
             fetchAttendance(attendanceDate);
         }
     }, [attendanceDate]);
+
+    const filteredData = useMemo(() => {
+        if (!search) return attendanceData;
+        const lowercasedSearch = search.toLowerCase();
+        return attendanceData.filter(att =>
+            att.employeeName.toLowerCase().includes(lowercasedSearch) ||
+            att.employeeCode.toLowerCase().includes(lowercasedSearch)
+        );
+    }, [attendanceData, search]);
 
     const handleAttendanceChange = (employeeId: string, field: keyof AttendanceRecord, value: any) => {
         setAttendanceData(prevData =>
@@ -116,73 +126,217 @@ export default function EmployeeAttendancePage() {
     const thStyle = "px-3 py-3 text-left text-xs font-semibold text-gray-100 bg-gray-700 uppercase tracking-wider sticky top-0";
 
     return (
-        <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="max-w-full mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="p-6 bg-gradient-to-r from-slate-800 via-slate-900 to-black shadow-md flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <UserCheck className="w-8 h-8 text-teal-300" />
-                        <h1 className="text-2xl font-bold text-white tracking-wider">Employee Attendance</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="date"
-                                id="attendanceDate"
-                                value={attendanceDate}
-                                onChange={(e) => setAttendanceDate(e.target.value)}
-                                className="pl-10 pr-4 py-2 border text-gray-700 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
-                            />
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
+            <div className="mx-auto max-w-[1400px] bg-white rounded-lg shadow-xl ring-1 ring-slate-200 overflow-hidden">
+                <header className="p-5 md:p-6 border-b border-slate-200 bg-slate-900">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <UserCheck className="w-8 h-8 text-teal-400" aria-hidden="true" />
+                            <h1 className="text-pretty text-2xl md:text-3xl font-semibold text-white tracking-tight">
+                                Employee Attendance
+                            </h1>
                         </div>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || loading}
-                            className="inline-flex items-center gap-2 px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg cursor-pointer font-bold shadow-lg transition-transform transform hover:scale-105 disabled:bg-teal-300 disabled:cursor-not-allowed"
-                        >
-                            {saving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
-                            {saving ? 'Saving...' : 'Save Attendance'}
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="attendanceDate" className="sr-only">
+                                Select attendance date
+                            </label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search Employee..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 pr-4 py-2 border text-gray-700 bg-gray-100 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Calendar
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
+                                    aria-hidden="true"
+                                />
+                                <input
+                                    type="date"
+                                    id="attendanceDate"
+                                    value={attendanceDate}
+                                    onChange={(e) => setAttendanceDate(e.target.value)}
+                                    aria-label="Attendance date"
+                                    className="pl-10 pr-4 py-2 rounded-md border border-slate-300 bg-white text-slate-800 text-sm shadow-sm
+                                               focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                />
+                            </div>
+
+                            <button
+                                onClick={handleSave}
+                                disabled={saving || loading}
+                                className="inline-flex items-center cursor-pointer gap-2 px-4 md:px-5 py-2 rounded-md font-medium
+                                           bg-teal-600 text-white hover:bg-teal-700 active:bg-teal-700
+                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
+                                           disabled:bg-teal-300 disabled:cursor-not-allowed transition-colors"
+                                aria-label="Save attendance"
+                                title="Save attendance"
+                            >
+                                {saving ? (
+                                    <Loader2 className="animate-spin w-5 h-5" aria-hidden="true" />
+                                ) : (
+                                    <Save className="w-5 h-5" aria-hidden="true" />
+                                )}
+                                {saving ? "Saving..." : "Save Attendance"}
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div className="overflow-x-auto max-h-[calc(100vh-200px)]">
-                    <table className="min-w-full divide-y divide-gray-300">
-                        <thead className="bg-gray-700">
+                </header>
+
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto divide-y divide-slate-200">
+                        <thead>
                             <tr>
                                 <th className={thStyle}>Employee</th>
                                 <th className={thStyle}>Status</th>
-                                <th className={thStyle}><Clock className="inline-block w-4 h-4 mr-1" />Check-In</th>
-                                <th className={thStyle}><Clock className="inline-block w-4 h-4 mr-1" />Check-Out</th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <Clock className="w-4 h-4" aria-hidden="true" /> Check-In
+                                    </span>
+                                </th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <Clock className="w-4 h-4" aria-hidden="true" /> Check-Out
+                                    </span>
+                                </th>
                                 <th className={thStyle}>Total Hrs</th>
                                 <th className={thStyle}>Overtime</th>
-                                <th className={thStyle}><AlertTriangle className="inline-block w-4 h-4 mr-1" />Late (min)</th>
-                                <th className={thStyle}><DollarSign className="inline-block w-4 h-4 mr-1" />Fine</th>
-                                <th className={thStyle}><DollarSign className="inline-block w-4 h-4 mr-1" />Advance</th>
-                                <th className={thStyle}><FileText className="inline-block w-4 h-4 mr-1" />Remarks</th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Late (min)
+                                    </span>
+                                </th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <DollarSign className="w-4 h-4" aria-hidden="true" /> Fine
+                                    </span>
+                                </th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <DollarSign className="w-4 h-4" aria-hidden="true" /> Advance
+                                    </span>
+                                </th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
+                                        <FileText className="w-4 h-4" aria-hidden="true" /> Remarks
+                                    </span>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+
+                        <tbody className="bg-white divide-y divide-slate-200">
                             {loading ? (
-                                <tr><td colSpan={10} className="text-center py-10"><Loader2 className="mx-auto animate-spin w-8 h-8 text-gray-500" /></td></tr>
+                                <tr>
+                                    <td colSpan={10} className="text-center py-12">
+                                        <Loader2
+                                            className="mx-auto animate-spin w-8 h-8 text-slate-500"
+                                            aria-label="Loading attendance data"
+                                        />
+                                    </td>
+                                </tr>
                             ) : (
-                                attendanceData.map(att => (
-                                    <tr key={att.employeeId} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-3 py-2 whitespace-nowrap">
-                                            <div className="font-bold text-sm text-gray-800">{att.employeeName}</div>
-                                            <div className="text-xs text-gray-500">{att.employeeCode}</div>
+                                filteredData.map((att) => (
+                                    <tr key={att.employeeId} className="odd:bg-white even:bg-slate-50 hover:bg-teal-50 transition-colors">
+                                        <td className="px-3 py-3 whitespace-nowrap align-top">
+                                            <div className="text-sm font-medium text-slate-900">{att.employeeName}</div>
+                                            <div className="text-xs text-slate-500">{att.employeeCode}</div>
                                         </td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-40">
-                                            <select value={att.status} onChange={(e) => handleAttendanceChange(att.employeeId, 'status', e.target.value)} className={`${inputStyle} cursor-pointer`}>
-                                                <option>Present</option><option>Absent</option><option>Leave</option><option>HalfDay</option><option>ShortLeave</option><option>Holiday</option>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-40 align-top">
+                                            <select
+                                                value={att.status}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "status", e.target.value)}
+                                                className={`${inputStyle} cursor-pointer`}
+                                                aria-label={`Status for ${att.employeeName}`}
+                                            >
+                                                <option>Present</option>
+                                                <option>Absent</option>
+                                                <option>Leave</option>
+                                                <option>HalfDay</option>
+                                                <option>ShortLeave</option>
+                                                <option>Holiday</option>
                                             </select>
                                         </td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-32"><input type="time" value={att.checkIn || ''} onChange={(e) => handleAttendanceChange(att.employeeId, 'checkIn', e.target.value)} className={inputStyle} /></td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-32"><input type="time" value={att.checkOut || ''} onChange={(e) => handleAttendanceChange(att.employeeId, 'checkOut', e.target.value)} className={inputStyle} /></td>
-                                        <td className="px-3 py-2 whitespace-nowrap text-center"><span className="text-sm font-mono p-2 rounded-md bg-blue-50 text-blue-700">{att.totalHours?.toFixed(2) || '0.00'}</span></td>
-                                        <td className="px-3 py-2 whitespace-nowrap text-center"><span className="text-sm font-mono p-2 rounded-md bg-green-50 text-green-700">{att.overtimeHours?.toFixed(2) || '0.00'}</span></td>
-                                        <td className="px-3 py-2 whitespace-nowrap text-center"><span className={`text-sm font-mono p-2 rounded-md ${att.lateByMinutes ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600'}`}>{att.lateByMinutes || 0}</span></td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-32"><input type="number" placeholder="0.00" value={att.fineAmount || ''} onChange={(e) => handleAttendanceChange(att.employeeId, 'fineAmount', e.target.value)} className={inputStyle} /></td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-32"><input type="number" placeholder="0.00" value={att.advanceAmount || ''} onChange={(e) => handleAttendanceChange(att.employeeId, 'advanceAmount', e.target.value)} className={inputStyle} /></td>
-                                        <td className="px-3 py-2 whitespace-nowrap w-64"><input type="text" placeholder="Remarks..." value={att.remarks} onChange={(e) => handleAttendanceChange(att.employeeId, 'remarks', e.target.value)} className={inputStyle} /></td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-36 align-top">
+                                            <input
+                                                type="time"
+                                                value={att.checkIn || ""}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "checkIn", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Check-in time for ${att.employeeName}`}
+                                            />
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-36 align-top">
+                                            <input
+                                                type="time"
+                                                value={att.checkOut || ""}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "checkOut", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Check-out time for ${att.employeeName}`}
+                                            />
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap text-center align-top">
+                                            <span className="inline-flex items-center justify-center min-w-[64px] text-sm font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-800">
+                                                {att.totalHours?.toFixed(2) || "0.00"}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap text-center align-top">
+                                            <span className="inline-flex items-center justify-center min-w-[64px] text-sm font-mono px-2.5 py-1 rounded-md bg-teal-50 text-teal-700">
+                                                {att.overtimeHours?.toFixed(2) || "0.00"}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap text-center align-top">
+                                            <span
+                                                className={`inline-flex items-center justify-center min-w-[48px] text-sm font-mono px-2.5 py-1 rounded-md ${att.lateByMinutes ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600"
+                                                    }`}
+                                            >
+                                                {att.lateByMinutes || 0}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-32 align-top">
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={att.fineAmount || ""}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "fineAmount", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Fine amount for ${att.employeeName}`}
+                                                inputMode="decimal"
+                                            />
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-32 align-top">
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={att.advanceAmount || ""}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "advanceAmount", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Advance amount for ${att.employeeName}`}
+                                                inputMode="decimal"
+                                            />
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-64 align-top">
+                                            <input
+                                                type="text"
+                                                placeholder="Remarks..."
+                                                value={att.remarks}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "remarks", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Remarks for ${att.employeeName}`}
+                                            />
+                                        </td>
                                     </tr>
                                 ))
                             )}
