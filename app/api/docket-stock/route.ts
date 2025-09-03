@@ -31,6 +31,27 @@ export async function GET(req: NextRequest) {
     }
 }
 
+export async function PUT(req: NextRequest) {
+    try {
+        const { awbNo, status } = await req.json();
+
+        if (!awbNo || !status) {
+            return NextResponse.json({ error: "AWB number and status are required." }, { status: 400 });
+        }
+
+        await prisma.docketStock.updateMany({
+            where: { awbNo: String(awbNo) },
+            data: { status: status.toUpperCase() },
+        });
+
+        return NextResponse.json({ message: `Docket ${awbNo} status updated to ${status}.` });
+
+    } catch (error) {
+        console.error("Failed to update docket status:", error);
+        return NextResponse.json({ error: "Failed to update docket status." }, { status: 500 });
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { awbNumbers } = await req.json();

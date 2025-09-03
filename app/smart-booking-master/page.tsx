@@ -11,7 +11,7 @@ import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "valumetric", "invoiceWt","actualWeight", "chargeWeight",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "valumetric", "invoiceWt", "actualWeight", "chargeWeight",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
     "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -196,6 +196,19 @@ export default function SmartBookingMasterPage() {
 
         if (extractionResults.length > 0) {
             toast.success(`Cities extracted: ${extractionResults.join(", ")}${extractionResults.length > 3 ? " +more..." : ""}`);
+        }
+
+        const awbNumbers = mappedRows.map(row => row.awbNo).filter(Boolean);
+        if (awbNumbers.length > 0) {
+            try {
+                const { data } = await axios.post('/api/docket-stock', { awbNumbers });
+                if (data.count > 0) {
+                    toast.info(`${data.count} new docket(s) added to stock.`);
+                }
+            } catch (error) {
+                console.error("Failed to update docket stock:", error);
+                toast.error("Could not update docket stock.");
+            }
         }
     };
 
@@ -493,7 +506,7 @@ export default function SmartBookingMasterPage() {
                                     j === idx ? {
                                         ...r2,
                                         clientBillingValue: amount,
-                                        gst: gstPercentage  
+                                        gst: gstPercentage
                                     } : r2
                                 )
                             );
@@ -562,6 +575,7 @@ export default function SmartBookingMasterPage() {
                 await axios.post("/api/booking-master", cleanRow);
                 toast.success("Booking created!");
             }
+            await axios.put('/api/docket-stock', { awbNo: cleanRow.awbNo, status: 'USED' });
         } catch {
             toast.error("Failed to save booking");
         } finally {
@@ -592,7 +606,7 @@ export default function SmartBookingMasterPage() {
                     <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
                 </div>
             </div>
-            <UploadStatusExcelButton/>
+            <UploadStatusExcelButton />
 
             <BookingImportPanel onData={handleImport} />
 
