@@ -231,6 +231,14 @@ model EmployeeAttendance {
   @@unique([employeeId, date])
 }
 
+model DocketStock {
+  id        String   @id @default(cuid())
+  awbNo     String   @unique
+  status    String   @default("UNUSED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model AppUser {
   id           String   @id @default(cuid())
   username     String   @unique
