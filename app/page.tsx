@@ -39,13 +39,21 @@ export default function Home() {
             <button onClick={() => { window.location.href = '/update-and-send-delivery-status' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Update Delivery Status / Send Delivery SMS</button>
           </div>
         </section>
-        <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Billings</h1>
-          <div className="flex flex-col space-y-2">
-            <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
-            <button onClick={() => { window.location.href = '/modify-delete-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Cash Booking)</button>
-            <button onClick={() => { window.location.href = '/generate-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Credit Client Booking)</button>
-            <button onClick={() => { window.location.href = '/modify-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Credit Client Booking)</button>
+        <section className="p-6 h-full rounded-lg shadow-md w-full max-w-sm">
+          <div>
+            <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Billings</h1>
+            <div className="flex flex-col space-y-2">
+              <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
+              <button onClick={() => { window.location.href = '/modify-delete-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Cash Booking)</button>
+              <button onClick={() => { window.location.href = '/generate-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Credit Client Booking)</button>
+              <button onClick={() => { window.location.href = '/modify-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Credit Client Booking)</button>
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Others</h1>
+            <div className="flex flex-col space-y-2">
+              <button onClick={() => { window.location.href = '/employee-attendance' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Employee Attendance</button>
+            </div>
           </div>
         </section>
       </div>

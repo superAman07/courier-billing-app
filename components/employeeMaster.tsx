@@ -18,6 +18,9 @@ type EmployeeForm = {
   dateOfBirth?: string;
   dateOfJoining?: string;
   photoUrl?: string;
+  shiftStartTime?: string;
+  shiftEndTime?: string;
+  workingHours?: number | string;
 };
 
 const initialForm: EmployeeForm = {
@@ -34,6 +37,9 @@ const initialForm: EmployeeForm = {
   dateOfBirth: '',
   dateOfJoining: '',
   photoUrl: '',
+  shiftStartTime: '10:00',
+  shiftEndTime: '18:30',
+  workingHours: 8.5,
 };
 
 export default function EmployeeMaster() {
@@ -70,6 +76,7 @@ export default function EmployeeMaster() {
         ...form,
         dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
         dateOfJoining: form.dateOfJoining ? new Date(form.dateOfJoining).toISOString() : null,
+        workingHours: form.workingHours ? parseFloat(form.workingHours as string) : null,
       };
       if (editingIndex !== null) {
         const emp = employees[editingIndex];
@@ -220,6 +227,23 @@ export default function EmployeeMaster() {
                   <div>
                     <label className={labelStyle}>Date of Joining</label>
                     <input name="dateOfJoining" value={form.dateOfJoining} onChange={handleChange} className={inputStyle} type="date" />
+                  </div>
+                </div>
+              </fieldset>
+              <fieldset className="mt-4 border border-gray-200 rounded p-4">
+                <legend className="text-base font-semibold text-blue-700 px-2">Shift Details</legend>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={labelStyle}>Shift Start Time</label>
+                    <input name="shiftStartTime" value={form.shiftStartTime || ''} onChange={handleChange} className={inputStyle} type="time" />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Shift End Time</label>
+                    <input name="shiftEndTime" value={form.shiftEndTime || ''} onChange={handleChange} className={inputStyle} type="time" />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Working Hours</label>
+                    <input name="workingHours" value={form.workingHours || ''} onChange={handleChange} className={inputStyle} type="number" step="0.1" placeholder="e.g., 8.5" />
                   </div>
                 </div>
               </fieldset>
