@@ -200,8 +200,35 @@ model EmployeeMaster {
   dateOfJoining DateTime?
   photoUrl      String?
 
+  shiftStartTime String?
+  shiftEndTime   String?
+  workingHours   Float?
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  attendances EmployeeAttendance[]
+}
+
+model EmployeeAttendance {
+  id            String    @id @default(cuid())
+  date          DateTime  @db.Date
+  status        String
+  checkIn       DateTime?
+  checkOut      DateTime?
+  totalHours    Float?
+  overtimeHours Float?
+  lateByMinutes Int?
+  fineAmount    Float?
+  advanceAmount Float?
+  remarks       String?
+
+  employee   EmployeeMaster @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, date])
 }
 
 model AppUser {
