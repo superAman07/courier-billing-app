@@ -11,21 +11,34 @@ export async function GET(req: NextRequest) {
         const statusParam = searchParams.get("status") || "BOOKED";
         const invoiceType = searchParams.get("type");
 
-        if (!customerId || !fromDate || !toDate) {
-            return NextResponse.json({ message: "Missing filters" }, { status: 400 });
+        if (!fromDate || !toDate) {
+            return NextResponse.json({ message: "Date range is required" }, { status: 400 });
         }
 
         const statusList = statusParam.split(",").map(s => s.trim()).filter(Boolean);
 
+        // const filters: any = {
+        //     customerId,
+        //     customerType,
+        //     status: { in: statusList },
+        //     bookingDate: {
+        //         gte: new Date(fromDate),
+        //         lte: new Date(toDate),
+        //     },
+        // };
+
         const filters: any = {
-            customerId,
-            customerType,
+            customerType: { in: customerType.split(',').map(s => s.trim()) },
             status: { in: statusList },
             bookingDate: {
                 gte: new Date(fromDate),
                 lte: new Date(toDate),
             },
         };
+
+        if (customerId) {
+            filters.customerId = customerId;
+        }
 
         if (invoiceType && ["Domestic", "International"].includes(invoiceType)) {
             filters.customer = { isInternational: invoiceType === "International" };

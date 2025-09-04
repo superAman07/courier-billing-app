@@ -12,13 +12,14 @@ export default function GenerateCashInvoice() {
     const [loading, setLoading] = useState(false);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
-    const [type, setType] = useState<'CashBooking' | 'InternationalCashBooking'>('CashBooking');
+    // const [type, setType] = useState<'CashBooking' | 'InternationalCashBooking'>('CashBooking');
 
     const fetchInvoices = async () => {
         setInvoiceLoading(true);
         try {
             const { data } = await axios.get('/api/invoices', {
-                params: { type }
+                // params: { type }
+                params: { type: 'BookingMaster_CASH' }
             });
             setInvoices(Array.isArray(data) ? data : data.data);
         } finally {
@@ -28,23 +29,42 @@ export default function GenerateCashInvoice() {
 
     useEffect(() => {
         fetchInvoices();
-    }, [type]);
+    }, []);
 
     const handleViewInvoice = (id: string) => {
         window.open(`/invoice/preview/${id}`, '_blank');
     };
 
     const fetchBookings = async () => {
+        if (!fromDate || !toDate) {
+            toast.error("Please select a date range.");
+            return;
+        }
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/cash-bookings-by-date', {
-                params: { fromDate, toDate, status: 'BOOKED' }
+            const { data } = await axios.get('/api/booking-master/for-invoice', {
+                params: {
+                    fromDate,
+                    toDate,
+                    customerType: 'REGULAR,WALK-IN',
+                    status: 'BOOKED,DELIVERED'
+                }
             });
             setBookings(data);
             setSelected([]);
         } finally {
             setLoading(false);
         }
+        // setLoading(true);
+        // try {
+        //     const { data } = await axios.get('/api/cash-bookings-by-date', {
+        //         params: { fromDate, toDate, status: 'BOOKED' }
+        //     });
+        //     setBookings(data);
+        //     setSelected([]);
+        // } finally {
+        //     setLoading(false);
+        // }
     };
 
     const handleSelect = (id: string) => {
@@ -57,16 +77,16 @@ export default function GenerateCashInvoice() {
     };
 
     const handleGenerateInvoice = async () => {
-        if (!invoiceDate || selected.length === 0) return alert('Select invoice date and at least one consignment');
+        if (!invoiceDate || selected.length === 0) {
+            toast.error('Select invoice date and at least one consignment');
+            return;
+        }
         setLoading(true);
         try {
-            const selectedBookings = bookings.filter((b: any) => selected.includes(b.id));
-            const bookingType = selectedBookings[0]?.bookingType || 'CashBooking';
-
             await axios.post('/api/invoices', {
-                type: bookingType,
+                bookingIds: selected,
                 invoiceDate,
-                bookingIds: selected
+                customerType: 'CASH'
             });
             toast.success('Invoice generated!');
             setBookings([]);
@@ -110,7 +130,7 @@ export default function GenerateCashInvoice() {
                         <th><input type="checkbox" className='cursor-pointer' checked={selected.length === bookings.length && bookings.length > 0} onChange={handleSelectAll} /></th>
                         <th className='text-gray-600'>Booking Date</th>
                         <th className='text-gray-600'>Consignment No</th>
-                        <th className='text-gray-600'>Destination</th>
+                        <th className='text-gray-600'>Customer/Receiver</th>
                         <th className='text-gray-600'>Amount</th>
                     </tr>
                 </thead>
@@ -133,9 +153,9 @@ export default function GenerateCashInvoice() {
                                     />
                                 </td>
                                 <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
-                                <td className='text-gray-600 text-center'>{b.consignmentNo}</td>
-                                <td className='text-gray-600 text-center'>{b.city || b.country}</td>
-                                <td className='text-gray-600 text-center'>{b.amountCharged}</td>
+                                <td className='text-gray-600 text-center'>{b.awbNo}</td>
+                                <td className='text-gray-600 text-center'>{b.customer?.customerName || b.receiverName}</td>
+                                <td className='text-gray-600 text-center'>{b.clientBillingValue}</td>
                             </tr>
                         ))
                     )}
@@ -155,17 +175,6 @@ export default function GenerateCashInvoice() {
                 <div className="mb-2 text-xs text-blue-700 italic">
                     <b>Note:</b> Only consignments with status <span className="font-semibold text-green-700">"BOOKED"</span> will be displayed here for invoice generation.<br />
                     If your consignment is missing, please update its status to <span className="font-semibold text-green-700">"BOOKED"</span> from the <span className="underline cursor-pointer" onClick={() => window.open('/update-and-send-delivery-status', '_blank')}>Update and Send Delivery Status</span> page.
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-700">Type</label>
-                    <select
-                        value={type}
-                        onChange={e => setType(e.target.value as 'CashBooking' | 'InternationalCashBooking')}
-                        className="border p-2 rounded text-gray-600"
-                    >
-                        <option value="CashBooking">Domestic (Cash Booking)</option>
-                        <option value="InternationalCashBooking">International (Cash Booking)</option>
-                    </select>
                 </div>
                 <table className="w-full border mb-2">
                     <thead>
