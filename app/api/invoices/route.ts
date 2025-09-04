@@ -60,8 +60,16 @@ export async function POST(req: NextRequest) {
 
     const createdInvoice = await runWithRetries(async () => {
       return await prisma.$transaction(async (tx) => {
-        const settings = await tx.invoiceSettings.findFirst();
-        const prefix = settings?.invoicePrefix || "INV";
+        let prefix = 'ANGS-';
+        if (customerType === 'CREDIT' && customerId) {
+            const customer = await tx.customerMaster.findUnique({
+                where: { id: customerId },
+                select: { gstNo: true }
+            });
+            if (customer?.gstNo) {
+                prefix = 'AGS-';
+            }
+        }
 
         const lastInvoice = await tx.invoice.findFirst({
           where: { type: invoiceType },
