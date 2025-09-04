@@ -17,16 +17,6 @@ export async function GET(req: NextRequest) {
 
         const statusList = statusParam.split(",").map(s => s.trim()).filter(Boolean);
 
-        // const filters: any = {
-        //     customerId,
-        //     customerType,
-        //     status: { in: statusList },
-        //     bookingDate: {
-        //         gte: new Date(fromDate),
-        //         lte: new Date(toDate),
-        //     },
-        // };
-
         const filters: any = {
             customerType: { in: customerType.split(',').map(s => s.trim()) },
             status: { in: statusList },
