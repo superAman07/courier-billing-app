@@ -35,8 +35,9 @@ model CustomerMaster {
   creditClientBookings              CreditClientBooking[]
   internationalCreditClientBookings InternationalCreditClientBooking[]
 
-  bookings BookingMaster[] @relation("CustomerMasterToBookingMaster")
+  bookings BookingMaster[]   @relation("CustomerMasterToBookingMaster")
   invoices Invoice[]
+  payments CustomerPayment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -436,7 +437,11 @@ model Invoice {
   periodFrom  DateTime?
   periodTo    DateTime?
 
-  bookings InvoiceBooking[]
+  paymentStatus PaymentStatus @default(UNPAID)
+  amountPaid    Float         @default(0)
+
+  bookings          InvoiceBooking[]
+  paymentsOnInvoice PaymentOnInvoice[]
 }
 
 model InvoiceBooking {
@@ -467,6 +472,44 @@ model InvoiceBooking {
 enum UserType {
   ADMIN
   USER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+model CustomerPayment {
+  id            String   @id @default(cuid())
+  paymentDate   DateTime
+  amount        Float
+  paymentMethod String // e.g., UPI, BANK, CASH
+  referenceNo   String?
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customerId String
+  customer   CustomerMaster @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  invoicesApplied PaymentOnInvoice[]
+
+  @@index([customerId])
+}
+
+model PaymentOnInvoice {
+  id            String   @id @default(cuid())
+  amountApplied Float
+  createdAt     DateTime @default(now())
+
+  paymentId String
+  payment   CustomerPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, invoiceId])
 }
 
 model InvoiceCounter {
