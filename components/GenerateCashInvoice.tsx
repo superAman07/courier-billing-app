@@ -12,7 +12,7 @@ export default function GenerateCashInvoice() {
     const [loading, setLoading] = useState(false);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
-    // const [type, setType] = useState<'CashBooking' | 'InternationalCashBooking'>('CashBooking');
+    const [type, setType] = useState<'Domestic' | 'International'>('Domestic');
 
     const fetchInvoices = async () => {
         setInvoiceLoading(true);
@@ -47,7 +47,8 @@ export default function GenerateCashInvoice() {
                     fromDate,
                     toDate,
                     customerType: 'REGULAR,WALK-IN',
-                    status: 'BOOKED,DELIVERED'
+                    status: 'BOOKED,DELIVERED',
+                    type
                 }
             });
             setBookings(data);
@@ -107,7 +108,18 @@ export default function GenerateCashInvoice() {
     return (
         <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 mt-8">
             <h2 className="text-xl font-bold mb-4 text-center bg-red-700 text-white py-2 rounded">GENERATE CASH INVOICE</h2>
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-4 mb-4 flex-wrap items-end">
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700">Type</label>
+                    <select
+                        value={type}
+                        onChange={e => setType(e.target.value as 'Domestic' | 'International')}
+                        className="border p-2 rounded text-gray-600"
+                    >
+                        <option value="Domestic">Domestic (Cash)</option>
+                        <option value="International">International (Cash)</option>
+                    </select>
+                </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-700">Invoice Date</label>
                     <input type="date" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} className="border p-2 rounded text-gray-600" />
