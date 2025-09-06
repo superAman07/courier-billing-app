@@ -97,12 +97,21 @@ export async function POST(req: NextRequest) {
 
                     // Update the invoice's paid amount and status.
                     const newAmountPaid = invoice.amountPaid + amountToApply;
-                    const newStatus = newAmountPaid >= invoice.netAmount ? PaymentStatus.PAID : PaymentStatus.PARTIALLY_PAID;
+                    let newStatus = invoice.paymentStatus;
+                    let finalAmountPaid = newAmountPaid;
+
+                    const remainingDue = invoice.netAmount - newAmountPaid;
+                    if (newAmountPaid >= invoice.netAmount || (remainingDue > 0 && remainingDue < 1)) {
+                        newStatus = PaymentStatus.PAID;
+                        finalAmountPaid = invoice.netAmount;
+                    } else {
+                        newStatus = PaymentStatus.PARTIALLY_PAID;
+                    }
 
                     await tx.invoice.update({
                         where: { id: invoice.id },
                         data: {
-                            amountPaid: newAmountPaid,
+                            amountPaid: finalAmountPaid,
                             paymentStatus: newStatus,
                         },
                     });
