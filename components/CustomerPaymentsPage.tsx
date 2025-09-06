@@ -21,19 +21,40 @@ interface Invoice {
     paymentStatus: 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
 }
 
-const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string, icon: React.ElementType, color: string }) => (
-    <div className={`bg-white p-6 rounded-2xl shadow-lg border-l-4 ${color}`}>
-        <div className="flex justify-between items-start">
-            <div>
-                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</p>
-                <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
-            </div>
-            <div className={`p-3 rounded-full bg-opacity-20 ${color.replace('border', 'bg').replace('-500', '-100')}`}>
-                <Icon className={`w-6 h-6 ${color.replace('border', 'text')}`} />
+const StatCard = ({ title, value, icon: Icon, colorName }: { title: string, value: string, icon: React.ElementType, colorName: 'blue' | 'green' | 'red' }) => {
+    const styles = {
+        blue: {
+            border: 'border-blue-500',
+            bg: 'bg-blue-100',
+            text: 'text-blue-500',
+        },
+        green: {
+            border: 'border-green-500',
+            bg: 'bg-green-100',
+            text: 'text-green-500',
+        },
+        red: {
+            border: 'border-red-500',
+            bg: 'bg-red-100',
+            text: 'text-red-500',
+        },
+    };
+    const style = styles[colorName];
+
+    return (
+        <div className={`bg-white p-6 rounded-2xl shadow-lg border-l-4 ${style.border}`}>
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${style.bg}`}>
+                    <Icon className={`w-6 h-6 ${style.text}`} />
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const StatusBadge = ({ status }: { status: Invoice['paymentStatus'] }) => {
     const styles = {
@@ -106,7 +127,7 @@ export default function CustomerPaymentsPage() {
                         isLoading={loading.customers}
                         isClearable
                         placeholder="Search by customer name or code..."
-                        className="text-gray-600"
+                        className="text-gray-600 cursor-pointer"
                         classNamePrefix="select"
                     />
                 </div>
@@ -114,15 +135,15 @@ export default function CustomerPaymentsPage() {
                 {selectedCustomer && (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <StatCard title="Total Invoiced" value={`₹${summary.totalInvoiced.toFixed(2)}`} icon={Receipt} color="border-blue-500" />
-                            <StatCard title="Total Paid" value={`₹${summary.totalPaid.toFixed(2)}`} icon={CheckCircle} color="border-green-500" />
-                            <StatCard title="Balance Due" value={`₹${summary.balanceDue.toFixed(2)}`} icon={Hourglass} color="border-red-500" />
+                            <StatCard title="Total Invoiced" value={`₹${summary.totalInvoiced.toFixed(2)}`} icon={Receipt} colorName="blue" />
+                            <StatCard title="Total Paid" value={`₹${summary.totalPaid.toFixed(2)}`} icon={CheckCircle} colorName="green" />
+                            <StatCard title="Balance Due" value={`₹${summary.balanceDue.toFixed(2)}`} icon={Hourglass} colorName="red" />
                         </div>
 
                         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                             <div className="p-4 flex justify-between items-center border-b bg-gray-50">
                                 <h2 className="text-xl font-semibold text-gray-700">Invoices for {selectedCustomer.customerName}</h2>
-                                <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                                <button onClick={() => setIsModalOpen(true)} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
                                     <DollarSign className="w-5 h-5" />
                                     Record Payment
                                 </button>
@@ -170,7 +191,7 @@ export default function CustomerPaymentsPage() {
                     onSuccess={() => {
                         setIsModalOpen(false);
                         // Re-fetch invoices to show updated data
-                        axios.get(`/api/invoices?customerId=${selectedCustomer!.id}`).then(res => setInvoices(res.data));
+                        axios.get(`/api/invoices?customerId=${selectedCustomer!.id}`).then(res => setInvoices(res.data.data));
                     }}
                 />
             )}
@@ -210,13 +231,16 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-                <div className="p-6 border-b flex justify-between items-center">
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50" onClick={onClose}>
+            <div
+                onClick={e => e.stopPropagation()}
+                className="absolute top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
+            >
+                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
                     <h2 className="text-2xl font-bold text-gray-800">Record Payment</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} id="payment-form" className="p-6 space-y-4 flex-1 overflow-y-auto">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                         <div className="relative">
@@ -235,7 +259,7 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
                         <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                         <div className="relative">
                             <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} className="w-full pl-10 p-2 border rounded-md text-gray-600 appearance-none" required>
+                            <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} className="w-full cursor-pointer pl-10 p-2 border rounded-md text-gray-600 appearance-none" required>
                                 <option>BANK</option>
                                 <option>UPI</option>
                                 <option>CASH</option>
@@ -251,9 +275,9 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
                             <input type="text" name="referenceNo" value={formData.referenceNo} onChange={handleChange} className="w-full pl-10 p-2 border rounded-md text-gray-600" />
                         </div>
                     </div>
-                    <div className="pt-4 flex justify-end gap-3">
+                    <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>
-                        <button type="submit" disabled={submitting} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-2">
+                        <button type="submit" form="payment-form" disabled={submitting} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-2">
                             {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
                             {submitting ? 'Saving...' : 'Save Payment'}
                         </button>
