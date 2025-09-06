@@ -62,13 +62,13 @@ export async function POST(req: NextRequest) {
       return await prisma.$transaction(async (tx) => {
         let prefix = 'ANGS-';
         if (customerType === 'CREDIT' && customerId) {
-            const customer = await tx.customerMaster.findUnique({
-                where: { id: customerId },
-                select: { gstNo: true }
-            });
-            if (customer?.gstNo) {
-                prefix = 'AGS-';
-            }
+          const customer = await tx.customerMaster.findUnique({
+            where: { id: customerId },
+            select: { gstNo: true }
+          });
+          if (customer?.gstNo) {
+            prefix = 'AGS-';
+          }
         }
 
         const lastInvoice = await tx.invoice.findFirst({
@@ -114,7 +114,15 @@ export async function POST(req: NextRequest) {
             ? Number(b.clientBillingValue ?? 0)
             : Number(b.regularCustomerAmount ?? 0);
 
-        const totalAmount = toInvoice.reduce((sum, b) => sum + getAmount(b), 0);
+        const calculateTotalAmount = (b: any) => {
+          const baseAmount = getAmount(b);
+          const shipperCost = Number(b.shipperCost ?? 0);
+          const otherExp = Number(b.otherExp ?? 0);
+          const waybillSurcharge = +(baseAmount * 0.002).toFixed(2);
+          return baseAmount + shipperCost + otherExp + waybillSurcharge;
+        };
+
+        const totalAmount = toInvoice.reduce((sum, b) => sum + calculateTotalAmount(b), 0);
         if (totalAmount <= 0) throw new Error("Total amount is zero or invalid");
 
         // You can add tax/fuel surcharge logic here as needed.

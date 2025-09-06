@@ -179,7 +179,7 @@ export default function SmartBookingMasterPage() {
                 existingRow.todayDate = getCurrentDate();
                 return existingRow;
             }
-
+            mapped.paymentStatus = "UNPAID";
             mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
             mapped.todayDate = getCurrentDate();
 
@@ -310,7 +310,7 @@ export default function SmartBookingMasterPage() {
     };
 
     const getCurrentDate = (): string => {
-        return new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        return new Date().toISOString().split('T')[0];
     };
 
     const handleCustomerSearch = async (idx: number, searchTerm: string) => {
@@ -670,6 +670,8 @@ export default function SmartBookingMasterPage() {
                                                             value={row[col] || ""}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
                                                             className="w-full p-1 border rounded text-xs"
+                                                            disabled={col === 'paymentStatus' && row.status !== 'INVOICED'}
+                                                            title={col === 'paymentStatus' && row.status !== 'INVOICED' ? 'Payment status can only be changed after an invoice is generated.' : ''}
                                                         >
                                                             <option value="">Select</option>
                                                             {OPTIONS[col as keyof typeof OPTIONS].map(opt => (
