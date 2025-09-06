@@ -276,8 +276,8 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
                         </div>
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>
-                        <button type="submit" form="payment-form" disabled={submitting} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-2">
+                        <button type="button" onClick={onClose} className="px-4 py-2 cursor-pointer bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>
+                        <button type="submit" form="payment-form" disabled={submitting} className="px-4 py-2 cursor-pointer bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-2">
                             {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
                             {submitting ? 'Saving...' : 'Save Payment'}
                         </button>
