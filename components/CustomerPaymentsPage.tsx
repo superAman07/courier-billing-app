@@ -137,7 +137,7 @@ export default function CustomerPaymentsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <StatCard title="Total Invoiced" value={`₹${summary.totalInvoiced.toFixed(2)}`} icon={Receipt} colorName="blue" />
                             <StatCard title="Total Paid" value={`₹${summary.totalPaid.toFixed(2)}`} icon={CheckCircle} colorName="green" />
-                            <StatCard title="Balance Due" value={`₹${summary.balanceDue.toFixed(2)}`} icon={Hourglass} colorName="red" />
+                            <StatCard title="Balance Due" value={`₹${Math.round(summary.balanceDue).toFixed(2)}`} icon={Hourglass} colorName="red" />
                         </div>
 
                         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -170,7 +170,7 @@ export default function CustomerPaymentsPage() {
                                                     <td className="px-4 py-3 text-sm text-gray-600">{new Date(inv.invoiceDate).toLocaleDateString()}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-gray-800">₹{inv.netAmount.toFixed(2)}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-green-700">₹{inv.amountPaid.toFixed(2)}</td>
-                                                    <td className="px-4 py-3 text-right font-mono text-sm text-red-700">₹{(inv.netAmount - inv.amountPaid).toFixed(2)}</td>
+                                                    <td className="px-4 py-3 text-right font-mono text-sm text-red-700">₹{(Math.round(inv.netAmount - inv.amountPaid)).toFixed(2)}</td>
                                                     <td className="px-4 py-3 text-center"><StatusBadge status={inv.paymentStatus} /></td>
                                                 </tr>
                                             ))
