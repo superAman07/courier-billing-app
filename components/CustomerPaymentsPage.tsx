@@ -193,9 +193,11 @@ export default function CustomerPaymentsPage() {
                                         ) : invoices.length > 0 ? (
                                             invoices.map(inv => (
                                                 <tr key={inv.id} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-mono text-sm text-gray-800">{inv.invoiceNo}<button onClick={() => handleViewDetails(inv)} title="View payment details">
-                                                            <Info className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer" />
-                                                        </button></td>
+                                                    <td className="px-4 py-3 font-mono text-sm text-gray-800">{inv.invoiceNo}
+                                                        <button onClick={() => handleViewDetails(inv)} title="View payment details">
+                                                            <Info className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer ml-1 my-auto" />
+                                                        </button>
+                                                    </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{new Date(inv.invoiceDate).toLocaleDateString()}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-gray-800">₹{inv.netAmount.toFixed(2)}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-green-700">₹{inv.amountPaid.toFixed(2)}</td>
@@ -218,7 +220,7 @@ export default function CustomerPaymentsPage() {
                     customer={selectedCustomer!}
                     onClose={() => setIsModalOpen(false)}
                     onSuccess={() => {
-                        setIsModalOpen(false); 
+                        setIsModalOpen(false);
                         axios.get(`/api/invoices?customerId=${selectedCustomer!.id}`).then(res => setInvoices(res.data.data));
                     }}
                 />
@@ -249,7 +251,7 @@ function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: 
                         <h2 className="text-xl font-bold text-gray-800">Payment History</h2>
                         <p className="text-sm text-gray-500">For Invoice <span className="font-semibold text-gray-700">{invoice.invoiceNo}</span></p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer"><XCircle className="w-6 h-6" /></button>
                 </div>
                 <div className="p-6 max-h-[60vh] overflow-y-auto">
                     {loading ? (
