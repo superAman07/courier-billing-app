@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import Select from 'react-select';
-import { DollarSign, Receipt, Hourglass, CheckCircle, XCircle, Banknote, Calendar, FileImage, Loader2, Search } from 'lucide-react';
+import { DollarSign, Receipt, Hourglass, CheckCircle, XCircle, Banknote, Calendar, FileImage, Loader2, Search, Info } from 'lucide-react';
 
 interface Customer {
     id: string;
@@ -19,6 +19,16 @@ interface Invoice {
     netAmount: number;
     amountPaid: number;
     paymentStatus: 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
+}
+
+interface PaymentDetail {
+    amountApplied: number;
+    payment: {
+        id: string;
+        paymentDate: string;
+        paymentMethod: string;
+        referenceNo: string | null;
+    }
 }
 
 const StatCard = ({ title, value, icon: Icon, colorName }: { title: string, value: string, icon: React.ElementType, colorName: 'blue' | 'green' | 'red' }) => {
@@ -69,8 +79,11 @@ export default function CustomerPaymentsPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [loading, setLoading] = useState({ customers: true, invoices: false });
+    const [loading, setLoading] = useState({ customers: true, invoices: false, details: false });
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [invoicePaymentDetails, setInvoicePaymentDetails] = useState<PaymentDetail[]>([]);
+    const [selectedInvoiceForDetails, setSelectedInvoiceForDetails] = useState<Invoice | null>(null);
 
     useEffect(() => {
         axios.get('/api/customers')
@@ -109,6 +122,20 @@ export default function CustomerPaymentsPage() {
 
     const handleCustomerChange = (option: any) => {
         setSelectedCustomer(option ? option.customer : null);
+    };
+
+    const handleViewDetails = async (invoice: Invoice) => {
+        setSelectedInvoiceForDetails(invoice);
+        setIsDetailsModalOpen(true);
+        setLoading(prev => ({ ...prev, details: true }));
+        try {
+            const { data } = await axios.get(`/api/invoices/${invoice.id}/payments`);
+            setInvoicePaymentDetails(data);
+        } catch (error) {
+            toast.error("Failed to load payment details.");
+        } finally {
+            setLoading(prev => ({ ...prev, details: false }));
+        }
     };
 
     return (
@@ -166,7 +193,9 @@ export default function CustomerPaymentsPage() {
                                         ) : invoices.length > 0 ? (
                                             invoices.map(inv => (
                                                 <tr key={inv.id} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-mono text-sm text-gray-800">{inv.invoiceNo}</td>
+                                                    <td className="px-4 py-3 font-mono text-sm text-gray-800">{inv.invoiceNo}<button onClick={() => handleViewDetails(inv)} title="View payment details">
+                                                            <Info className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer" />
+                                                        </button></td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{new Date(inv.invoiceDate).toLocaleDateString()}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-gray-800">₹{inv.netAmount.toFixed(2)}</td>
                                                     <td className="px-4 py-3 text-right font-mono text-sm text-green-700">₹{inv.amountPaid.toFixed(2)}</td>
@@ -189,17 +218,72 @@ export default function CustomerPaymentsPage() {
                     customer={selectedCustomer!}
                     onClose={() => setIsModalOpen(false)}
                     onSuccess={() => {
-                        setIsModalOpen(false);
-                        // Re-fetch invoices to show updated data
+                        setIsModalOpen(false); 
                         axios.get(`/api/invoices?customerId=${selectedCustomer!.id}`).then(res => setInvoices(res.data.data));
                     }}
+                />
+            )}
+            {isDetailsModalOpen && (
+                <PaymentDetailsModal
+                    invoice={selectedInvoiceForDetails}
+                    details={invoicePaymentDetails}
+                    loading={loading.details}
+                    onClose={() => setIsDetailsModalOpen(false)}
                 />
             )}
         </div>
     );
 }
 
-// Payment Modal Component
+function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: Invoice | null, details: PaymentDetail[], loading: boolean, onClose: () => void }) {
+    if (!invoice) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
+            <div
+                onClick={e => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-300"
+            >
+                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800">Payment History</h2>
+                        <p className="text-sm text-gray-500">For Invoice <span className="font-semibold text-gray-700">{invoice.invoiceNo}</span></p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
+                </div>
+                <div className="p-6 max-h-[60vh] overflow-y-auto">
+                    {loading ? (
+                        <div className="flex justify-center items-center h-24">
+                            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                        </div>
+                    ) : details.length > 0 ? (
+                        <ul className="space-y-3">
+                            {details.map(detail => (
+                                <li key={detail.payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                    <div>
+                                        <p className="font-semibold text-green-600 text-lg">₹{detail.amountApplied.toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {new Date(detail.payment.paymentDate).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-medium text-gray-700">{detail.payment.paymentMethod}</p>
+                                        {detail.payment.referenceNo && <p className="text-xs text-gray-500 font-mono">Ref: {detail.payment.referenceNo}</p>}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">
+                            <p>No payments have been applied to this invoice yet.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Customer, onClose: () => void, onSuccess: () => void }) {
     const [formData, setFormData] = useState({
         amount: '',
