@@ -465,6 +465,8 @@ model InvoiceBooking {
   shipperCost      Float?
   waybillSurcharge Float?
   otherExp         Float?
+  fuelSurcharge    Float?
+  gst              Float?
 
   createdAt DateTime @default(now())
 }

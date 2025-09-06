@@ -81,6 +81,23 @@ export default function GenerateCreditInvoice() {
     else setSelected(bookings.map((b: any) => b.id));
   };
 
+  const calculateRowTotal = (b: any) => {
+    const baseAmount = Number(b.clientBillingValue ?? 0);
+    const shipperCost = Number(b.shipperCost ?? 0);
+    const otherExp = Number(b.otherExp ?? 0);
+    const waybillSurcharge = +(baseAmount * 0.002).toFixed(2);
+    const fuelSurcharge = Number(b.fuelSurcharge ?? 0);
+    
+    const taxableValue = baseAmount + shipperCost + otherExp + waybillSurcharge + fuelSurcharge;
+    
+    const gstRate = Number(b.gst ?? 0);
+    const gstAmount = taxableValue * (gstRate / 100);
+    
+    const finalAmount = taxableValue + gstAmount;
+    
+    return finalAmount.toFixed(2);
+  };
+
   const handleGenerateInvoice = async () => {
     if (!invoiceDate || selected.length === 0 || !customerId) {
       toast.error('Select invoice date, customer, and at least one consignment');
@@ -193,7 +210,7 @@ export default function GenerateCreditInvoice() {
                 <td className='text-gray-600 text-center'>{b.awbNo}</td>
                 <td className='text-gray-600 text-center'>{b.customer?.customerCode || ''} - {b.customer?.customerName || ''}</td>
                 <td className='text-gray-600 text-center'>{b.receiverName}</td>
-                <td className='text-gray-600 text-center'>{b.clientBillingValue}</td>
+                <td className='text-gray-600 text-center'>₹{calculateRowTotal(b)}</td>
               </tr>
             ))
           )}

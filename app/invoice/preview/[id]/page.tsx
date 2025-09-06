@@ -23,19 +23,32 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
         );
     }
  
+    // const bookings = invoice.bookings || [];
+    // const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
+    // const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
+    // const fuelSurcharge = 0;
+    // const taxableValue = subtotal + fuelSurcharge;
+    // const igstRate = 0.18;
+    // const igstAmount = taxableValue * igstRate;
+    // const totalAfterTax = taxableValue + igstAmount;
+    // const roundOff = Math.round(totalAfterTax) - totalAfterTax;
+    // const finalAmount = Math.round(totalAfterTax);
+    // const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
+    // const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
+    // const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
     const bookings = invoice.bookings || [];
     const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
     const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
-    const fuelSurcharge = 0;
-    const taxableValue = subtotal + fuelSurcharge;
-    const igstRate = 0.18;
-    const igstAmount = taxableValue * igstRate;
-    const totalAfterTax = taxableValue + igstAmount;
-    const roundOff = Math.round(totalAfterTax) - totalAfterTax;
-    const finalAmount = Math.round(totalAfterTax);
     const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
     const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
     const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
+    const fuelSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.fuelSurcharge || 0), 0);
+
+    const taxableValue = invoice.totalAmount;
+    const igstAmount = invoice.totalTax;
+    const totalAfterTax = invoice.netAmount;
+    const finalAmount = Math.round(totalAfterTax);
+    const gstRate = taxableValue > 0 ? (igstAmount / taxableValue) * 100 : 0;
 
     return (
         <div className="max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
@@ -155,15 +168,15 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{otherExpTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge @ 0 %</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{fuelSurcharge}</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{fuelSurchargeTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST 18%</td>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>
                         </tr>
                         <tr>

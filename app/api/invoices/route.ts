@@ -119,14 +119,16 @@ export async function POST(req: NextRequest) {
           const shipperCost = Number(b.shipperCost ?? 0);
           const otherExp = Number(b.otherExp ?? 0);
           const waybillSurcharge = +(baseAmount * 0.002).toFixed(2);
-          return baseAmount + shipperCost + otherExp + waybillSurcharge;
+          const fuelSurcharge = Number(b.fuelSurcharge ?? 0);
+          return baseAmount + shipperCost + otherExp + waybillSurcharge + fuelSurcharge;
         };
 
         const totalAmount = toInvoice.reduce((sum, b) => sum + calculateTotalAmount(b), 0);
         if (totalAmount <= 0) throw new Error("Total amount is zero or invalid");
 
-        // You can add tax/fuel surcharge logic here as needed.
-        const totalTax = 0;
+        const gstRate = toInvoice[0]?.gst || 0;
+        const totalTax = totalAmount * (gstRate / 100);
+        
         const netAmount = totalAmount + totalTax;
 
         const periodFrom = toInvoice.reduce((min, b) => b.bookingDate < min ? b.bookingDate : min, toInvoice[0].bookingDate);
