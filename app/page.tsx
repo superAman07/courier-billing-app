@@ -54,6 +54,7 @@ export default function Home() {
             <div className="flex flex-col space-y-2">
               <button onClick={() => { window.location.href = '/employee-attendance' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Employee Attendance</button>
               <button onClick={() => { window.location.href = '/docket-stock' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Docket Stock</button>
+              <button onClick={() => { window.location.href = '/customer-payments' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Payments</button>
             </div>
           </div>
         </section>
