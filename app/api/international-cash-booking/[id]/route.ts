@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const id = (await params).id
     const booking = await prisma.internationalCashBooking.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
     if (!booking) return NextResponse.json({ message: "Not found" }, { status: 404 });
     return NextResponse.json(booking);
@@ -13,11 +14,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const id = (await params).id;
     const data = await req.json();
     const booking = await prisma.internationalCashBooking.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         bookingDate: new Date(data.bookingDate),
         senderName: data.senderName,
@@ -45,10 +47,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const id = (await params).id;
     await prisma.internationalCashBooking.delete({
-      where: { id: params.id },
+      where: { id },
     });
     return NextResponse.json({ message: "Deleted" });
   } catch (error) {
