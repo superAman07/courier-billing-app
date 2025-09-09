@@ -1,64 +1,43 @@
 'use client'
+import Link from 'next/link';
+import { Users, Truck, FileText, DollarSign, ClipboardList, CalendarCheck, Package, UserCheck } from 'lucide-react';
+
+const quickAccessLinks = [
+    { href: '/all-customers', label: 'All Customers', icon: Users, description: "View and manage all customers" },
+    { href: '/smart-booking-master', label: 'Smart Booking', icon: Truck, description: "Bulk import and edit bookings" },
+    { href: '/update-and-send-delivery-status', label: 'Update Delivery Status', icon: ClipboardList, description: "Update status and send SMS" },
+    { href: '/generate-cash-invoice', label: 'Cash Invoices', icon: FileText, description: "Generate invoices for cash bookings" },
+    { href: '/generate-credit-client-invoice', label: 'Credit Invoices', icon: FileText, description: "Generate invoices for credit clients" },
+    { href: '/employee-attendance', label: 'Employee Attendance', icon: CalendarCheck, description: "Mark and track attendance" },
+    { href: '/docket-stock', label: 'Docket Stock', icon: Package, description: "Manage your docket inventory" },
+    { href: '/customer-payments', label: 'Customer Payments', icon: DollarSign, description: "Record and track payments" },
+];
+
+const DashboardCard = ({ href, label, icon: Icon, description }: typeof quickAccessLinks[0]) => (
+    <Link href={href} className="group block p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 border border-gray-200/80 transition-all duration-300">
+        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-6 h-6" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{label}</h3>
+            <p className="text-sm text-gray-500 mt-1">{description}</p>
+        </div>
+    </Link>
+);
+
 export default function Home() {
-  return (
-    <main className="space-x-3">
-      <div className="flex h-screen space-y-4">
-        <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Masters</h1>
-          <div className="flex flex-col space-y-2">
-            <button onClick={() => { window.location.href = '/customer' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Master</button>
-            <button onClick={() => { window.location.href = '/all-customers' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Customers</button>
-            <button onClick={() => { window.location.href = '/rate-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Rate Master</button>
-            <button onClick={() => { window.location.href = '/copy-rates' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Copy Rate</button>
-            <button onClick={() => { window.location.href = '/rate-template' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Rate Template</button>
-            <button onClick={() => { window.location.href = '/tax-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Tax Master</button>
-            <button onClick={() => { window.location.href = '/country-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Country Master</button>
-            <button onClick={() => { window.location.href = '/zone-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Zone Master</button>
-            <button onClick={() => { window.location.href = '/state-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">State Master</button>
-            <button onClick={() => { window.location.href = '/city-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">City Master</button>
-            <button onClick={() => { window.location.href = '/pincode-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Pincode Mapping Master</button>
-            <button onClick={() => { window.location.href = '/invoice-settings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Invoice Configuration</button>
-            <button onClick={() => { window.location.href = '/registration-details' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify Registration Details</button>
-            <button onClick={() => { window.location.href = '/book-rate-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Book Rate Master</button>
-            <button onClick={() => { window.location.href = '/employee-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Employee Master</button>
-            <button onClick={() => { window.location.href = '/create-user' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Create User</button>
-            <button onClick={() => { window.location.href = '/sms-api-settings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">SMS API Settings</button>
-            <button onClick={() => { window.location.href = '/sms-templates' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">SMS Templates</button>
-          </div>
-        </section>
-        <section className="p-6 rounded-lg shadow-md w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Booking</h1>
-          <div className="flex flex-col space-y-2">
-            <button onClick={() => { window.location.href = '/cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking (Domestic)</button>
-            <button onClick={() => { window.location.href = '/credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (Domestic)</button>
-            <button onClick={() => { window.location.href = '/international-cash-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Cash Booking (International)</button>
-            <button onClick={() => { window.location.href = '/international-credit-client-booking' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Credit Client Booking (International)</button>
-            <button onClick={() => { window.location.href = '/booking-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Booking Master</button>
-            <button onClick={() => { window.location.href = '/smart-booking-master' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Smart Booking Master</button>
-            <button onClick={() => { window.location.href = '/all-bookings' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">All Bookings / Bulk Booking</button>
-            <button onClick={() => { window.location.href = '/update-and-send-delivery-status' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Update Delivery Status / Send Delivery SMS</button>
-          </div>
-        </section>
-        <section className="p-6 h-full rounded-lg shadow-md w-full max-w-sm">
-          <div>
-            <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Billings</h1>
-            <div className="flex flex-col space-y-2">
-              <button onClick={() => { window.location.href = '/generate-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Cash Booking)</button>
-              <button onClick={() => { window.location.href = '/modify-delete-cash-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Cash Booking)</button>
-              <button onClick={() => { window.location.href = '/generate-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Generate Invoice (Credit Client Booking)</button>
-              <button onClick={() => { window.location.href = '/modify-credit-client-invoice' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Modify / Delete Invoice (Credit Client Booking)</button>
+    return (
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <header className="mb-10">
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
+                <p className="mt-2 text-lg text-gray-600">Welcome back! Here's your quick access to daily operations.</p>
+            </header>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {quickAccessLinks.map(link => (
+                    <DashboardCard key={link.href} {...link} />
+                ))}
             </div>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold mb-4 text-center text-gray-600">Others</h1>
-            <div className="flex flex-col space-y-2">
-              <button onClick={() => { window.location.href = '/employee-attendance' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Employee Attendance</button>
-              <button onClick={() => { window.location.href = '/docket-stock' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Docket Stock</button>
-              <button onClick={() => { window.location.href = '/customer-payments' }} className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-4 py-2 rounded-md">Customer Payments</button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+        </div>
+    );
 }
