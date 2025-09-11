@@ -106,7 +106,14 @@ export default function SmartBookingMasterPage() {
         console.log(`⚠️ Could not extract city from: "${locationString}", using first part: "${firstPart}"`);
         return firstPart;
     };
-
+    const MODE_MAP: Record<string, string> = {
+        E: "EXPRESS",
+        S: "SURFACE",
+        A: "AIR",
+        P: "PREMIUM",
+        R: "RAIL",
+        O: "OTHER MODE"
+    };
     const handleImport = async (rows: any[]) => {
         setLoading(true);
 
@@ -146,7 +153,10 @@ export default function SmartBookingMasterPage() {
                 );
 
                 if (importKey) {
-                    if (col === "bookingDate" || col === "statusDate") {
+                    if (col === "mode") {
+                        const rawMode = row[importKey]?.toString().toUpperCase();
+                        mapped[col] = MODE_MAP[rawMode] || rawMode;
+                    } else if (col === "bookingDate" || col === "statusDate") {
                         mapped[col] = parseDateString(row[importKey]);
                     } else if (col === "location") {
                         // Extract only city name from location field
@@ -328,13 +338,6 @@ export default function SmartBookingMasterPage() {
         setCustomerSuggestions(prev => ({ ...prev, [idx]: filtered }));
     };
 
-    const MODE_MAP: Record<string, string> = {
-        A: "AIR",
-        S: "SURFACE",
-        R: "ROAD",
-        T: "TRAIN"
-    };
-
     async function fetchAndCalculateRate(row: any) {
         if (!row.customerId || !row.mode || !row.destinationCity || !row.chargeWeight) {
             return null;
@@ -346,7 +349,7 @@ export default function SmartBookingMasterPage() {
                 params: { city: cityNameForRate }
             });
 
-            const dbMode = MODE_MAP[row.mode] || row.mode;
+            const dbMode = row.mode;
 
             const consignmentTypeMap: Record<string, string> = {
                 "Dox": "DOCUMENT", "Non Dox": "PARCEL", "DOX": "DOCUMENT",
@@ -593,7 +596,7 @@ export default function SmartBookingMasterPage() {
 
     const OPTIONS = {
         paymentStatus: ["PAID", "UNPAID", "PARTIAL"],
-        mode: [ "AIR", "EXPRESS", "PREMIUM", "RAIL", "SURFACE", "OTHER MODE"],
+        mode: ["AIR", "EXPRESS", "PREMIUM", "RAIL", "SURFACE", "OTHER MODE"],
         status: ["BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED", "RETURNED"],
         delivered: ["YES", "NO", "PARTIAL"]
     };

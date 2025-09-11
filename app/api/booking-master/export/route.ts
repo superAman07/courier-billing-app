@@ -107,10 +107,7 @@ export async function GET() {
                 dateOfDelivery: booking.dateOfDelivery ? new Date(booking.dateOfDelivery).toLocaleDateString('en-IN') : '',
                 todayDate: booking.todayDate ? new Date(booking.todayDate).toLocaleDateString('en-IN') : '',
                 gst: booking.gst ? `${booking.gst}%` : '',
-                mode: booking.mode === 'A' ? 'AIR' :
-                    booking.mode === 'S' ? 'SURFACE' :
-                        booking.mode === 'R' ? 'ROAD' :
-                            booking.mode === 'T' ? 'TRAIN' : booking.mode,
+                mode: booking.mode
             };
 
             worksheet.addRow(formattedBooking);

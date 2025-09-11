@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
                 consignmentValue: b.invoiceValue || 0,
                 doxType: b.dsrNdxPaper || '',
                 numPcs: b.pcs || 0,
-                serviceType: b.mode === "A" ? "AIR" : (b.mode === "S" ? "SURFACE" : (b.mode || '')),
+                serviceType: b.mode || '',
                 shipperCost: b.shipperCost || 0,
                 otherExp: b.otherExp || 0,
                 waybillSurcharge: +(getAmount(b) * 0.002).toFixed(2)
