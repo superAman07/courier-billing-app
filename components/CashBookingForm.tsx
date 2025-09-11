@@ -235,11 +235,11 @@ export default function CashBookingForm() {
               <label className={labelStyle}>Mode</label>
               <select name="mode" value={form.mode} onChange={handleChange} className="w-full p-2 border cursor-pointer rounded text-gray-700">
                 <option value="">Select</option>
-                <option value="EXPRESS">Express</option>
-                <option value="SURFACE">Surface</option>
                 <option value="AIR">Air</option>
+                <option value="EXPRESS">Express</option>
                 <option value="PREMIUM">Premium</option>
                 <option value="RAIL">Rail</option>
+                <option value="SURFACE">Surface</option>
                 <option value="OTHER MODE">Other Mode</option>
               </select>
             </div>

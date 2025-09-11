@@ -168,11 +168,11 @@ export default function InternationalCashBookingForm() {
               <label className="block text-sm font-semibold text-blue-900 mb-1">Mode</label>
               <select name="mode" value={form.mode} onChange={handleChange} className="w-full cursor-pointer p-2 border rounded text-gray-700">
                 <option value="">Select</option>
-                <option value="EXPRESS">Express</option>
-                <option value="SURFACE">Surface</option>
                 <option value="AIR">Air</option>
+                <option value="EXPRESS">Express</option>
                 <option value="PREMIUM">Premium</option>
                 <option value="RAIL">Rail</option>
+                <option value="SURFACE">Surface</option>
                 <option value="OTHER MODE">Other Mode</option>
               </select>
             </div>
