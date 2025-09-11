@@ -114,8 +114,8 @@ export default function CustomerForm() {
       const submissionData = {
         ...formData,
         fuelSurchargePercent: parseFloat(String(formData.fuelSurchargePercent)),
-        discountPercent: parseFloat(String(formData.discountPercent)),
-        openingBalance: parseFloat(String(formData.openingBalance)),
+        discountPercent: parseFloat(String(formData.discountPercent)) || 0,
+        openingBalance: parseFloat(String(formData.openingBalance)) || 0,
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
         contractDate: formData.contractDate ? new Date(formData.contractDate).toISOString() : null,
       };
