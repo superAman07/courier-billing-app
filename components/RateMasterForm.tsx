@@ -225,9 +225,12 @@ export default function RateMasterForm() {
                                 <label htmlFor="mode" className={labelStyle}>Mode</label>
                                 <select name="mode" value={formData.mode} onChange={handleChange} className={inputStyle}>
                                     <option value="ALL">ALL</option>
-                                    <option value="AIR">AIR</option>
-                                    <option value="ROAD">ROAD</option>
-                                    <option value="TRAIN">TRAIN</option>
+                                    <option value="EXPRESS">Express</option>
+                                    <option value="SURFACE">Surface</option>
+                                    <option value="AIR">Air</option>
+                                    <option value="PREMIUM">Premium</option>
+                                    <option value="RAIL">Rail</option>
+                                    <option value="OTHER MODE">Other Mode</option>
                                 </select>
                             </div>
                             <div>
