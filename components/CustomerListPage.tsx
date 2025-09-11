@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { CustomerMaster } from '@prisma/client';
@@ -10,6 +10,7 @@ export default function CustomerListPage() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
+    const [search , setSearch] = useState('');
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -27,6 +28,22 @@ export default function CustomerListPage() {
         };
         fetchCustomers();
     }, []);
+
+    const filteredCustomers = useMemo(() => {
+        if (!search) {
+            return customers;
+        }
+        const searchTerm = search.toLowerCase();
+        return customers.filter(customer =>
+            customer.customerCode.toLowerCase().includes(searchTerm) ||
+            customer.customerName.toLowerCase().includes(searchTerm) ||
+            (customer.contactPerson && customer.contactPerson.toLowerCase().includes(searchTerm)) ||
+            (customer.city && customer.city.toLowerCase().includes(searchTerm)) ||
+            (customer.mobile && customer.mobile.includes(searchTerm)) ||
+            (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
+            (customer.gstNo && customer.gstNo.toLowerCase().includes(searchTerm))
+        );
+    }, [customers, search]);
 
     const handleDelete = async (customerId: string) => {
         if (!confirm("Are you sure you want to delete this customer? This action cannot be undone.")) {
@@ -58,10 +75,19 @@ export default function CustomerListPage() {
                 </div>
 
                 <div className="p-6">
+                    <div className="mb-4">
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search by name, code, city, GST, etc..."
+                            className="w-full max-w-md p-2 border border-gray-300 text-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
                     {message && <p className="text-sm text-blue-600 mb-4">{message}</p>}
-                    <div className="overflow-x-auto border rounded-lg">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                    <div className="overflow-x-auto max-h-[60vh] border rounded-lg">
+                        <table className="min-w-full h-[10vh] divide-y divide-gray-200">
+                            <thead className="bg-gray-50 sticky">
                                 <tr>
                                     <th className={tableHeaderStyle}>Customer Code</th>
                                     <th className={tableHeaderStyle}>Customer Name</th>
@@ -75,9 +101,9 @@ export default function CustomerListPage() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {isLoading ? (
-                                    <tr><td colSpan={6} className="text-center py-4">Loading...</td></tr>
-                                ) : customers.length > 0 ? (
-                                    customers.map(customer => (
+                                    <tr><td colSpan={8} className="text-center py-4">Loading...</td></tr>
+                                ) : filteredCustomers.length > 0 ? (
+                                    filteredCustomers.map(customer => (
                                         <tr key={customer.id}>
                                             <td className={tableCellStyle}>{customer.customerCode}</td>
                                             <td className={tableCellStyle}>{customer.customerName}</td>
@@ -93,7 +119,7 @@ export default function CustomerListPage() {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan={6} className="text-center py-4">No customers found.</td></tr>
+                                    <tr><td colSpan={6} className="text-center text-gray-600">No customers found.</td></tr>
                                 )}
                             </tbody>
                         </table>
