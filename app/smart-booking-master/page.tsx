@@ -163,7 +163,7 @@ export default function SmartBookingMasterPage() {
 
             columns.forEach(col => {
                 if (col === "srNo") return;
-                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge","receiverName"];
+                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge", "receiverName"];
                 if (customerFields.includes(col)) {
                     mapped[col] = "";
                     return;
@@ -181,6 +181,17 @@ export default function SmartBookingMasterPage() {
                     if (col === "mode") {
                         const rawMode = row[importKey]?.toString().toUpperCase();
                         mapped[col] = MODE_MAP[rawMode] || rawMode;
+                    } else if (col === "dsrNdxPaper") {
+                        const rawValue = row[importKey]?.toString().toUpperCase();
+                        if (rawValue === 'D' || rawValue === 'N') {
+                            mapped[col] = rawValue;
+                        } else if (rawValue === 'DOCUMENT') {
+                            mapped[col] = 'D';
+                        } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX') {
+                            mapped[col] = 'N';
+                        } else {
+                            mapped[col] = rawValue;
+                        }
                     } else if (col === "bookingDate" || col === "statusDate") {
                         mapped[col] = parseDateString(row[importKey]);
                     } else if (col === "location") {
@@ -229,7 +240,7 @@ export default function SmartBookingMasterPage() {
                 toast.info(`Saving ${newBookingsToCreate.length} new bookings to the database...`);
                 const { data: createResult } = await axios.post('/api/booking-master/bulk-create', newBookingsToCreate);
                 toast.success(createResult.message || `${createResult.count} new bookings saved successfully.`);
-                
+
                 await fetchUnassignedBookings();
 
                 // const { data: allBookings } = await axios.get("/api/booking-master");
@@ -755,8 +766,8 @@ export default function SmartBookingMasterPage() {
                                                             className="w-full p-1 border rounded text-xs"
                                                         >
                                                             <option value="">Select</option>
-                                                            <option value="DOCUMENT">Document / Dox</option>
-                                                            <option value="PARCEL">Parcel / Non Dox</option>
+                                                            <option value="D">D (Dox)</option>
+                                                            <option value="N">N (Non Dox)</option>
                                                         </select>
                                                     ) : col === "customerType" ? (
                                                         <select
