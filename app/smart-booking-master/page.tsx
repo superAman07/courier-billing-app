@@ -593,7 +593,7 @@ export default function SmartBookingMasterPage() {
 
     const OPTIONS = {
         paymentStatus: ["PAID", "UNPAID", "PARTIAL"],
-        mode: ["A", "S", "R", "T"],
+        mode: [ "AIR", "EXPRESS", "PREMIUM", "RAIL", "SURFACE", "OTHER MODE"],
         status: ["BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED", "RETURNED"],
         delivered: ["YES", "NO", "PARTIAL"]
     };
