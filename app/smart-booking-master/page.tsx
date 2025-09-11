@@ -66,6 +66,28 @@ export default function SmartBookingMasterPage() {
     const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
     const [companyState, setCompanyState] = useState<string>("delhi");
 
+    const fetchUnassignedBookings = async () => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get('/api/booking-master/unassigned');
+            const rowsWithIndex = data.map((row: any, idx: number) => ({
+                ...row,
+                srNo: idx + 1,
+                _awbExists: true,
+                _bookingId: row.id,
+            }));
+            setTableRows(rowsWithIndex);
+            if (rowsWithIndex.length > 0) {
+                toast.info(`${rowsWithIndex.length} bookings pending for customer assignment.`);
+            }
+        } catch (error) {
+            toast.error("Failed to load pending bookings.");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const extractCityName = (locationString: string): string => {
         if (!locationString) return "";
 
@@ -207,18 +229,20 @@ export default function SmartBookingMasterPage() {
                 toast.info(`Saving ${newBookingsToCreate.length} new bookings to the database...`);
                 const { data: createResult } = await axios.post('/api/booking-master/bulk-create', newBookingsToCreate);
                 toast.success(createResult.message || `${createResult.count} new bookings saved successfully.`);
+                
+                await fetchUnassignedBookings();
 
-                const { data: allBookings } = await axios.get("/api/booking-master");
-                const updatedAwbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
+                // const { data: allBookings } = await axios.get("/api/booking-master");
+                // const updatedAwbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
 
-                const allProcessedRows = mappedRows.map(row => {
-                    const awbNo = row.awbNo?.toString();
-                    if (awbNo && updatedAwbMap[awbNo]) {
-                        return { ...updatedAwbMap[awbNo], _awbExists: true, _bookingId: updatedAwbMap[awbNo].id };
-                    }
-                    return row;
-                });
-                setTableRows(allProcessedRows);
+                // const allProcessedRows = mappedRows.map(row => {
+                //     const awbNo = row.awbNo?.toString();
+                //     if (awbNo && updatedAwbMap[awbNo]) {
+                //         return { ...updatedAwbMap[awbNo], _awbExists: true, _bookingId: updatedAwbMap[awbNo].id };
+                //     }
+                //     return row;
+                // });
+                // setTableRows(allProcessedRows);
 
             } catch (error: any) {
                 console.error("Bulk booking creation failed:", error);
@@ -258,6 +282,7 @@ export default function SmartBookingMasterPage() {
     };
 
     useEffect(() => {
+        fetchUnassignedBookings();
         const fetchCities = async () => {
             try {
                 const { data } = await axios.get("/api/city-master");
