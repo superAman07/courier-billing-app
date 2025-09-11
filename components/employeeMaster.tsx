@@ -53,6 +53,22 @@ export default function EmployeeMaster() {
     axios.get('/api/employee-master').then(res => setEmployees(res.data));
   }, []);
 
+  useEffect(()=>{
+    if(form.shiftStartTime && form.shiftEndTime){
+      const [startHours, startMinutes] = form.shiftStartTime.split(':').map(Number);
+      const [endHours, endMinutes] = form.shiftEndTime.split(':').map(Number);
+      const startDate = new Date(0,0,0,startHours,startMinutes);
+      const endDate = new Date(0,0,0,endHours, endMinutes);
+
+      let diff = endDate.getTime() - startDate.getTime();
+      if(diff < 0){
+        diff += 24 * 60 * 60 * 1000;
+      }
+      const hours = diff/(1000 * 60 * 60);
+      setForm(prev => ({...prev, workingHours: parseFloat(hours.toFixed(2))}));
+    }
+  },[form.shiftStartTime, form.shiftEndTime])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setForm(prev => ({
