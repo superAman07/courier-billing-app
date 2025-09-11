@@ -309,6 +309,7 @@ model BookingMaster {
   delivered               String?
   dateOfDelivery          DateTime?
   todayDate               DateTime?
+  customerCode            String?
   customerId              String?
   customer                CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
   createdAt               DateTime        @default(now())

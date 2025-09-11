@@ -39,7 +39,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     ref: ["CustRefNo", "Ref"],
     bookingDate: ["Booking Date"],
     location: ["Booking City", "Booking Branch", "Location"],
-    receiverName: ["Consignee", "Receiver Name"],
+    customerAttendBy: ["Consignee"],
     destinationCity: ["Destination City", "Destination"],
     pin: ["Pin", "Pincode"],
     mode: ["Mode"],
@@ -116,12 +116,15 @@ export default function SmartBookingMasterPage() {
     };
     const handleImport = async (rows: any[]) => {
         setLoading(true);
+        toast.info("Processing imported file...");
 
         try {
-            const { data } = await axios.get("/api/customers");
-            setCustomers(data);
+            const { data: customerData } = await axios.get("/api/customers");
+            setCustomers(customerData);
         } catch {
             toast.error("Failed to fetch customers");
+            setLoading(false);
+            return;
         }
 
         let existingBookings: any[] = [];
@@ -138,7 +141,7 @@ export default function SmartBookingMasterPage() {
 
             columns.forEach(col => {
                 if (col === "srNo") return;
-                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge"];
+                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge","receiverName"];
                 if (customerFields.includes(col)) {
                     mapped[col] = "";
                     return;
@@ -196,7 +199,39 @@ export default function SmartBookingMasterPage() {
             return { ...mapped, _awbExists: false };
         });
 
-        setTableRows(mappedRows);
+        const newBookingsToCreate = mappedRows.filter(row => !row._awbExists);
+        const existingBookingsToShow = mappedRows.filter(row => row._awbExists);
+
+        if (newBookingsToCreate.length > 0) {
+            try {
+                toast.info(`Saving ${newBookingsToCreate.length} new bookings to the database...`);
+                const { data: createResult } = await axios.post('/api/booking-master/bulk-create', newBookingsToCreate);
+                toast.success(createResult.message || `${createResult.count} new bookings saved successfully.`);
+
+                const { data: allBookings } = await axios.get("/api/booking-master");
+                const updatedAwbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
+
+                const allProcessedRows = mappedRows.map(row => {
+                    const awbNo = row.awbNo?.toString();
+                    if (awbNo && updatedAwbMap[awbNo]) {
+                        return { ...updatedAwbMap[awbNo], _awbExists: true, _bookingId: updatedAwbMap[awbNo].id };
+                    }
+                    return row;
+                });
+                setTableRows(allProcessedRows);
+
+            } catch (error: any) {
+                console.error("Bulk booking creation failed:", error);
+                toast.error(error.response?.data?.error || "Failed to auto-save new bookings.");
+                setTableRows(mappedRows);
+            }
+        } else {
+            setTableRows(existingBookingsToShow);
+            if (existingBookingsToShow.length > 0) {
+                toast.info("All imported bookings already exist in the database.");
+            }
+        }
+
         setLoading(false);
 
         const extractionResults = mappedRows
