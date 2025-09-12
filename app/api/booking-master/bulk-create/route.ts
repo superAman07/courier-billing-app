@@ -56,15 +56,6 @@ export async function POST(req: NextRequest) {
             return bookingData;
         });
 
-        // const result = await prisma.bookingMaster.createMany({
-        //     data: createData,
-        //     skipDuplicates: true,
-        // });
-
-        // return NextResponse.json({
-        //     message: `Successfully imported ${result.count} bookings.`,
-        //     count: result.count,
-        // });
         let createdCount = 0;
         let updatedCount = 0;
 
