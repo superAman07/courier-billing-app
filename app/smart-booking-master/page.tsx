@@ -199,7 +199,6 @@ export default function SmartBookingMasterPage() {
                     } else if (col === "bookingDate" || col === "statusDate") {
                         mapped[col] = parseDateString(row[importKey]);
                     } else if (col === "location") {
-                        // Extract only city name from location field
                         const rawLocation = row[importKey];
                         mapped[col] = extractCityName(rawLocation);
                         console.log(`Location processed: "${rawLocation}" → "${mapped[col]}"`);
@@ -224,10 +223,10 @@ export default function SmartBookingMasterPage() {
 
             const awbNo = mapped.awbNo?.toString();
             if (awbNo && awbMap[awbNo]) {
-                const existingRow = { ...awbMap[awbNo], srNo: mapped.srNo, _awbExists: true, _bookingId: awbMap[awbNo].id };
-                existingRow.pendingDaysNotDelivered = calculatePendingDays(existingRow.bookingDate, existingRow.status);
-                existingRow.todayDate = getCurrentDate();
-                return existingRow;
+                const updatedRow = { ...awbMap[awbNo], ...mapped, _awbExists: true, _bookingId: awbMap[awbNo].id };
+                updatedRow.pendingDaysNotDelivered = calculatePendingDays(updatedRow.bookingDate, updatedRow.status);
+                updatedRow.todayDate = getCurrentDate();
+                return updatedRow; 
             }
             mapped.paymentStatus = "UNPAID";
             mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
@@ -236,39 +235,20 @@ export default function SmartBookingMasterPage() {
             return { ...mapped, _awbExists: false };
         });
 
-        const newBookingsToCreate = mappedRows.filter(row => !row._awbExists);
-        const existingBookingsToShow = mappedRows.filter(row => row._awbExists);
-
-        if (newBookingsToCreate.length > 0) {
+        if (mappedRows.length > 0) {
             try {
-                toast.info(`Saving ${newBookingsToCreate.length} new bookings to the database...`);
-                const { data: createResult } = await axios.post('/api/booking-master/bulk-create', newBookingsToCreate);
-                toast.success(createResult.message || `${createResult.count} new bookings saved successfully.`);
+                toast.info(`Saving/Updating ${mappedRows.length} bookings in the database...`);
+                const { data: createResult } = await axios.post('/api/booking-master/bulk-create', mappedRows); // Send all mappedRows
+                toast.success(createResult.message || `${createResult.count} bookings processed successfully.`);
 
                 await fetchUnassignedBookings();
-
-                // const { data: allBookings } = await axios.get("/api/booking-master");
-                // const updatedAwbMap = Object.fromEntries(allBookings.map((b: any) => [String(b.awbNo), b]));
-
-                // const allProcessedRows = mappedRows.map(row => {
-                //     const awbNo = row.awbNo?.toString();
-                //     if (awbNo && updatedAwbMap[awbNo]) {
-                //         return { ...updatedAwbMap[awbNo], _awbExists: true, _bookingId: updatedAwbMap[awbNo].id };
-                //     }
-                //     return row;
-                // });
-                // setTableRows(allProcessedRows);
-
             } catch (error: any) {
-                console.error("Bulk booking creation failed:", error);
-                toast.error(error.response?.data?.error || "Failed to auto-save new bookings.");
+                console.error("Bulk booking creation/update failed:", error);
+                toast.error(error.response?.data?.error || "Failed to save/update bookings.");
                 setTableRows(mappedRows);
             }
         } else {
-            setTableRows(existingBookingsToShow);
-            if (existingBookingsToShow.length > 0) {
-                toast.info("All imported bookings already exist in the database.");
-            }
+            toast.info("No data to import.");
         }
 
         setLoading(false);
