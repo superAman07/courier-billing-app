@@ -34,13 +34,3 @@ export function parseDateString(dateStr: string | number | Date | null | undefin
   }
   return null;
 }
-
-
-// export function parseDateString(dateStr: string | number) {
-//   if (!dateStr) return null;
-//   if (typeof dateStr === "number") return excelSerialToISO(dateStr);
-//   const [d, m, y] = dateStr.split("/");
-//   if (d && m && y) return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-//   const dt = new Date(dateStr);
-//   return isNaN(dt.getTime()) ? null : dt.toISOString().slice(0, 10);
-// }
