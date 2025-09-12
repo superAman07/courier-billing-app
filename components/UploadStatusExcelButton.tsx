@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 
 interface Props {
     apiEndpoint?: string;
+    onUploadComplete?: () => void;
 }
 
-export default function UploadStatusExcelButton({ apiEndpoint = '/api/booking-master/bulk-status-upload' }: Props) {
+export default function UploadStatusExcelButton({ apiEndpoint = '/api/booking-master/bulk-status-upload', onUploadComplete }: Props) {
     const [uploading, setUploading] = useState(false);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,6 +53,9 @@ export default function UploadStatusExcelButton({ apiEndpoint = '/api/booking-ma
                 toast.success(response.data.message);
             } else {
                 toast.success('Status update completed successfully');
+            }
+            if (onUploadComplete) {
+                onUploadComplete();
             }
         } catch (error: any) {
             const msg = error?.response?.data?.error || error?.message || 'Upload failed';

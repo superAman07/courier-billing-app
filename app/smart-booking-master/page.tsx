@@ -75,10 +75,14 @@ export default function SmartBookingMasterPage() {
                 srNo: idx + 1,
                 _awbExists: true,
                 _bookingId: row.id,
+                pendingDaysNotDelivered: calculatePendingDays(row.bookingDate, row.status),
+                todayDate: getCurrentDate(),
             }));
             setTableRows(rowsWithIndex);
             if (rowsWithIndex.length > 0) {
                 toast.info(`${rowsWithIndex.length} bookings pending for customer assignment.`);
+            } else {
+                toast.success("All bookings are assigned. No pending data found.");
             }
         } catch (error) {
             toast.error("Failed to load pending bookings.");
@@ -380,7 +384,7 @@ export default function SmartBookingMasterPage() {
     };
 
     const calculatePendingDays = (bookingDate: string, status: string): number => {
-        if (status === "DELIVERED" || !bookingDate) return 0;
+        if (!status || status.toUpperCase() === "DELIVERED" || !bookingDate) return 0;
 
         const booking = new Date(bookingDate);
         const today = new Date();
@@ -680,7 +684,7 @@ export default function SmartBookingMasterPage() {
                     <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
                 </div>
             </div>
-            <UploadStatusExcelButton />
+            <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
 
             <BookingImportPanel onData={handleImport} />
 

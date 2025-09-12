@@ -18,12 +18,12 @@ model CustomerMaster {
   mobile          String?
   phone           String?
   email           String?   @unique
-  dateOfBirth     DateTime?
+  dateOfBirth     DateTime? @db.Date
   isInternational Boolean   @default(false)
   ownership       String?
 
   contractNo           String?
-  contractDate         DateTime?
+  contractDate         DateTime? @db.Date
   panNo                String?
   gstNo                String?
   fuelSurchargePercent Float?
@@ -197,8 +197,8 @@ model EmployeeMaster {
   sex           String?
   email         String?   @unique
   maritalStatus String?
-  dateOfBirth   DateTime?
-  dateOfJoining DateTime?
+  dateOfBirth   DateTime?  @db.Date
+  dateOfJoining DateTime?  @db.Date
   photoUrl      String?
 
   shiftStartTime String?
@@ -272,7 +272,7 @@ model SmsTemplate {
 model BookingMaster {
   id                      String          @id @default(cuid())
   srNo                    Int?
-  bookingDate             DateTime
+  bookingDate             DateTime        @db.Date
   awbNo                   String          @unique
   location                String?
   destinationCity         String
@@ -301,14 +301,14 @@ model BookingMaster {
   adhaarNo                String?
   customerAttendBy        String?
   status                  String?
-  statusDate              DateTime?
+  statusDate              DateTime?    @db.Date
   pendingDaysNotDelivered Int?
   receiverName            String?
   receiverContactNo       String?
   ref                     String?
   delivered               String?
-  dateOfDelivery          DateTime?
-  todayDate               DateTime?
+  dateOfDelivery          DateTime?    @db.Date
+  todayDate               DateTime?    @db.Date
   customerCode            String?
   customerId              String?
   customer                CustomerMaster? @relation("CustomerMasterToBookingMaster", fields: [customerId], references: [id])
@@ -318,7 +318,7 @@ model BookingMaster {
 
 model CashBooking {
   id             String   @id @default(cuid())
-  bookingDate    DateTime
+  bookingDate    DateTime  @db.Date
   senderName     String
   senderMobile   String
   sourcePincode  String
@@ -340,7 +340,7 @@ model CashBooking {
   vsAmount       Float?
   amountCharged  Float
   smsSent        Boolean   @default(false)
-  smsDate        DateTime?
+  smsDate        DateTime?  
   status         String?   @default("BOOKED")
   statusDate     DateTime? @default(now())
 
@@ -350,7 +350,7 @@ model CashBooking {
 
 model InternationalCashBooking {
   id             String   @id @default(cuid())
-  bookingDate    DateTime
+  bookingDate    DateTime  @db.Date
   senderName     String
   senderMobile   String
   receiverName   String
@@ -378,7 +378,7 @@ model InternationalCashBooking {
 
 model CreditClientBooking {
   id            String         @id @default(cuid())
-  bookingDate   DateTime
+  bookingDate   DateTime       @db.Date
   consignmentNo String         @unique
   customerId    String
   customer      CustomerMaster @relation(fields: [customerId], references: [id])
@@ -402,7 +402,7 @@ model CreditClientBooking {
 
 model InternationalCreditClientBooking {
   id            String         @id @default(cuid())
-  bookingDate   DateTime
+  bookingDate   DateTime        @db.Date
   consignmentNo String         @unique
   customerId    String
   customer      CustomerMaster @relation(fields: [customerId], references: [id])
@@ -427,7 +427,7 @@ model Invoice {
   id          String          @id @default(cuid())
   invoiceNo   String          @unique
   type        String
-  invoiceDate DateTime
+  invoiceDate DateTime        @db.Date
   totalAmount Float
   totalTax    Float
   netAmount   Float
@@ -435,8 +435,8 @@ model Invoice {
   customer    CustomerMaster? @relation(fields: [customerId], references: [id])
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  periodFrom  DateTime?
-  periodTo    DateTime?
+  periodFrom  DateTime?       @db.Date
+  periodTo    DateTime?       @db.Date
 
   paymentStatus PaymentStatus @default(UNPAID)
   amountPaid    Float         @default(0)
@@ -452,7 +452,7 @@ model InvoiceBooking {
   bookingId        String
   bookingType      String
   consignmentNo    String
-  bookingDate      DateTime
+  bookingDate      DateTime  @db.Date
   senderName       String
   receiverName     String
   city             String
@@ -485,7 +485,7 @@ enum PaymentStatus {
 
 model CustomerPayment {
   id            String   @id @default(cuid())
-  paymentDate   DateTime
+  paymentDate   DateTime  @db.Date
   amount        Float
   paymentMethod String // e.g., UPI, BANK, CASH
   referenceNo   String?
