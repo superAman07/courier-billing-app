@@ -12,11 +12,13 @@
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
+    "@types/lodash": "^4.17.20",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "exceljs": "^4.4.0",
     "formidable": "^3.5.4",
     "formidable-serverless": "^1.1.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.540.0",
     "next": "15.4.4",
     "react": "19.1.0",

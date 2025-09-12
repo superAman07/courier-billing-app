@@ -8,6 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import { Download, Users } from "lucide-react";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
+import { debounce } from 'lodash';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -226,7 +227,7 @@ export default function SmartBookingMasterPage() {
                 const updatedRow = { ...awbMap[awbNo], ...mapped, _awbExists: true, _bookingId: awbMap[awbNo].id };
                 updatedRow.pendingDaysNotDelivered = calculatePendingDays(updatedRow.bookingDate, updatedRow.status);
                 updatedRow.todayDate = getCurrentDate();
-                return updatedRow; 
+                return updatedRow;
             }
             mapped.paymentStatus = "UNPAID";
             mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
@@ -378,20 +379,20 @@ export default function SmartBookingMasterPage() {
         return new Date().toISOString().split('T')[0];
     };
 
-    const handleCustomerSearch = async (idx: number, searchTerm: string) => {
+    const handleCustomerSearch = debounce(async (idx: number, searchTerm: string) => {
         if (searchTerm.length < 2) {
             setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
             return;
         }
 
-        const filtered = customers.filter(c =>
-            c.customerCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase())
-        ).slice(0, 10);
-
-        setCustomerSuggestions(prev => ({ ...prev, [idx]: filtered }));
-    };
+        // Use the API's built-in filtering instead of client-side filtering
+        try {
+            const { data } = await axios.get(`/api/customers?query=${searchTerm}`);
+            setCustomerSuggestions(prev => ({ ...prev, [idx]: data }));
+        } catch (error) {
+            console.error("Error searching customers:", error);
+        }
+    }, 300);
 
     async function fetchAndCalculateRate(row: any) {
         if (!row.customerId || !row.mode || !row.destinationCity || !row.chargeWeight) {
@@ -489,7 +490,7 @@ export default function SmartBookingMasterPage() {
                     customerCode: customer.customerCode,
                     customerId: customer.id,
                     customerName: customer.customerName,
-                    receiverName: customer.contactPerson || "",
+                    customerAttendBy: customer.contactPerson || "", 
                     receiverContactNo: customer.mobile || customer.phone || "",
                     fuelSurcharge: customer.fuelSurchargePercent || 0,
                     address: customer.address || "",
