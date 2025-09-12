@@ -708,7 +708,7 @@ export default function SmartBookingMasterPage() {
                     <div className="mt-8 overflow-x-auto">
                         <div className="max-h-[600px] overflow-auto border rounded-lg">
                             <table className="min-w-full text-gray-600">
-                                <thead className="sticky top-0 bg-blue-100">
+                                <thead className="sticky top-0 z-20 bg-blue-100">
                                     <tr>
                                         {columns.map(col => (
                                             <th key={col} className="px-3 py-2 text-xs font-semibold text-blue-900 border-b">
