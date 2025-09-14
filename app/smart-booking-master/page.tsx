@@ -385,7 +385,6 @@ export default function SmartBookingMasterPage() {
             return;
         }
 
-        // Use the API's built-in filtering instead of client-side filtering
         try {
             const { data } = await axios.get(`/api/customers?query=${searchTerm}`);
             setCustomerSuggestions(prev => ({ ...prev, [idx]: data }));
