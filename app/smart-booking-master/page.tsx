@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BookingImportPanel from "@/components/BookingImportPanel";
 import { toast } from "sonner";
 import axios from "axios";
@@ -9,6 +9,7 @@ import { handleDownload } from "@/lib/downloadExcel";
 import { Download, Users } from "lucide-react";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -69,6 +70,10 @@ export default function SmartBookingMasterPage() {
     const [taxMaster, setTaxMaster] = useState<any[]>([]);
     const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
     const [companyState, setCompanyState] = useState<string>("delhi");
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(100);
+    const [totalPages, setTotalPages] = useState(1);
 
     const fetchUnassignedBookings = async () => {
         setLoading(true);
@@ -689,6 +694,30 @@ export default function SmartBookingMasterPage() {
         delivered: ["YES", "NO", "PARTIAL"]
     };
 
+    const paginatedRows = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return filteredRows.slice(startIndex, endIndex);
+    }, [filteredRows, currentPage, pageSize]);
+    useEffect(() => {
+        setTotalPages(Math.max(1, Math.ceil(filteredRows.length / pageSize)));
+        // Reset to page 1 if we're beyond the new total pages
+        if (currentPage > Math.ceil(filteredRows.length / pageSize)) {
+            setCurrentPage(1);
+        }
+    }, [filteredRows, pageSize]);
+
+    // Add these pagination control functions
+    const goToPage = (page: number) => {
+        const targetPage = Math.max(1, Math.min(page, totalPages));
+        setCurrentPage(targetPage);
+    };
+
+    const goToFirstPage = () => goToPage(1);
+    const goToPrevPage = () => goToPage(currentPage - 1);
+    const goToNextPage = () => goToPage(currentPage + 1);
+    const goToLastPage = () => goToPage(totalPages);
+
     return (
         <div className="max-w-[1440px] mx-auto p-8">
             <div className="flex items-center justify-between mb-6">
@@ -739,6 +768,25 @@ export default function SmartBookingMasterPage() {
                     </div>
 
                     <div className="mt-8 overflow-x-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="text-sm text-gray-600">
+                                Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredRows.length)} of {filteredRows.length} bookings
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="pageSize" className="text-sm font-medium text-gray-700">Rows per page:</label>
+                                <select
+                                    id="pageSize"
+                                    value={pageSize}
+                                    onChange={e => setPageSize(Number(e.target.value))}
+                                    className="text-sm border border-gray-300 text-blue-600 cursor-pointer rounded p-1"
+                                >
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                    <option value="500">500</option>
+                                </select>
+                            </div>
+                        </div>
                         <div className="max-h-[300px] overflow-auto border rounded-lg">
                             <table className="min-w-full text-gray-600">
                                 <thead className="sticky top-0 z-20 bg-blue-100">
@@ -752,7 +800,8 @@ export default function SmartBookingMasterPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredRows.map((row) => (
+                                    {/* {filteredRows.map((row) => ( */}
+                                    {paginatedRows.map((row) => (
                                         <tr key={row.__origIndex} className={row._awbExists ? "bg-yellow-50" : ""}>
                                             {columns.map(col => (
                                                 <td key={col} className="px-1 py-2 border-b relative">
@@ -855,6 +904,63 @@ export default function SmartBookingMasterPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                        <div className="mt-4 flex items-center justify-center">
+                            <div className="text-sm text-gray-600">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={goToFirstPage}
+                                    disabled={currentPage === 1}
+                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                    title="First Page"
+                                >
+                                    <ChevronsLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={goToPrevPage}
+                                    disabled={currentPage === 1}
+                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                    title="Previous Page"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+
+                                {/* Page number input */}
+                                <div className="flex items-center gap-1">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={totalPages}
+                                        value={currentPage}
+                                        onChange={(e) => {
+                                            const page = parseInt(e.target.value);
+                                            if (!isNaN(page)) goToPage(page);
+                                        }}
+                                        className="w-12 p-1 text-gray-600 text-center border rounded text-sm"
+                                    />
+                                    <span className="text-gray-600">/</span>
+                                    <span className="text-gray-600">{totalPages}</span>
+                                </div>
+
+                                <button
+                                    onClick={goToNextPage}
+                                    disabled={currentPage === totalPages}
+                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                    title="Next Page"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={goToLastPage}
+                                    disabled={currentPage === totalPages}
+                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                    title="Last Page"
+                                >
+                                    <ChevronsRight className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>
