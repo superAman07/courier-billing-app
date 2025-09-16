@@ -916,7 +916,7 @@ export default function SmartBookingMasterPage() {
                                     className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
                                     title="First Page"
                                 >
-                                    <ChevronsLeft className="w-4 h-4" />
+                                    <ChevronsLeft className="w-4 h-4 cursor-pointer" />
                                 </button>
                                 <button
                                     onClick={goToPrevPage}
