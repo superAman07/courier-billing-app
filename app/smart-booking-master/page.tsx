@@ -739,7 +739,7 @@ export default function SmartBookingMasterPage() {
                     </div>
 
                     <div className="mt-8 overflow-x-auto">
-                        <div className="max-h-[600px] overflow-auto border rounded-lg">
+                        <div className="max-h-[300px] overflow-auto border rounded-lg">
                             <table className="min-w-full text-gray-600">
                                 <thead className="sticky top-0 z-20 bg-blue-100">
                                     <tr>
