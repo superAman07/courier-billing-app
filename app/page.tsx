@@ -5,6 +5,7 @@ import { Users, Truck, FileText, DollarSign, ClipboardList, CalendarCheck, Packa
 const quickAccessLinks = [
     { href: '/all-customers', label: 'All Customers', icon: Users, description: "View and manage all customers" },
     { href: '/smart-booking-master', label: 'Smart Booking', icon: Truck, description: "Bulk import and edit bookings" },
+    { href: '/all-bookings', label: 'All Bookings', icon: Truck, description: "View and manage all bookings" },
     { href: '/update-and-send-delivery-status', label: 'Update Delivery Status', icon: ClipboardList, description: "Update status and send SMS" },
     { href: '/generate-cash-invoice', label: 'Cash Invoices', icon: FileText, description: "Generate invoices for cash bookings" },
     { href: '/generate-credit-client-invoice', label: 'Credit Invoices', icon: FileText, description: "Generate invoices for credit clients" },
