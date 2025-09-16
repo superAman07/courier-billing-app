@@ -34,6 +34,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.invoiceValue !== undefined) updateData.invoiceValue = data.invoiceValue ? Number(data.invoiceValue) : null;
     if (data.actualWeight !== undefined) updateData.actualWeight = data.actualWeight ? Number(data.actualWeight) : null;
     if (data.chargeWeight !== undefined) updateData.chargeWeight = data.chargeWeight ? Number(data.chargeWeight) : null;
+    if (data.length !== undefined) updateData.length = data.length ? Number(data.length) : null;
+    if (data.width !== undefined) updateData.width = data.width ? Number(data.width) : null;
+    if (data.height !== undefined) updateData.height = data.height ? Number(data.height) : null;
     if (data.valumetric !== undefined) updateData.valumetric = data.valumetric ? Number(data.valumetric) : null;
     if (data.invoiceWt !== undefined) updateData.invoiceWt = data.invoiceWt ? Number(data.invoiceWt) : null;
     if (data.clientBillingValue !== undefined) updateData.clientBillingValue = data.clientBillingValue ? Number(data.clientBillingValue) : null;

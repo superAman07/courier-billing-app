@@ -7,7 +7,7 @@ import { handleDownload } from "@/lib/downloadExcel";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-  "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight",
+  "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
   "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -78,7 +78,7 @@ export default function AllBookingsPage() {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/booking-master");
+      const res = await axios.get("/api/booking-master/assigned");
       const withSrNo = res.data.map((b: any, idx: number) => ({ ...b, srNo: idx + 1 }));
       setBookings(withSrNo);
     } catch (error) {
@@ -149,6 +149,10 @@ export default function AllBookingsPage() {
       delete payload.createdAt;
       delete payload.customer;
       delete payload.customerId;
+      if (payload.length) payload.length = Number(payload.length);
+      if (payload.width) payload.width = Number(payload.width);
+      if (payload.height) payload.height = Number(payload.height);
+      if (payload.valumetric) payload.valumetric = Number(payload.valumetric);
       await axios.put(`/api/booking-master/${editForm.id}`, payload);
       toast.success("Booking updated successfully.")
       setEditingId(null)
@@ -163,7 +167,22 @@ export default function AllBookingsPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedForm = { ...editForm, [name]: value };
+
+    // Auto-calculate valumetric when length, width, or height changes
+    if (['length', 'width', 'height'].includes(name)) {
+      const l = parseFloat(updatedForm.length) || 0;
+      const w = parseFloat(updatedForm.width) || 0;
+      const h = parseFloat(updatedForm.height) || 0;
+
+      if (l > 0 && w > 0 && h > 0) {
+        updatedForm.valumetric = ((l * w * h) / 5000).toFixed(2);
+      }
+    }
+
+    setEditForm(updatedForm);
+    // setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
   return (
@@ -286,7 +305,7 @@ export default function AllBookingsPage() {
                           value={editForm[col] ?? ""}
                           onChange={handleInputChange}
                           className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
-                          readOnly={col === "srNo" || col === "id"}
+                          readOnly={col === "srNo" || col === "id" || col === "valumetric"}
                         />
                       </td>
                     ) : (
