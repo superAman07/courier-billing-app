@@ -511,7 +511,7 @@ export default function SmartBookingMasterPage() {
                     customerId: customer.id,
                     customerName: customer.customerName,
                     customerAttendBy: customer.contactPerson || "", 
-                    receiverContactNo: customer.mobile || customer.phone || "",
+                    // receiverContactNo: customer.mobile || customer.phone || "",
                     fuelSurcharge: customer.fuelSurchargePercent || 0,
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
