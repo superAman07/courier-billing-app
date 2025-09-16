@@ -240,7 +240,16 @@ export default function SmartBookingMasterPage() {
                 const w = parseFloat(updatedRow.width) || 0;
                 const h = parseFloat(updatedRow.height) || 0;
                 if (l > 0 && w > 0 && h > 0) {
-                    updatedRow.valumetric = ((l * w * h) / 5000).toFixed(2);
+                    const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+                    mapped.valumetric = volumetricValue;
+
+                    const actualWeight = parseFloat(mapped.actualWeight) || 0;
+                    const volumetricWeight = parseFloat(volumetricValue);
+                    if (volumetricWeight > actualWeight) {
+                        mapped.chargeWeight = volumetricValue;
+                    } else if (actualWeight > 0) {
+                        updatedRow.chargeWeight = updatedRow.actualWeight;
+                    }
                 } else {
                     updatedRow.valumetric = "0.00";
                 }
@@ -254,7 +263,16 @@ export default function SmartBookingMasterPage() {
             const w = parseFloat(mapped.width) || 0;
             const h = parseFloat(mapped.height) || 0;
             if (l > 0 && w > 0 && h > 0) {
-                mapped.valumetric = ((l * w * h) / 5000).toFixed(2);
+                const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+                mapped.valumetric = volumetricValue;
+
+                const actualWeight = parseFloat(mapped.actualWeight) || 0;
+                const volumetricWeight = parseFloat(volumetricValue);
+                if (volumetricWeight > actualWeight) {
+                    mapped.chargeWeight = volumetricValue;
+                } else if (actualWeight > 0) {
+                    mapped.chargeWeight = actualWeight;
+                }
             } else {
                 mapped.valumetric = "0.00";
             }
@@ -558,7 +576,17 @@ export default function SmartBookingMasterPage() {
                     const w = parseFloat(updated.width) || 0;
                     const h = parseFloat(updated.height) || 0;
                     if (l > 0 && w > 0 && h > 0) {
-                        updated.valumetric = ((l * w * h) / 5000).toFixed(2);
+                        const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+                        updated.valumetric = volumetricValue;
+
+                        // Set charge weight equal to volumetric if volumetric is greater
+                        const actualWeight = parseFloat(updated.actualWeight) || 0;
+                        const volumetricWeight = parseFloat(volumetricValue);
+                        if (volumetricWeight > actualWeight) {
+                            updated.chargeWeight = volumetricValue;
+                        } else if (actualWeight > 0) {
+                            updated.chargeWeight = updated.actualWeight;
+                        }
                     } else {
                         updated.valumetric = "0.00";
                     }
