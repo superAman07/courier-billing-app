@@ -12,7 +12,7 @@ import { debounce } from 'lodash';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "valumetric",  "actualWeight", "chargeWeight", "invoiceWt",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width","height", "valumetric",  "actualWeight", "chargeWeight", "invoiceWt",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
     "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -24,7 +24,7 @@ const COLUMN_MAP: Record<string, string> = {
     destinationCity: "Destination", mode: "Mode", pcs: "No of Pcs", pin: "Pincode",
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", fuelSurcharge: "Fuel Surcharge (in %)",
-    shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", valumetric: "Valumatric",
+    shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
     invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
     creditCustomerAmount: "Credit Cust.  Amt", regularCustomerAmount: "Regular Cust. Amt",
     customerType: "Customer Type", senderDetail: "Sender Detail", paymentStatus: "PAYMENT STATUS",
@@ -52,6 +52,9 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     statusDate: ["Status Date"],
     dsrNdxPaper: ["Dox / Non Dox"],
     dsrContents: ["DSR_CONTENTS", "Content"],
+    length: ["Length", "L"],
+    width: ["Width", "W"],
+    height: ["Height", "H"],
 };
 
 export default function SmartBookingMasterPage() {
@@ -227,11 +230,29 @@ export default function SmartBookingMasterPage() {
                 const updatedRow = { ...awbMap[awbNo], ...mapped, _awbExists: true, _bookingId: awbMap[awbNo].id };
                 updatedRow.pendingDaysNotDelivered = calculatePendingDays(updatedRow.bookingDate, updatedRow.status);
                 updatedRow.todayDate = getCurrentDate();
+
+                const l = parseFloat(updatedRow.length) || 0;
+                const w = parseFloat(updatedRow.width) || 0;
+                const h = parseFloat(updatedRow.height) || 0;
+                if (l > 0 && w > 0 && h > 0) {
+                    updatedRow.valumetric = ((l * w * h) / 5000).toFixed(2);
+                } else {
+                    updatedRow.valumetric = "0.00";
+                }
                 return updatedRow;
             }
             mapped.paymentStatus = "UNPAID";
             mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
             mapped.todayDate = getCurrentDate();
+
+            const l = parseFloat(mapped.length) || 0;
+            const w = parseFloat(mapped.width) || 0;
+            const h = parseFloat(mapped.height) || 0;
+            if (l > 0 && w > 0 && h > 0) {
+                mapped.valumetric = ((l * w * h) / 5000).toFixed(2);
+            } else {
+                mapped.valumetric = "0.00";
+            }
 
             return { ...mapped, _awbExists: false };
         });
@@ -527,6 +548,18 @@ export default function SmartBookingMasterPage() {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
 
+                if(["length", "width", "height"].includes(field)){
+                    const l = parseFloat(updated.length) || 0;
+                    const w = parseFloat(updated.width) || 0;
+                    const h = parseFloat(updated.height) || 0;
+                    if (l > 0 && w > 0 && h > 0) {
+                        updated.valumetric = ((l * w * h) / 5000).toFixed(2);
+                    } else {
+                        updated.valumetric = "0.00";
+                    }
+                }
+                console.log(updated.valumetric);
+
                 if (field === "location") {
                     updated.location = getCityName(value);
                     updated.destinationCity = getCityCode(updated.location);
@@ -805,8 +838,8 @@ export default function SmartBookingMasterPage() {
                                                                             row.location === row.destinationCity && row.location ?
                                                                             "bg-green-50 border-green-300" : ""
                                                                 }`}
-                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered"}
-                                                            title={col === "gst" ? "Auto-calculated GST percentage" : ""}
+                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric"}
+                                                            title={col === "gst" ? "Auto-calculated GST percentage" : col === "valumetric" ? "Auto-calculated from L/W/H" : ""}
                                                         />
                                                     )}
                                                 </td>
