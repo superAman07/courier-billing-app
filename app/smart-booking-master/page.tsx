@@ -12,7 +12,7 @@ import { debounce } from 'lodash';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width","height", "valumetric",  "actualWeight", "chargeWeight", "invoiceWt",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "invoiceWt",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
     "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -177,7 +177,6 @@ export default function SmartBookingMasterPage() {
                     return;
                 }
 
-
                 let importKey = Object.keys(row).find(k =>
                     IMPORT_ALIASES[col]?.some(alias =>
                         k.replace(/[\s_]/g, '').toLowerCase() === alias.replace(/[\s_]/g, '').toLowerCase()
@@ -213,6 +212,7 @@ export default function SmartBookingMasterPage() {
                     mapped[col] = "";
                 }
             });
+            mapped.customerType = "CREDIT";
 
             if (mapped.location) {
                 const cityCode = getCityCode(mapped.location);
@@ -510,7 +510,7 @@ export default function SmartBookingMasterPage() {
                     customerCode: customer.customerCode,
                     customerId: customer.id,
                     customerName: customer.customerName,
-                    customerAttendBy: customer.contactPerson || "", 
+                    customerAttendBy: customer.contactPerson || "",
                     // receiverContactNo: customer.mobile || customer.phone || "",
                     fuelSurcharge: customer.fuelSurchargePercent || 0,
                     address: customer.address || "",
@@ -548,7 +548,7 @@ export default function SmartBookingMasterPage() {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
 
-                if(["length", "width", "height"].includes(field)){
+                if (["length", "width", "height"].includes(field)) {
                     const l = parseFloat(updated.length) || 0;
                     const w = parseFloat(updated.width) || 0;
                     const h = parseFloat(updated.height) || 0;
@@ -788,13 +788,12 @@ export default function SmartBookingMasterPage() {
                                                         </select>
                                                     ) : col === "customerType" ? (
                                                         <select
-                                                            value={row[col] || ""}
+                                                            value={row[col] || "CREDIT"}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
                                                             className="w-full p-1 border rounded text-xs"
                                                         >
-                                                            <option value="">Select</option>
-                                                            <option value="REGULAR">Regular</option>
                                                             <option value="CREDIT">Credit</option>
+                                                            <option value="REGULAR">Regular</option>
                                                             <option value="WALK-IN">Walk-in</option>
                                                         </select>
                                                     ) : col === "customerCode" ? (
