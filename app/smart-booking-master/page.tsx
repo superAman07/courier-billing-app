@@ -927,7 +927,6 @@ export default function SmartBookingMasterPage() {
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
 
-                                {/* Page number input */}
                                 <div className="flex items-center gap-1">
                                     <input
                                         type="number"
