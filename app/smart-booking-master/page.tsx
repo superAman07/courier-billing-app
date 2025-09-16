@@ -12,7 +12,7 @@ import { debounce } from 'lodash';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "valumetric", "invoiceWt", "actualWeight", "chargeWeight",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "valumetric",  "actualWeight", "chargeWeight", "invoiceWt",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
     "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
