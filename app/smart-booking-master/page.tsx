@@ -536,7 +536,8 @@ export default function SmartBookingMasterPage() {
                     customerId: customer.id,
                     customerName: customer.customerName,
                     customerAttendBy: customer.contactPerson || "",
-                    // receiverContactNo: customer.mobile || customer.phone || "",
+                    senderContactNo: customer.mobile || customer.phone || "",
+                    senderDetail: customer.customerName || "",
                     fuelSurcharge: customer.fuelSurchargePercent || 0,
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
@@ -587,7 +588,6 @@ export default function SmartBookingMasterPage() {
                         const volumetricValue = ((l * w * h) / 5000).toFixed(2);
                         updated.valumetric = volumetricValue;
 
-                        // Set charge weight equal to volumetric if volumetric is greater
                         const actualWeight = parseFloat(updated.actualWeight) || 0;
                         const volumetricWeight = parseFloat(volumetricValue);
                         if (volumetricWeight > actualWeight) {
