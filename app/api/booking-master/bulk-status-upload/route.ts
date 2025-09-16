@@ -8,6 +8,7 @@ interface ExcelRow {
   'Status Date'?: string | number;
   'Received By'?: string;
   'Status'?: string;
+  'Receiver Contact No'?: string;
 }
 
 function parseExcelDate(excelDate: any): Date | null {
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
       const newStatus = row['Status']?.toString().trim().toUpperCase();
       const statusDate = parseExcelDate(row['Status Date']);
       const receivedBy = row['Received By']?.toString().trim();
+      const receiverContactNo = row['Receiver Contact No']?.toString().trim();
 
       if (!awbNo) continue;
 
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
       if (newStatus) updateData.status = newStatus;
       if (statusDate) updateData.statusDate = statusDate;
       if (receivedBy) updateData.receiverName = receivedBy;
+      if (receiverContactNo) updateData.receiverContactNo = receiverContactNo;
 
       if (Object.keys(updateData).length > 0) {
         transactions.push(
