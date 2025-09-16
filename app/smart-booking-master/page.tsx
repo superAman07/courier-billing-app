@@ -250,6 +250,7 @@ export default function SmartBookingMasterPage() {
                     } else if (actualWeight > 0) {
                         updatedRow.chargeWeight = updatedRow.actualWeight;
                     }
+                    updatedRow.invoiceWt = Math.max(actualWeight, parseFloat(updatedRow.chargeWeight) || 0).toFixed(2);
                 } else {
                     updatedRow.valumetric = "0.00";
                 }
@@ -273,6 +274,7 @@ export default function SmartBookingMasterPage() {
                 } else if (actualWeight > 0) {
                     mapped.chargeWeight = actualWeight;
                 }
+                mapped.invoiceWt = Math.max(actualWeight, parseFloat(mapped.chargeWeight) || 0).toFixed(2);
             } else {
                 mapped.valumetric = "0.00";
             }
@@ -571,6 +573,12 @@ export default function SmartBookingMasterPage() {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
 
+                if (field === "actualWeight" || field === "chargeWeight") {
+                    const actualWeight = field === "actualWeight" ? parseFloat(value) || 0 : parseFloat(updated.actualWeight) || 0;
+                    const chargeWeight = field === "chargeWeight" ? parseFloat(value) || 0 : parseFloat(updated.chargeWeight) || 0;
+                    updated.invoiceWt = Math.max(actualWeight, chargeWeight).toFixed(2);
+                }
+
                 if (["length", "width", "height"].includes(field)) {
                     const l = parseFloat(updated.length) || 0;
                     const w = parseFloat(updated.width) || 0;
@@ -587,6 +595,7 @@ export default function SmartBookingMasterPage() {
                         } else if (actualWeight > 0) {
                             updated.chargeWeight = updated.actualWeight;
                         }
+                        updated.invoiceWt = Math.max(actualWeight, parseFloat(updated.chargeWeight) || 0).toFixed(2);
                     } else {
                         updated.valumetric = "0.00";
                     }
