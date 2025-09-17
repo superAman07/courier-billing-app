@@ -78,6 +78,7 @@ export default function CustomerPaymentsPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [employees, setEmployees] = useState<{ id: string, employeeName: string }[]>([]);
     const [loading, setLoading] = useState({ customers: true, invoices: false, details: false });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -89,6 +90,10 @@ export default function CustomerPaymentsPage() {
             .then(res => setCustomers(res.data))
             .catch(() => toast.error('Failed to load customers.'))
             .finally(() => setLoading(prev => ({ ...prev, customers: false })));
+
+        axios.get('/api/employee-master')
+            .then(res => setEmployees(res.data))
+            .catch(() => toast.error('Failed to load employees.'));
     }, []);
 
     useEffect(() => {
@@ -217,6 +222,7 @@ export default function CustomerPaymentsPage() {
             {isModalOpen && (
                 <RecordPaymentModal
                     customer={selectedCustomer!}
+                    employees={employees}
                     onClose={() => setIsModalOpen(false)}
                     onSuccess={() => {
                         setIsModalOpen(false);
@@ -285,16 +291,19 @@ function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: 
     );
 }
 
-function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Customer, onClose: () => void, onSuccess: () => void }) {
+function RecordPaymentModal({ customer, employees, onClose, onSuccess }: { customer: Customer, employees: { id: string, employeeName: string }[], onClose: () => void, onSuccess: () => void }) {
     const [formData, setFormData] = useState({
         amount: '',
         paymentDate: new Date().toISOString().split('T')[0],
         paymentMethod: 'BANK',
         referenceNo: '',
+        receivedBy: '',
+        remarks: '',
+        discuss: ''
     });
     const [submitting, setSubmitting] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
@@ -302,9 +311,19 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
         e.preventDefault();
         setSubmitting(true);
         try {
-            await axios.post('/api/customer-payment-updates', {
-                ...formData,
-                customerId: customer.id,
+            const data = new FormData();
+            data.append('customerId', customer.id);
+            data.append('amount', formData.amount);
+            data.append('paymentDate', formData.paymentDate);
+            data.append('paymentMethod', formData.paymentMethod);
+            data.append('referenceNo', formData.referenceNo);
+            data.append('receivedBy', formData.receivedBy);
+            data.append('remarks', formData.remarks);
+            data.append('discuss', formData.discuss);
+            await axios.post('/api/customer-payment-updates', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
             toast.success('Payment recorded successfully!');
             onSuccess();
@@ -359,6 +378,25 @@ function RecordPaymentModal({ customer, onClose, onSuccess }: { customer: Custom
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input type="text" name="referenceNo" value={formData.referenceNo} onChange={handleChange} className="w-full pl-10 p-2 border rounded-md text-gray-600" />
                         </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Received By</label>
+                        <select name="receivedBy" value={formData.receivedBy} onChange={handleChange} className="w-full p-2 border rounded-md text-gray-600 appearance-none">
+                            <option value="">Select Employee</option>
+                            {employees.map(emp => (
+                                <option key={emp.id} value={emp.employeeName}>{emp.employeeName}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                        <textarea name="remarks" value={formData.remarks} onChange={handleChange} rows={3} className="w-full p-2 border rounded-md text-gray-600" placeholder="Payment notes, e.g., 'Advance for next month'"></textarea>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Internal Discussion</label>
+                        <textarea name="discuss" value={formData.discuss} onChange={handleChange} rows={3} className="w-full p-2 border rounded-md text-gray-600" placeholder="Internal notes for follow-up"></textarea>
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 cursor-pointer bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>

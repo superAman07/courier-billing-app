@@ -36,13 +36,23 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const { customerId, amount, paymentDate, paymentMethod, referenceNo, imageUrl } = await req.json();
+        const formData = await req.formData();
+        const customerId = formData.get('customerId') as string;
+        const paymentAmount = parseFloat(formData.get('amount') as string);
+        const paymentDate = new Date(formData.get('paymentDate') as string);
+        const paymentMethod = formData.get('paymentMethod') as string;
+        const referenceNo = formData.get('referenceNo') as string;
+        const receivedBy = formData.get('receivedBy') as string | null;
+        const remarks = formData.get('remarks') as string | null;
+        const discuss = formData.get('discuss') as string | null;
+        const imageFile = formData.get('image') as File | null;
 
-        if (!customerId || !amount || !paymentDate || !paymentMethod) {
+        let imageUrl: string | undefined = undefined;
+
+        if (!customerId || !paymentAmount || !paymentDate || !paymentMethod) {
             return NextResponse.json({ message: "Missing required fields: customerId, amount, paymentDate, paymentMethod" }, { status: 400 });
         }
 
-        const paymentAmount = parseFloat(amount);
         if (isNaN(paymentAmount) || paymentAmount <= 0) {
             return NextResponse.json({ message: "Invalid payment amount" }, { status: 400 });
         }
@@ -55,10 +65,13 @@ export async function POST(req: NextRequest) {
                 data: {
                     customerId,
                     amount: paymentAmount,
-                    paymentDate: new Date(paymentDate),
+                    paymentDate,
                     paymentMethod,
                     referenceNo,
                     imageUrl,
+                    receivedBy,
+                    remarks,
+                    discuss,
                 },
             });
 
