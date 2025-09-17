@@ -29,6 +29,7 @@ interface PaymentDetail {
         referenceNo: string | null;
         receivedBy: string | null;
         remarks: string | null;
+        discuss: string | null;
     }
 }
 
@@ -287,6 +288,7 @@ function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: 
                                         <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
                                             {detail.payment.receivedBy && <p className="text-gray-600"><span className="font-semibold">Received By:</span> {detail.payment.receivedBy}</p>}
                                             {detail.payment.remarks && <p className="text-gray-600 mt-1"><span className="font-semibold">Remarks:</span> {detail.payment.remarks}</p>}
+                                            {detail.payment.discuss && <p className="text-gray-600 mt-1"><span className="font-semibold">Internal Discussion:</span> {detail.payment.discuss}</p>}
                                         </div>
                                     )}
                                 </li>
