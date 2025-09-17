@@ -38,6 +38,10 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
     const finalAmount = Math.round(totalAfterTax);
     const gstRate = taxableValue > 0 ? (igstAmount / taxableValue) * 100 : 0;
 
+    const companyStateCode = company?.gstNo?.substring(0, 2);
+    const customerStateCode = invoice.customer?.gstNo?.substring(0, 2);
+    const isIntraState = companyStateCode && customerStateCode && companyStateCode === customerStateCode;
+
     return (
         <div className="max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
             <div className="text-center border-b-2 border-black pb-4 mb-6">
@@ -167,10 +171,23 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue.toFixed(2)}</td>
                         </tr>
-                        <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>
-                        </tr>
+                        {isIntraState ? (
+                            <>
+                                <tr>
+                                    <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">CGST {(gstRate / 2).toFixed(0)}%</td>
+                                    <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{(igstAmount / 2).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">SGST {(gstRate / 2).toFixed(0)}%</td>
+                                    <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{(igstAmount / 2).toFixed(2)}</td>
+                                </tr>
+                            </>
+                        ) : (
+                            <tr>
+                                <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
+                                <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>
+                            </tr>
+                        )} 
                         <tr>
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{totalAfterTax.toFixed(2)}</td>
