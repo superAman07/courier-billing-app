@@ -76,6 +76,23 @@ export default function SmartBookingMasterPage() {
     const [pageSize, setPageSize] = useState(100);
     const [totalPages, setTotalPages] = useState(1);
 
+    const recalculateClientBilling = (row: any) => {
+        const frCharge = parseFloat(row.frCharge) || 0;
+        const fuelSurcharge = parseFloat(row.fuelSurcharge) || 0;
+        const shipperCost = parseFloat(row.shipperCost) || 0;
+        const otherExp = parseFloat(row.otherExp) || 0;
+        const gstPercent = row._gstPercent || 0;
+
+        const subtotal = frCharge + fuelSurcharge + shipperCost + otherExp;
+        const gstAmount = (subtotal * gstPercent) / 100;
+        const clientBillingValue = subtotal + gstAmount;
+
+        const updatedRow = { ...row };
+        updatedRow.gst = gstAmount.toFixed(2);
+        updatedRow.clientBillingValue = clientBillingValue.toFixed(2);
+        return updatedRow;
+    };
+
     const fetchUnassignedBookings = async () => {
         setLoading(true);
         try {
@@ -527,17 +544,61 @@ export default function SmartBookingMasterPage() {
         }
     }
 
+    // const handleCustomerSelect = async (idx: number, customer: any) => {
+    //     setTableRows(rows =>
+    //         rows.map((row, i) => {
+    //             if (i !== idx) return row;
+    //             const frCharge = parseFloat(row.frCharge) || 0;
+    //             const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
+    //             let fuelSurcharge = 0;
+    //             if (frCharge > 0) {
+    //                 fuelSurcharge = (frCharge * fuelSurchargePercent) / 100;
+    //             }
+    //             return {
+    //                 ...row,
+    //                 customerCode: customer.customerCode,
+    //                 customerId: customer.id,
+    //                 customerName: customer.customerName,
+    //                 customerAttendBy: customer.contactPerson || "",
+    //                 senderContactNo: customer.mobile || customer.phone || "",
+    //                 senderDetail: customer.customerName || "",
+    //                 _fuelSurchargePercent: fuelSurchargePercent,
+    //                 fuelSurcharge: fuelSurcharge.toFixed(2),
+    //                 address: customer.address || "",
+    //                 todayDate: getCurrentDate(),
+    //             };
+    //         })
+    //     );
+
+    //     const updatedRow = tableRows[idx];
+    //     updatedRow.customerId = customer.id;
+
+    //     const calculatedRate = await fetchAndCalculateRate(updatedRow);
+    //     if (calculatedRate !== null) {
+    //         const gstPercentage = getGSTPercentage(customer.pincode || "");
+
+    //         setTableRows(rows =>
+    //             rows.map((row, i) => {
+    //                 if (i !== idx) return row;
+    //                 return {
+    //                     ...row,
+    //                     clientBillingValue: calculatedRate,
+    //                     gst: gstPercentage
+    //                 };
+    //             })
+    //         );
+    //         toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}%`);
+    //     }
+    //     setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
+    //     toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
+    // };
     const handleCustomerSelect = async (idx: number, customer: any) => {
         setTableRows(rows =>
             rows.map((row, i) => {
                 if (i !== idx) return row;
-                const frCharge = parseFloat(row.frCharge) || 0;
-                const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
-                let fuelSurcharge = 0;
-                if (frCharge > 0) {
-                    fuelSurcharge = (frCharge * fuelSurchargePercent) / 100;
-                }
-                return {
+
+                const gstPercentage = getGSTPercentage(customer.pincode || "");
+                let updatedRow = {
                     ...row,
                     customerCode: customer.customerCode,
                     customerId: customer.id,
@@ -545,33 +606,19 @@ export default function SmartBookingMasterPage() {
                     customerAttendBy: customer.contactPerson || "",
                     senderContactNo: customer.mobile || customer.phone || "",
                     senderDetail: customer.customerName || "",
-                    _fuelSurchargePercent: fuelSurchargePercent,
-                    fuelSurcharge: fuelSurcharge.toFixed(2),
+                    _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
+                    _gstPercent: gstPercentage, 
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
                 };
+                const frCharge = parseFloat(updatedRow.frCharge) || 0;
+                const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+                updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+                return recalculateClientBilling(updatedRow);
             })
         );
 
-        const updatedRow = tableRows[idx];
-        updatedRow.customerId = customer.id;
-
-        const calculatedRate = await fetchAndCalculateRate(updatedRow);
-        if (calculatedRate !== null) {
-            const gstPercentage = getGSTPercentage(customer.pincode || "");
-
-            setTableRows(rows =>
-                rows.map((row, i) => {
-                    if (i !== idx) return row;
-                    return {
-                        ...row,
-                        clientBillingValue: calculatedRate,
-                        gst: gstPercentage
-                    };
-                })
-            );
-            toast.success(`Rate: ₹${calculatedRate} | GST: ${gstPercentage}%`);
-        }
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
         toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
     };
@@ -580,7 +627,7 @@ export default function SmartBookingMasterPage() {
         setTableRows(rows =>
             rows.map((row, i) => {
                 if (i !== idx) return row;
-                const updated = { ...row, [field]: value };
+                let updated = { ...row, [field]: value };
 
                 if (field === "frCharge") {
                     const frCharge = parseFloat(value) || 0;
@@ -590,6 +637,10 @@ export default function SmartBookingMasterPage() {
                     } else {
                         updated.fuelSurcharge = "0.00";
                     }
+                }
+
+                if (["frCharge", "shipperCost", "otherExp"].includes(field)) {
+                    updated = recalculateClientBilling(updated);
                 }
 
                 if (field === "actualWeight" || field === "chargeWeight") {
@@ -643,34 +694,35 @@ export default function SmartBookingMasterPage() {
                         updated.address = "";
                         updated.clientBillingValue = "";
                         updated.gst = "";
+                        updated._gstPercent = 0;
                     }
                 }
 
-                if (["mode", "destinationCity", "location", "chargeWeight", "dsrNdxPaper"].includes(field) && updated.customerId) {
-                    fetchAndCalculateRate(updated).then(amount => {
-                        if (amount !== null) {
-                            const customer = customers.find(c => c.id === updated.customerId);
-                            const gstPercentage = customer ? getGSTPercentage(customer.pincode || "") : "";
+                // if (["mode", "destinationCity", "location", "chargeWeight", "dsrNdxPaper"].includes(field) && updated.customerId) {
+                //     fetchAndCalculateRate(updated).then(amount => {
+                //         if (amount !== null) {
+                //             const customer = customers.find(c => c.id === updated.customerId);
+                //             const gstPercentage = customer ? getGSTPercentage(customer.pincode || "") : "";
 
-                            setTableRows(rows2 =>
-                                rows2.map((r2, j) =>
-                                    j === idx ? {
-                                        ...r2,
-                                        clientBillingValue: amount,
-                                        gst: gstPercentage
-                                    } : r2
-                                )
-                            );
-                        }
-                    });
-                }
-                if (field === "clientBillingValue" && updated.customerId) {
-                    const customer = customers.find(c => c.id === updated.customerId);
-                    if (customer) {
-                        const gstPercentage = getGSTPercentage(customer.pincode || "");
-                        updated.gst = gstPercentage;
-                    }
-                }
+                //             setTableRows(rows2 =>
+                //                 rows2.map((r2, j) =>
+                //                     j === idx ? {
+                //                         ...r2,
+                //                         clientBillingValue: amount,
+                //                         gst: gstPercentage
+                //                     } : r2
+                //                 )
+                //             );
+                //         }
+                //     });
+                // }
+                // if (field === "clientBillingValue" && updated.customerId) {
+                //     const customer = customers.find(c => c.id === updated.customerId);
+                //     if (customer) {
+                //         const gstPercentage = getGSTPercentage(customer.pincode || "");
+                //         updated.gst = gstPercentage;
+                //     }
+                // }
                 if (field === "status" || field === "bookingDate") {
                     updated.pendingDaysNotDelivered = calculatePendingDays(
                         field === "bookingDate" ? value : updated.bookingDate,
@@ -941,11 +993,12 @@ export default function SmartBookingMasterPage() {
                                                                             row.location === row.destinationCity && row.location ?
                                                                             "bg-green-50 border-green-300" : ""
                                                                 }`}
-                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge"}
+                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue"}
                                                             placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
                                                             title={col === "gst" ? "Auto-calculated GST percentage" : 
                                                                 col === "valumetric" ? "Auto-calculated from L/W/H" : 
-                                                                col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)` : ""
+                                                                col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)`:
+                                                                col === "clientBillingValue" ? "Auto-calculated from components" : ""
                                                             }
                                                         />
                                                     )}
