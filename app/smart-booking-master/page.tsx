@@ -457,92 +457,92 @@ export default function SmartBookingMasterPage() {
         }
     }, 300);
 
-    async function fetchAndCalculateRate(row: any) {
-        if (!row.customerId || !row.mode || !row.destinationCity || !row.chargeWeight) {
-            return null;
-        }
+    // async function fetchAndCalculateRate(row: any) {
+    //     if (!row.customerId || !row.mode || !row.destinationCity || !row.chargeWeight) {
+    //         return null;
+    //     }
 
-        try {
-            const cityNameForRate = getCityName(row.destinationCity);
-            const { data: cityMap } = await axios.get('/api/city-to-zone-state', {
-                params: { city: cityNameForRate }
-            });
+    //     try {
+    //         const cityNameForRate = getCityName(row.destinationCity);
+    //         const { data: cityMap } = await axios.get('/api/city-to-zone-state', {
+    //             params: { city: cityNameForRate }
+    //         });
 
-            const dbMode = row.mode;
+    //         const dbMode = row.mode;
 
-            const consignmentTypeMap: Record<string, string> = {
-                "Dox": "DOCUMENT", "Non Dox": "PARCEL", "DOX": "DOCUMENT",
-                "NON DOX": "PARCEL", "DOCUMENT": "DOCUMENT", "PARCEL": "PARCEL"
-            };
-            const consignmentType = consignmentTypeMap[row.dsrNdxPaper] || "DOCUMENT";
+    //         const consignmentTypeMap: Record<string, string> = {
+    //             "Dox": "DOCUMENT", "Non Dox": "PARCEL", "DOX": "DOCUMENT",
+    //             "NON DOX": "PARCEL", "DOCUMENT": "DOCUMENT", "PARCEL": "PARCEL"
+    //         };
+    //         const consignmentType = consignmentTypeMap[row.dsrNdxPaper] || "DOCUMENT";
 
-            const { data: slabs } = await axios.get('/api/rates/templates/slabs', {
-                params: {
-                    customerId: row.customerId,
-                    mode: dbMode,
-                    consignmentType: consignmentType,
-                    zoneId: cityMap.zoneId,
-                    stateId: cityMap.stateId,
-                    city: cityNameForRate,
-                }
-            });
+    //         const { data: slabs } = await axios.get('/api/rates/templates/slabs', {
+    //             params: {
+    //                 customerId: row.customerId,
+    //                 mode: dbMode,
+    //                 consignmentType: consignmentType,
+    //                 zoneId: cityMap.zoneId,
+    //                 stateId: cityMap.stateId,
+    //                 city: cityNameForRate,
+    //             }
+    //         });
 
-            if (!slabs || slabs.length === 0) {
-                console.warn("No rate slabs found for this combination");
-                return null;
-            }
+    //         if (!slabs || slabs.length === 0) {
+    //             console.warn("No rate slabs found for this combination");
+    //             return null;
+    //         }
 
-            const weight = Number(row.chargeWeight);
-            const slab = slabs.find((s: any) => weight >= s.fromWeight && weight <= s.toWeight);
+    //         const weight = Number(row.chargeWeight);
+    //         const slab = slabs.find((s: any) => weight >= s.fromWeight && weight <= s.toWeight);
 
-            if (!slab) {
-                console.warn("No rate slab found for weight:", weight);
-                return null;
-            }
+    //         if (!slab) {
+    //             console.warn("No rate slab found for weight:", weight);
+    //             return null;
+    //         }
 
-            let baseAmount = slab.rate;
-            let additionalAmount = 0;
-            if (slab.hasAdditionalRate && weight > slab.toWeight) {
-                const extraWeight = weight - slab.toWeight;
-                const extraUnits = Math.ceil(extraWeight / slab.additionalWeight);
-                additionalAmount = extraUnits * slab.additionalRate;
-            }
+    //         let baseAmount = slab.rate;
+    //         let additionalAmount = 0;
+    //         if (slab.hasAdditionalRate && weight > slab.toWeight) {
+    //             const extraWeight = weight - slab.toWeight;
+    //             const extraUnits = Math.ceil(extraWeight / slab.additionalWeight);
+    //             additionalAmount = extraUnits * slab.additionalRate;
+    //         }
 
-            const subtotal = baseAmount + additionalAmount;
+    //         const subtotal = baseAmount + additionalAmount;
 
-            const customer = customers.find(c => c.id === row.customerId);
-            if (!customer) return subtotal;
+    //         const customer = customers.find(c => c.id === row.customerId);
+    //         if (!customer) return subtotal;
 
-            const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
-            const discountPercent = customer.discountPercent || 0;
+    //         const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
+    //         const discountPercent = customer.discountPercent || 0;
 
-            const fuelSurchargeAmount = (subtotal * fuelSurchargePercent) / 100;
-            const discountAmount = (subtotal * discountPercent) / 100;
+    //         const fuelSurchargeAmount = (subtotal * fuelSurchargePercent) / 100;
+    //         const discountAmount = (subtotal * discountPercent) / 100;
 
-            const finalAmount = subtotal + fuelSurchargeAmount - discountAmount;
+    //         const finalAmount = subtotal + fuelSurchargeAmount - discountAmount;
 
-            console.log("💼 Billing Calculation:", {
-                customer: customer.customerName,
-                weight: `${weight} kg`,
-                mode: dbMode,
-                city: cityNameForRate,
-                breakdown: {
-                    baseRate: `₹${baseAmount}`,
-                    additionalCharges: `₹${additionalAmount}`,
-                    subtotal: `₹${subtotal}`,
-                    fuelSurcharge: `₹${fuelSurchargeAmount} (${fuelSurchargePercent}%)`,
-                    discount: `₹${discountAmount} (${discountPercent}%)`,
-                    finalAmount: `₹${finalAmount.toFixed(2)}`
-                }
-            });
+    //         console.log("💼 Billing Calculation:", {
+    //             customer: customer.customerName,
+    //             weight: `${weight} kg`,
+    //             mode: dbMode,
+    //             city: cityNameForRate,
+    //             breakdown: {
+    //                 baseRate: `₹${baseAmount}`,
+    //                 additionalCharges: `₹${additionalAmount}`,
+    //                 subtotal: `₹${subtotal}`,
+    //                 fuelSurcharge: `₹${fuelSurchargeAmount} (${fuelSurchargePercent}%)`,
+    //                 discount: `₹${discountAmount} (${discountPercent}%)`,
+    //                 finalAmount: `₹${finalAmount.toFixed(2)}`
+    //             }
+    //         });
 
-            return parseFloat(finalAmount.toFixed(2));
+    //         return parseFloat(finalAmount.toFixed(2));
 
-        } catch (error) {
-            console.error("Rate calculation error:", error);
-            return null;
-        }
-    }
+    //     } catch (error) {
+    //         console.error("Rate calculation error:", error);
+    //         return null;
+    //     }
+    // }
 
     // const handleCustomerSelect = async (idx: number, customer: any) => {
     //     setTableRows(rows =>

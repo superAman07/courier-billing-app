@@ -58,7 +58,7 @@ export default function GenerateCreditInvoice() {
     try {
       const { data } = await axios.get('/api/invoices', {
         params: {
-          type: 'BookingMaster_CREDIT',  // ← Use the actual DB type
+          type: 'BookingMaster_CREDIT',
           customerId
         }
       });
@@ -79,23 +79,6 @@ export default function GenerateCreditInvoice() {
   const handleSelectAll = () => {
     if (selected.length === bookings.length) setSelected([]);
     else setSelected(bookings.map((b: any) => b.id));
-  };
-
-  const calculateRowTotal = (b: any) => {
-    const baseAmount = Number(b.clientBillingValue ?? 0);
-    const shipperCost = Number(b.shipperCost ?? 0);
-    const otherExp = Number(b.otherExp ?? 0);
-    const waybillSurcharge = +(baseAmount * 0.002).toFixed(2);
-    const fuelSurcharge = Number(b.fuelSurcharge ?? 0);
-    
-    const taxableValue = baseAmount + shipperCost + otherExp + waybillSurcharge + fuelSurcharge;
-    
-    const gstRate = Number(b.gst ?? 0);
-    const gstAmount = taxableValue * (gstRate / 100);
-    
-    const finalAmount = taxableValue + gstAmount;
-    
-    return finalAmount.toFixed(2);
   };
 
   const handleGenerateInvoice = async () => {
@@ -196,23 +179,30 @@ export default function GenerateCreditInvoice() {
               </td>
             </tr>
           ) : (
-            bookings.map((b: any) => (
-              <tr key={b.id} className="text-xs">
-                <td className='text-center'>
-                  <input
-                    type="checkbox"
-                    className='cursor-pointer'
-                    checked={selected.includes(b.id)}
-                    onChange={() => handleSelect(b.id)}
-                  />
-                </td>
-                <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
-                <td className='text-gray-600 text-center'>{b.awbNo}</td>
-                <td className='text-gray-600 text-center'>{b.customer?.customerCode || ''} - {b.customer?.customerName || ''}</td>
-                <td className='text-gray-600 text-center'>{b.receiverName}</td>
-                <td className='text-gray-600 text-center'>₹{calculateRowTotal(b)}</td>
-              </tr>
-            ))
+            bookings.map((b: any) => { 
+              const clientBillingValue = Number(b.clientBillingValue || 0);
+              const creditAmount = Number(b.creditCustomerAmount || 0);
+              const regularAmount = Number(b.regularCustomerAmount || 0);
+              const totalAmount = clientBillingValue + creditAmount + regularAmount;
+
+              return (
+                <tr key={b.id} className="text-xs">
+                  <td className='text-center'>
+                    <input
+                      type="checkbox"
+                      className='cursor-pointer'
+                      checked={selected.includes(b.id)}
+                      onChange={() => handleSelect(b.id)}
+                    />
+                  </td>
+                  <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
+                  <td className='text-gray-600 text-center'>{b.awbNo}</td>
+                  <td className='text-gray-600 text-center'>{b.customer?.customerCode || ''} - {b.customer?.customerName || ''}</td>
+                  <td className='text-gray-600 text-center'>{b.receiverName}</td>
+                  <td className='text-gray-600 text-center'>₹{totalAmount.toFixed(2)}</td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

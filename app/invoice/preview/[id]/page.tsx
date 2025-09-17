@@ -23,22 +23,10 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
         );
     }
  
-    // const bookings = invoice.bookings || [];
-    // const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
-    // const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
-    // const fuelSurcharge = 0;
-    // const taxableValue = subtotal + fuelSurcharge;
-    // const igstRate = 0.18;
-    // const igstAmount = taxableValue * igstRate;
-    // const totalAfterTax = taxableValue + igstAmount;
-    // const roundOff = Math.round(totalAfterTax) - totalAfterTax;
-    // const finalAmount = Math.round(totalAfterTax);
-    // const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
-    // const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
-    // const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
     const bookings = invoice.bookings || [];
     const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
-    const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
+    // const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
+    const frChargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.frCharge || 0), 0);
     const shipperCostTotal = bookings.reduce((s: number, b: any) => s + Number(b.shipperCost || 0), 0);
     const waybillSurchargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.waybillSurcharge || 0), 0);
     const otherExpTotal = bookings.reduce((s: number, b: any) => s + Number(b.otherExp || 0), 0);
@@ -153,7 +141,11 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
 
                         <tr>
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{subtotal.toFixed(2)}</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{invoice.netAmount.toFixed(2)}</td>
+                        </tr> 
+                        <tr>
+                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">FR Charge</td>
+                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{frChargeTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>

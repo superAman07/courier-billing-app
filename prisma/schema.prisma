@@ -467,6 +467,7 @@ model InvoiceBooking {
   doxType          String?
   numPcs           Int?
   serviceType      String?
+  frCharge         Float?
   shipperCost      Float?
   waybillSurcharge Float?
   otherExp         Float?
