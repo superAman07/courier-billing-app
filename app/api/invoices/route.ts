@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           const clientBillingValue = Number(b.clientBillingValue || 0);
           const creditAmount = Number(b.creditCustomerAmount || 0);
           const regularAmount = Number(b.regularCustomerAmount || 0);
-          
+
           const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
           const taxAmount = Number(b.gst || 0);
 
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
             invoiceDate,
             totalAmount: grandTotal - totalTax,
             totalTax: totalTax,
-            netAmount: grandTotal, 
+            netAmount: grandTotal,
             customerId,
             periodFrom: bookings.reduce((min: Date, b: BookingMaster) => b.bookingDate < min ? b.bookingDate : min, bookings[0].bookingDate),
             periodTo: bookings.reduce((max: Date, b: BookingMaster) => b.bookingDate > max ? b.bookingDate : max, bookings[0].bookingDate),
@@ -152,165 +152,6 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-// export async function POST(req: NextRequest) {
-//   try {
-//     const body = await req.json();
-//     const { bookingIds, customerId, invoiceDate: invoiceDateStr, customerType } = body;
-//     if (
-//       !bookingIds ||
-//       !Array.isArray(bookingIds) ||
-//       bookingIds.length === 0 ||
-//       !customerId ||
-//       !invoiceDateStr ||
-//       !customerType
-//     ) {
-//       return NextResponse.json({ message: "Invalid input" }, { status: 400 });
-//     }
-
-//     const allowedCustomerTypes = ["CREDIT", "REGULAR", "WALK-IN"];
-//     if (!allowedCustomerTypes.includes(customerType)) {
-//       return NextResponse.json({ message: "Invalid customerType" }, { status: 400 });
-//     }
-
-//     const invoiceDate = new Date(invoiceDateStr);
-//     if (isNaN(invoiceDate.getTime())) {
-//       return NextResponse.json({ message: "Invalid invoiceDate" }, { status: 400 });
-//     }
-
-//     const invoiceType = customerType === "CREDIT" ?
-//       "BookingMaster_CREDIT" : "BookingMaster_CASH";
-
-//     const createdInvoice = await runWithRetries(async () => {
-//       return await prisma.$transaction(async (tx) => {
-//         let prefix = 'ANGS-';
-//         if (customerType === 'CREDIT' && customerId) {
-//           const customer = await tx.customerMaster.findUnique({
-//             where: { id: customerId },
-//             select: { gstNo: true }
-//           });
-//           if (customer?.gstNo) {
-//             prefix = 'AGS-';
-//           }
-//         }
-
-//         const lastInvoice = await tx.invoice.findFirst({
-//           where: { type: invoiceType },
-//           orderBy: { createdAt: "desc" },
-//           select: { invoiceNo: true }
-//         });
-//         const maxExistingNumber = parseInvoiceNumericPart(lastInvoice?.invoiceNo) || 0;
-
-//         const counter = await tx.invoiceCounter.upsert({
-//           where: { type: invoiceType },
-//           create: { type: invoiceType, lastNumber: maxExistingNumber + 1 },
-//           update: { lastNumber: { increment: 1 } }
-//         });
-
-//         const nextNumber = counter.lastNumber;
-//         const invoiceNo = `${prefix}${String(nextNumber).padStart(5, "0")}`;
-
-//         const bookings = await tx.bookingMaster.findMany({
-//           where: {
-//             id: { in: bookingIds },
-//             customerId,
-//             customerType
-//           },
-//           include: { customer: true }
-//         });
-
-//         if (!bookings.length) throw new Error("No bookings found");
-
-//         const alreadyInvoiced = await tx.invoiceBooking.findMany({
-//           where: {
-//             bookingId: { in: bookingIds },
-//             bookingType: invoiceType
-//           },
-//           select: { bookingId: true }
-//         });
-//         const alreadyInvoicedSet = new Set(alreadyInvoiced.map((r) => r.bookingId));
-//         const toInvoice = bookings.filter((b) => !alreadyInvoicedSet.has(b.id));
-//         if (!toInvoice.length) throw new Error("All selected bookings are already invoiced");
-
-//         const getAmount = (b: any) =>
-//           customerType === "CREDIT"
-//             ? Number(b.clientBillingValue ?? 0)
-//             : Number(b.regularCustomerAmount ?? 0);
-
-//         const calculateTotalAmount = (b: any) => {
-//           const baseAmount = getAmount(b);
-//           const shipperCost = Number(b.shipperCost ?? 0);
-//           const otherExp = Number(b.otherExp ?? 0);
-//           const waybillSurcharge = +(baseAmount * 0.002).toFixed(2);
-//           const fuelSurcharge = Number(b.fuelSurcharge ?? 0);
-//           return baseAmount + shipperCost + otherExp + waybillSurcharge + fuelSurcharge;
-//         };
-
-//         const totalAmount = toInvoice.reduce((sum, b) => sum + calculateTotalAmount(b), 0);
-//         if (totalAmount <= 0) throw new Error("Total amount is zero or invalid");
-
-//         const gstRate = toInvoice[0]?.gst || 0;
-//         const totalTax = totalAmount * (gstRate / 100);
-        
-//         const netAmount = totalAmount + totalTax;
-
-//         const periodFrom = toInvoice.reduce((min, b) => b.bookingDate < min ? b.bookingDate : min, toInvoice[0].bookingDate);
-//         const periodTo = toInvoice.reduce((max, b) => b.bookingDate > max ? b.bookingDate : max, toInvoice[0].bookingDate);
-
-//         const createdInvoice = await tx.invoice.create({
-//           data: {
-//             invoiceNo,
-//             type: invoiceType,
-//             invoiceDate,
-//             periodFrom,
-//             periodTo,
-//             customerId,
-//             totalAmount: Number(totalAmount.toFixed(2)),
-//             totalTax: Number(totalTax.toFixed(2)),
-//             netAmount: Number(netAmount.toFixed(2)),
-//             bookings: {
-//               create: toInvoice.map((b) => ({
-//                 bookingId: b.id,
-//                 bookingType: invoiceType,
-//                 consignmentNo: b.awbNo,
-//                 bookingDate: b.bookingDate,
-//                 senderName: b.customer?.customerName ?? "",
-//                 receiverName: b.receiverName ?? "",
-//                 city: b.destinationCity || b.location || "",
-//                 amountCharged: getAmount(b),
-//                 taxAmount: 0,
-//                 weight: Number(b.actualWeight) || Number(b.chargeWeight) || 0,
-//                 consignmentValue: b.invoiceValue || 0,
-//                 doxType: b.dsrNdxPaper || '',
-//                 numPcs: b.pcs || 0,
-//                 serviceType: b.mode || '',
-//                 shipperCost: b.shipperCost || 0,
-//                 otherExp: b.otherExp || 0,
-//                 waybillSurcharge: +(getAmount(b) * 0.002).toFixed(2)
-//               }))
-//             }
-//           },
-//           include: { bookings: true }
-//         });
-
-//         await tx.bookingMaster.updateMany({
-//           where: { id: { in: toInvoice.map(b => b.id) } },
-//           data: { status: "INVOICED", statusDate: new Date() }
-//         });
-
-//         return createdInvoice;
-//       }, { timeout: 15000 });
-//     }, 3);
-
-//     return NextResponse.json(createdInvoice, { status: 201 });
-//   } catch (error: any) {
-//     console.error("Invoice generation error:", error);
-//     return NextResponse.json(
-//       { message: `Error generating invoice: ${error.message || "unknown"}` },
-//       { status: 500 }
-//     );
-//   }
-// }
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);

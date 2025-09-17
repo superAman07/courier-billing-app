@@ -18,7 +18,6 @@ export default function GenerateCashInvoice() {
         setInvoiceLoading(true);
         try {
             const { data } = await axios.get('/api/invoices', {
-                // params: { type }
                 params: { type: 'BookingMaster_CASH' }
             });
             setInvoices(Array.isArray(data) ? data : data.data);
@@ -56,16 +55,6 @@ export default function GenerateCashInvoice() {
         } finally {
             setLoading(false);
         }
-        // setLoading(true);
-        // try {
-        //     const { data } = await axios.get('/api/cash-bookings-by-date', {
-        //         params: { fromDate, toDate, status: 'BOOKED' }
-        //     });
-        //     setBookings(data);
-        //     setSelected([]);
-        // } finally {
-        //     setLoading(false);
-        // }
     };
 
     const handleSelect = (id: string) => {
