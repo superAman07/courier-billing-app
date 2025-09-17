@@ -27,6 +27,8 @@ interface PaymentDetail {
         paymentDate: string;
         paymentMethod: string;
         referenceNo: string | null;
+        receivedBy: string | null;
+        remarks: string | null;
     }
 }
 
@@ -183,7 +185,7 @@ export default function CustomerPaymentsPage() {
                                 <table className="min-w-full">
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Invoice #</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Invoice</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Total Amount</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Amount Paid</th>
@@ -244,6 +246,7 @@ export default function CustomerPaymentsPage() {
 
 function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: Invoice | null, details: PaymentDetail[], loading: boolean, onClose: () => void }) {
     if (!invoice) return null;
+    const [viewMore , setViewMore] = useState(false);
 
     return (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
@@ -266,17 +269,26 @@ function PaymentDetailsModal({ invoice, details, loading, onClose }: { invoice: 
                     ) : details.length > 0 ? (
                         <ul className="space-y-3">
                             {details.map(detail => (
-                                <li key={detail.payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                                    <div>
-                                        <p className="font-semibold text-green-600 text-lg">₹{detail.amountApplied.toFixed(2)}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {new Date(detail.payment.paymentDate).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                                <li key={detail.payment.id}>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                        <div>
+                                            <p className="font-semibold text-green-600 text-lg">₹{detail.amountApplied.toFixed(2)}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {new Date(detail.payment.paymentDate).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-medium text-gray-700">{detail.payment.paymentMethod}</p>
+                                            {detail.payment.referenceNo && <p className="text-xs text-gray-500 font-mono">Ref: {detail.payment.referenceNo}</p>}
+                                            <button onClick={()=>setViewMore(!viewMore)} className='text-blue-500 hover:underline cursor-pointer text-[12px]'>View more</button>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-medium text-gray-700">{detail.payment.paymentMethod}</p>
-                                        {detail.payment.referenceNo && <p className="text-xs text-gray-500 font-mono">Ref: {detail.payment.referenceNo}</p>}
-                                    </div>
+                                    {viewMore && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
+                                            {detail.payment.receivedBy && <p className="text-gray-600"><span className="font-semibold">Received By:</span> {detail.payment.receivedBy}</p>}
+                                            {detail.payment.remarks && <p className="text-gray-600 mt-1"><span className="font-semibold">Remarks:</span> {detail.payment.remarks}</p>}
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                         </ul>
