@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
             if (b.invoiceValue) bookingData.invoiceValue = Number(b.invoiceValue);
             if (b.actualWeight) bookingData.actualWeight = Number(b.actualWeight);
             if (b.chargeWeight) bookingData.chargeWeight = Number(b.chargeWeight);
+            if (b.frCharge) bookingData.frCharge = Number(b.frCharge);
             if (b.length) bookingData.length = Number(b.length);
             if (b.width) bookingData.width = Number(b.width);
             if (b.height) bookingData.height = Number(b.height);

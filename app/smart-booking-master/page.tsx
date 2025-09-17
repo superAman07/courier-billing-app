@@ -13,7 +13,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
-    "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "invoiceWt",
+    "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
     "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -24,7 +24,7 @@ const COLUMN_MAP: Record<string, string> = {
     srNo: "SR NO.", bookingDate: "Booking Date", awbNo: "Docket", location: "Location",
     destinationCity: "Destination", mode: "Mode", pcs: "No of Pcs", pin: "Pincode",
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
-    actualWeight: "FR Weight", chargeWeight: "Charge Weight", fuelSurcharge: "Fuel Surcharge (in %)",
+    actualWeight: "FR Weight", chargeWeight: "Charge Weight", frCharge: "FR Charge", fuelSurcharge: "Fuel Surcharge",
     shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
     invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
     creditCustomerAmount: "Credit Cust.  Amt", regularCustomerAmount: "Regular Cust. Amt",
@@ -47,6 +47,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     mode: ["Mode"],
     pcs: ["PCS", "No of Pcs"],
     actualWeight: ["Actual Weight", "FR Weight"],
+    frCharge: ["FR Charge"],
     chargeWeight: ["Charge Weight"],
     invoiceValue: ["Invoice value", "Material Value"],
     status: ["STATUS", "Status"],
@@ -530,6 +531,12 @@ export default function SmartBookingMasterPage() {
         setTableRows(rows =>
             rows.map((row, i) => {
                 if (i !== idx) return row;
+                const frCharge = parseFloat(row.frCharge) || 0;
+                const fuelSurchargePercent = customer.fuelSurchargePercent || 0;
+                let fuelSurcharge = 0;
+                if (frCharge > 0) {
+                    fuelSurcharge = (frCharge * fuelSurchargePercent) / 100;
+                }
                 return {
                     ...row,
                     customerCode: customer.customerCode,
@@ -538,7 +545,8 @@ export default function SmartBookingMasterPage() {
                     customerAttendBy: customer.contactPerson || "",
                     senderContactNo: customer.mobile || customer.phone || "",
                     senderDetail: customer.customerName || "",
-                    fuelSurcharge: customer.fuelSurchargePercent || 0,
+                    _fuelSurchargePercent: fuelSurchargePercent,
+                    fuelSurcharge: fuelSurcharge.toFixed(2),
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
                 };
@@ -573,6 +581,16 @@ export default function SmartBookingMasterPage() {
             rows.map((row, i) => {
                 if (i !== idx) return row;
                 const updated = { ...row, [field]: value };
+
+                if (field === "frCharge") {
+                    const frCharge = parseFloat(value) || 0;
+                    const fuelSurchargePercent = updated._fuelSurchargePercent || 0;
+                    if (frCharge > 0 && fuelSurchargePercent > 0) {
+                        updated.fuelSurcharge = ((frCharge * fuelSurchargePercent) / 100).toFixed(2);
+                    } else {
+                        updated.fuelSurcharge = "0.00";
+                    }
+                }
 
                 if (field === "actualWeight" || field === "chargeWeight") {
                     const actualWeight = field === "actualWeight" ? parseFloat(value) || 0 : parseFloat(updated.actualWeight) || 0;
@@ -684,7 +702,7 @@ export default function SmartBookingMasterPage() {
         cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
         cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
 
-        ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "fuelSurcharge",
+        ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
             "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
             "pendingDaysNotDelivered"].forEach(field => {
@@ -923,8 +941,12 @@ export default function SmartBookingMasterPage() {
                                                                             row.location === row.destinationCity && row.location ?
                                                                             "bg-green-50 border-green-300" : ""
                                                                 }`}
-                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric"}
-                                                            title={col === "gst" ? "Auto-calculated GST percentage" : col === "valumetric" ? "Auto-calculated from L/W/H" : ""}
+                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge"}
+                                                            placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
+                                                            title={col === "gst" ? "Auto-calculated GST percentage" : 
+                                                                col === "valumetric" ? "Auto-calculated from L/W/H" : 
+                                                                col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)` : ""
+                                                            }
                                                         />
                                                     )}
                                                 </td>

@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       ...(data.invoiceValue !== undefined && { invoiceValue: Number(data.invoiceValue) }),
       ...(data.actualWeight !== undefined && { actualWeight: Number(data.actualWeight) }),
       ...(data.chargeWeight !== undefined && { chargeWeight: Number(data.chargeWeight) }),
+      ...(data.frCharge !== undefined && { frCharge: Number(data.frCharge) }),
       ...(data.valumetric !== undefined && { valumetric: Number(data.valumetric) }),
       ...(data.length !== undefined && { length: Number(data.length) }),
       ...(data.width !== undefined && { width: Number(data.width) }),

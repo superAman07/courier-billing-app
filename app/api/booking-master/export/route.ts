@@ -22,6 +22,8 @@ export async function GET() {
             { header: "Dox / Non Dox", key: "dsrNdxPaper", width: 14 },
             { header: "Material Value", key: "invoiceValue", width: 14 },
             { header: "FR Weight", key: "actualWeight", width: 12 },
+            { header: "Charge Weight", key: "chargeWeight", width: 14 },
+            { header: "FR Charge", key: "frCharge", width: 12 },
             { header: "Length", key: "length", width: 10 },
             { header: "Width", key: "width", width: 10 },
             { header: "Height", key: "height", width: 10 },

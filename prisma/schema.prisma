@@ -284,6 +284,7 @@ model BookingMaster {
   invoiceValue            Float? // Material/Consignment Value
   actualWeight            Float? // Fr weight
   chargeWeight            Float? // Base Fr weight
+  frCharge                Float?
   fuelSurcharge           Float?
   shipperCost             Float?
   otherExp                Float?
