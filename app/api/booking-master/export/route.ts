@@ -4,7 +4,7 @@ import ExcelJS from "exceljs";
 
 export async function GET() {
     try {
-        const bookings = await prisma.bookingMaster.findMany({ orderBy: { bookingDate: "desc" } });
+        const bookings = await prisma.bookingMaster.findMany({ include: { customer: true }, orderBy: { bookingDate: "desc" } });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Bookings");
@@ -32,10 +32,13 @@ export async function GET() {
             { header: "Clinet Billing Value", key: "clientBillingValue", width: 18 },
             { header: "Credit Cust.  Amt", key: "creditCustomerAmount", width: 20 },
             { header: "Regular Cust. Amt", key: "regularCustomerAmount", width: 20 },
-            { header: "Fuel Surcharge", key: "fuelSurcharge", width: 14 },      // NEW
-            { header: "Shipper Cost", key: "shipperCost", width: 14 },          // NEW
-            { header: "Other Exp", key: "otherExp", width: 14 },                // NEW
-            { header: "GST", key: "gst", width: 10 },                           // NEW
+            { header: "Fuel Surcharge", key: "fuelSurcharge", width: 14 },      
+            { header: "Shipper Cost", key: "shipperCost", width: 14 },          
+            { header: "Other Exp", key: "otherExp", width: 14 },                
+            { header: "GST", key: "gst", width: 10 },     
+            { header: "Customer Code", key: "customerCode", width: 16 },       // NEW
+            { header: "Customer Name", key: "customerName", width: 25 },       // NEW
+            { header: "Child Customer", key: "childCustomer", width: 25 },                      
             { header: "Customer Type", key: "customerType", width: 16 },
             { header: "Sender Detail", key: "senderDetail", width: 18 },
             { header: "PAYMENT STATUS", key: "paymentStatus", width: 16 },
@@ -107,6 +110,9 @@ export async function GET() {
             const formattedBooking = {
                 ...booking,
                 srNo: idx + 1,
+                customerCode: booking.customer?.customerCode, 
+                customerName: booking.customer?.customerName,
+                childCustomer: booking.customer?.childCustomer || booking.customer?.customerName,
                 bookingDate: booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-IN') : '',
                 statusDate: booking.statusDate ? new Date(booking.statusDate).toLocaleDateString('en-IN') : '',
                 dateOfDelivery: booking.dateOfDelivery ? new Date(booking.dateOfDelivery).toLocaleDateString('en-IN') : '',
