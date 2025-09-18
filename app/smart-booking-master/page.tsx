@@ -14,10 +14,13 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
     "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
-    "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount", "customerType",
-    "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
-    "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
-    "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate", "customerCode"
+    "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", 
+    
+    "customerCode", "customerName", "childCustomer", "customerAttendBy", "senderDetail", "senderContactNo", "address",
+
+    "creditCustomerAmount", "regularCustomerAmount", "customerType",
+    "paymentStatus", "adhaarNo", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
+    "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
 ];
 
 const COLUMN_MAP: Record<string, string> = {
@@ -27,13 +30,21 @@ const COLUMN_MAP: Record<string, string> = {
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", frCharge: "FR Charge", fuelSurcharge: "Fuel Surcharge",
     shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
     invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
+    
+    customerCode: "Customer Code",
+    customerName: "Customer Name",
+    childCustomer: "Child Customer",
+    customerAttendBy: "Customer Attend By",
+    senderDetail: "Sender Detail",
+    senderContactNo: "Sender Contact No",
+    address: "Address",
+
     creditCustomerAmount: "Credit Cust.  Amt", regularCustomerAmount: "Regular Cust. Amt",
-    customerType: "Customer Type", senderDetail: "Sender Detail", paymentStatus: "PAYMENT STATUS",
-    senderContactNo: "Sender Contact No", address: "Address", adhaarNo: "Adhaar No",
-    customerAttendBy: "Customer Attend By", status: "STATUS", statusDate: "Status Date",
+    customerType: "Customer Type", paymentStatus: "PAYMENT STATUS",
+    adhaarNo: "Adhaar No", status: "STATUS", statusDate: "Status Date",
     pendingDaysNotDelivered: "Pending Days", receiverName: "Receiver Name",
     receiverContactNo: "Receiver Contact No", ref: "Ref", delivered: "DELIVERED",
-    dateOfDelivery: "Date of Delivery", todayDate: "Today Date", customerCode: "Customer Code"
+    dateOfDelivery: "Date of Delivery", todayDate: "Today Date"
 };
 
 const IMPORT_ALIASES: Record<string, string[]> = {
@@ -194,7 +205,7 @@ export default function SmartBookingMasterPage() {
 
             columns.forEach(col => {
                 if (col === "srNo") return;
-                const customerFields = ["customerCode", "customerId", "customerName", "fuelSurcharge", "receiverName"];
+                const customerFields = ["customerCode", "customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
                 if (customerFields.includes(col)) {
                     mapped[col] = "";
                     return;
@@ -468,6 +479,7 @@ export default function SmartBookingMasterPage() {
                     customerCode: customer.customerCode,
                     customerId: customer.id,
                     customerName: customer.customerName,
+                    childCustomer: customer.childCustomer || customer.customerName,
                     customerAttendBy: customer.contactPerson || "",
                     senderContactNo: customer.mobile || customer.phone || "",
                     senderDetail: customer.customerName || "",
@@ -833,7 +845,7 @@ export default function SmartBookingMasterPage() {
                                                                             row.location === row.destinationCity && row.location ?
                                                                             "bg-green-50 border-green-300" : ""
                                                                 }`}
-                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue"}
+                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue" || col === "customerName" || col === "childCustomer"}
                                                             placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
                                                             title={col === "gst" ? "Auto-calculated GST percentage" : 
                                                                 col === "valumetric" ? "Auto-calculated from L/W/H" : 
