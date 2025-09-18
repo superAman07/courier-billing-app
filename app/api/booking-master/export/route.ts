@@ -67,7 +67,7 @@ export async function GET() {
             { header: "Ref", key: "ref", width: 12 },
         ];
 
-        worksheet.mergeCells('A1:AI1');
+        worksheet.mergeCells('A1:AQ1');
         worksheet.getCell('A1').value = 'BOOKING MASTER REPORT';
         worksheet.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFF' } };
         worksheet.getCell('A1').fill = {
@@ -78,7 +78,7 @@ export async function GET() {
         worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
         worksheet.getRow(1).height = 35;
 
-        worksheet.mergeCells('A2:AI2');
+        worksheet.mergeCells('A2:AQ2');
         worksheet.getCell('A2').value = `Generated on: ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}`;
         worksheet.getCell('A2').font = { size: 11, italic: true, color: { argb: '666666' } };
         worksheet.getCell('A2').alignment = { horizontal: 'center' };
