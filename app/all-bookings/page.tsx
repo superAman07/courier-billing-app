@@ -71,6 +71,10 @@ export default function AllBookingsPage() {
     consignStartNo: "",
     consignEndNo: "",
     consignNo: "",
+    status: '',
+    paymentStatus: '',
+    startDate: '',
+    endDate: '',
   });
 
   useEffect(() => {
@@ -113,6 +117,22 @@ export default function AllBookingsPage() {
       filtered = filtered.filter(b => b.awbNo?.includes(filters.consignNo));
     if (filters.bookingDate)
       filtered = filtered.filter(b => b.bookingDate?.startsWith(filters.bookingDate));
+    if (filters.status) {
+      filtered = filtered.filter(b => b.status === filters.status);
+    }
+    if (filters.paymentStatus) {
+      filtered = filtered.filter(b => b.paymentStatus === filters.paymentStatus);
+    }
+    const startDate = filters.startDate ? new Date(filters.startDate) : null;
+    const endDate = filters.endDate ? new Date(filters.endDate) : null;
+    if (startDate) {
+      startDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(b => new Date(b.bookingDate) >= startDate);
+    }
+    if (endDate) {
+      endDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(b => new Date(b.bookingDate) <= endDate);
+    }
 
     setFilteredBookings(filtered);
   };
@@ -197,79 +217,110 @@ export default function AllBookingsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
+    <div className="max-w-8xl mx-auto p-8">
       <h1 className="text-4xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-700 drop-shadow-sm">
         All Bookings
       </h1>
-      <div className="mb-8 bg-white rounded-2xl shadow-md px-6 py-6 flex flex-col md:flex-row md:items-end gap-6 border border-blue-100">
-        <div className="flex-1">
-          <label htmlFor="customerName" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Customer Name</label>
-          <input
-            name="customerName"
-            id="customerName"
-            value={filters.customerName}
-            onChange={handleFilterChange}
-            placeholder="Search for Customer"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
-            autoComplete="off"
-          />
+      <div className="mb-8 bg-white w-full rounded-2xl py-8 px-8 shadow-md border border-blue-100">
+        <div className="flex justify-center gap-x-4 mb-4">
+          <div className="flex-1">
+            <label htmlFor="customerName" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Customer/Receiver Name</label>
+            <input
+              name="customerName"
+              id="customerName"
+              value={filters.customerName}
+              onChange={handleFilterChange}
+              placeholder="Search for Customer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+              autoComplete="off"
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="consignNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment No</label>
+            <input
+              name="consignNo"
+              id="consignNo"
+              value={filters.consignNo}
+              onChange={handleFilterChange}
+              placeholder="Contains…"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+            />
+          </div>
+          <div>
+            <label htmlFor="status" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Status</label>
+            <select name="status" id="status" value={filters.status} onChange={handleFilterChange} className="w-full px-3 py-2 cursor-pointer rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition">
+              <option value="">All</option>
+              <option value="BOOKED">Booked</option>
+              <option value="IN-TRANSIT">In-Transit</option>
+              <option value="DELIVERED">Delivered</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="paymentStatus" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Payment Status</label>
+            <select name="paymentStatus" id="paymentStatus" value={filters.paymentStatus} onChange={handleFilterChange} className="w-full px-3 py-2 cursor-pointer rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition">
+              <option value="">All</option>
+              <option value="PAID">Paid</option>
+              <option value="UNPAID">Unpaid</option>
+              <option value="PARTIALLY_PAID">Partially Paid</option>
+            </select>
+          </div>
+          <div className="flex justify-end ml-12">
+            <button
+              onClick={() => {
+                toast('Downloading Excel...');
+                handleDownload();
+              }}
+              className="px-5 py-2 cursor-pointer bg-blue-700 text-white rounded-md shadow-md hover:bg-blue-800 transition"
+              disabled={loading}
+            >
+              Download Excel
+            </button>
+          </div>
         </div>
-        <div className="flex-1">
-          <label htmlFor="consignStartNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment Start No</label>
-          <input
-            name="consignStartNo"
-            id="consignStartNo"
-            value={filters.consignStartNo}
-            onChange={handleFilterChange}
-            placeholder="Start No"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
-          />
-        </div>
-        <div className="flex-1">
-          <label htmlFor="consignEndNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment End No</label>
-          <input
-            name="consignEndNo"
-            id="consignEndNo"
-            value={filters.consignEndNo}
-            onChange={handleFilterChange}
-            placeholder="End No"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
-          />
-        </div>
-        <div className="flex-1">
-          <label htmlFor="consignNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment No</label>
-          <input
-            name="consignNo"
-            id="consignNo"
-            value={filters.consignNo}
-            onChange={handleFilterChange}
-            placeholder="Contains…"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
-          />
-        </div>
-        <div className="flex-1">
-          <label htmlFor="bookingDate" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Booking Date</label>
-          <input
-            name="bookingDate"
-            id="bookingDate"
-            type="date"
-            value={filters.bookingDate}
-            onChange={handleFilterChange}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
-            placeholder="Booking Date"
-          />
-        </div>
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => {
-              toast('Downloading Excel...');
-              handleDownload();
-            }}
-            className="px-5 py-2 cursor-pointer bg-blue-700 text-white rounded-md shadow-md hover:bg-blue-800 transition"
-            disabled={loading}
-          >
-            Download Excel
-          </button>
+        <div className="flex justify-center gap-x-4 mb-2">
+          <div>
+            <label htmlFor="startDate" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Start Date</label>
+            <input name="startDate" id="startDate" type="date" value={filters.startDate} onChange={handleFilterChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition" />
+          </div>
+          <div>
+            <label htmlFor="endDate" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">End Date</label>
+            <input name="endDate" id="endDate" type="date" value={filters.endDate} onChange={handleFilterChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition" />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="consignStartNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment Start No</label>
+            <input
+              name="consignStartNo"
+              id="consignStartNo"
+              value={filters.consignStartNo}
+              onChange={handleFilterChange}
+              placeholder="Start No"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="consignEndNo" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Consignment End No</label>
+            <input
+              name="consignEndNo"
+              id="consignEndNo"
+              value={filters.consignEndNo}
+              onChange={handleFilterChange}
+              placeholder="End No"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="bookingDate" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Booking Date</label>
+            <input
+              name="bookingDate"
+              id="bookingDate"
+              type="date"
+              value={filters.bookingDate}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
+              placeholder="Booking Date"
+            />
+          </div>
         </div>
       </div>
 
@@ -321,8 +372,8 @@ export default function AllBookingsPage() {
                       </td>
                     ) : (
                       <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
-                        {col === 'childCustomer' 
-                          ? row.customer?.childCustomer || row.customer?.customerName 
+                        {col === 'childCustomer'
+                          ? row.customer?.childCustomer || row.customer?.customerName
                           : isDateField ? parseDateString(row[col]) : row[col]}
                       </td>
                     )
