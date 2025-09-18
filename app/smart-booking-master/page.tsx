@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
-import { Download, Users } from "lucide-react";
+import { Download, Plus, Users } from "lucide-react";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -14,8 +14,8 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
     "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
-    "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", 
-    
+    "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue",
+
     "customerCode", "customerName", "childCustomer", "customerAttendBy", "senderDetail", "senderContactNo", "address",
 
     "creditCustomerAmount", "regularCustomerAmount", "customerType",
@@ -30,7 +30,7 @@ const COLUMN_MAP: Record<string, string> = {
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", frCharge: "FR Charge", fuelSurcharge: "Fuel Surcharge",
     shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
     invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
-    
+
     customerCode: "Customer Code",
     customerName: "Customer Name",
     childCustomer: "Child Customer",
@@ -128,6 +128,60 @@ export default function SmartBookingMasterPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAddRow = () => {
+        const newRow = {
+            __origIndex: tableRows.length, // A temporary unique index
+            srNo: tableRows.length + 1,
+            bookingDate: new Date().toISOString().split('T')[0],
+            awbNo: "",
+            location: "",
+            destinationCity: "",
+            mode: "SURFACE",
+            pcs: 1,
+            pin: "",
+            dsrContents: "",
+            dsrNdxPaper: "N",
+            invoiceValue: 0,
+            actualWeight: 0,
+            chargeWeight: 0,
+            frCharge: 0,
+            fuelSurcharge: 0,
+            shipperCost: 0,
+            otherExp: 0,
+            gst: 0,
+            length: 0,
+            width: 0,
+            height: 0,
+            valumetric: 0,
+            invoiceWt: 0,
+            clientBillingValue: 0,
+            customerCode: "",
+            customerName: "",
+            childCustomer: "",
+            customerAttendBy: "",
+            senderDetail: "",
+            senderContactNo: "",
+            address: "",
+            creditCustomerAmount: 0,
+            regularCustomerAmount: 0,
+            customerType: "CREDIT",
+            paymentStatus: "UNPAID",
+            status: "BOOKED",
+            statusDate: null,
+            pendingDaysNotDelivered: 0,
+            receiverName: "",
+            receiverContactNo: "",
+            ref: "",
+            delivered: "NO",
+            dateOfDelivery: null,
+            todayDate: getCurrentDate(),
+            _awbExists: false,
+        };
+
+        setTableRows(prevRows => [newRow, ...prevRows]);
+        toast.success("New booking row added. Fill in the details and click Save.");
     };
 
     const extractCityName = (locationString: string): string => {
@@ -484,7 +538,7 @@ export default function SmartBookingMasterPage() {
                     senderContactNo: customer.mobile || customer.phone || "",
                     senderDetail: customer.customerName || "",
                     _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
-                    _gstPercent: gstPercentage, 
+                    _gstPercent: gstPercentage,
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
                 };
@@ -679,10 +733,16 @@ export default function SmartBookingMasterPage() {
 
     return (
         <div className="max-w-[1440px] mx-auto p-8">
-            <div className="flex items-center justify-between mb-6">
-                <div>
+            <div className="flex items-center justify-between mb-6 w-full">
+                <div className="w-full">
                     <h1 className="text-3xl font-bold text-gray-900">Smart Booking Master</h1>
-                    <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
+                    <div className="flex justify-between max-w-full">
+                        <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
+                        <button onClick={handleAddRow} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">
+                            <Plus className="w-5 h-5" />
+                            Add New Booking
+                        </button>
+                    </div>
                 </div>
             </div>
             <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
@@ -847,10 +907,10 @@ export default function SmartBookingMasterPage() {
                                                                 }`}
                                                             disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue" || col === "customerName" || col === "childCustomer"}
                                                             placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
-                                                            title={col === "gst" ? "Auto-calculated GST percentage" : 
-                                                                col === "valumetric" ? "Auto-calculated from L/W/H" : 
-                                                                col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)`:
-                                                                col === "clientBillingValue" ? "Auto-calculated from components" : ""
+                                                            title={col === "gst" ? "Auto-calculated GST percentage" :
+                                                                col === "valumetric" ? "Auto-calculated from L/W/H" :
+                                                                    col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)` :
+                                                                        col === "clientBillingValue" ? "Auto-calculated from components" : ""
                                                             }
                                                         />
                                                     )}
