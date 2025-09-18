@@ -8,7 +8,7 @@ import { handleDownload } from "@/lib/downloadExcel";
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
-  "valumetric", "invoiceWt", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+  "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
   "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
@@ -30,6 +30,11 @@ const COLUMN_MAP: Record<string, string> = {
   chargeWeight: "Charge Weight",
   valumetric: "Volumetric",
   invoiceWt: "Invoice Wt",
+  frCharge: "FR Charge",
+  fuelSurcharge: "Fuel Surcharge",
+  shipperCost: "Shipper Cost",
+  otherExp: "Other Exp",
+  gst: "GST",
   clientBillingValue: "Client Billing Value",
   creditCustomerAmount: "Credit Cust. Amount",
   regularCustomerAmount: "Regular Cust. Amount",
@@ -153,6 +158,11 @@ export default function AllBookingsPage() {
       if (payload.width) payload.width = Number(payload.width);
       if (payload.height) payload.height = Number(payload.height);
       if (payload.valumetric) payload.valumetric = Number(payload.valumetric);
+      if (payload.frCharge) payload.frCharge = Number(payload.frCharge);
+      if (payload.fuelSurcharge) payload.fuelSurcharge = Number(payload.fuelSurcharge);
+      if (payload.shipperCost) payload.shipperCost = Number(payload.shipperCost);
+      if (payload.otherExp) payload.otherExp = Number(payload.otherExp);
+      if (payload.gst) payload.gst = Number(payload.gst);
       await axios.put(`/api/booking-master/${editForm.id}`, payload);
       toast.success("Booking updated successfully.")
       setEditingId(null)
