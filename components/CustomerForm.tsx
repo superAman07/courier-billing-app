@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 type CustomerFormData = {
   customerCode: string;
   customerName: string;
+  childCustomer?: string;
   contactPerson?: string;
   address?: string;
   pincode?: string;
@@ -31,6 +32,7 @@ type CustomerFormData = {
 const initialFormData: CustomerFormData = {
   customerCode: '',
   customerName: '',
+  childCustomer: '',
   contactPerson: '',
   address: '',
   pincode: '',
@@ -97,6 +99,9 @@ export default function CustomerForm() {
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    if (name === 'customerName') {
+      setFormData(prev => ({ ...prev, customerName: value, childCustomer: value }));
     }
   };
 
@@ -169,6 +174,10 @@ export default function CustomerForm() {
             <div className="lg:col-span-2">
               <label htmlFor="customerName" className={labelStyle}>Customer Name</label>
               <input type="text" name="customerName" placeholder='Enter customer name' id="customerName" value={formData.customerName} onChange={handleChange} className={inputStyle} required />
+            </div>
+            <div className="lg:col-span-3">
+              <label htmlFor="childCustomer" className={labelStyle}>Child Customer (for billing)</label>
+              <input type="text" name="childCustomer" id="childCustomer" placeholder='Enter child customer name' value={formData.childCustomer} onChange={handleChange} className={inputStyle} />
             </div>
             <div>
               <label htmlFor="contactPerson" className={labelStyle}>Contact Person</label>

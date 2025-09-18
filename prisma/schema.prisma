@@ -11,6 +11,7 @@ model CustomerMaster {
   id              String    @id @default(cuid())
   customerCode    String    @unique
   customerName    String
+  childCustomer   String?
   contactPerson   String?
   address         String?
   pincode         String?
