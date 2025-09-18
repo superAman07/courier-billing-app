@@ -68,10 +68,12 @@ export default function CustomerForm() {
       const fetchCustomerData = async () => {
         try {
           const response = await axios.get(`/api/customers/${customerId}`);
+          const customerData = response.data;
           const data = {
-            ...response.data,
-            dateOfBirth: response.data.dateOfBirth ? response.data.dateOfBirth.split('T')[0] : '',
-            contractDate: response.data.contractDate ? response.data.contractDate.split('T')[0] : '',
+            ...customerData,
+            dateOfBirth: customerData.dateOfBirth ? customerData.dateOfBirth.split('T')[0] : '',
+            contractDate: customerData.contractDate ? customerData.contractDate.split('T')[0] : '',
+            childCustomer: customerData.childCustomer || customerData.customerName,
           };
           setFormData(data);
         } catch (error) {
@@ -158,7 +160,7 @@ export default function CustomerForm() {
           {/* Customer Details Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-3">
-              <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Customer Details</h2> {/* text-color: #1f2937 */}
+              <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Customer Details</h2>
             </div>
             <div>
               <label htmlFor="customerCode" className={labelStyle}>Customer Code</label>
@@ -176,7 +178,7 @@ export default function CustomerForm() {
               <input type="text" name="customerName" placeholder='Enter customer name' id="customerName" value={formData.customerName} onChange={handleChange} className={inputStyle} required />
             </div>
             <div className="lg:col-span-3">
-              <label htmlFor="childCustomer" className={labelStyle}>Child Customer (for billing)</label>
+              <label htmlFor="childCustomer" className={labelStyle}>Child Customer</label>
               <input type="text" name="childCustomer" id="childCustomer" placeholder='Enter child customer name' value={formData.childCustomer} onChange={handleChange} className={inputStyle} />
             </div>
             <div>

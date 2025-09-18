@@ -91,6 +91,7 @@ export default function CustomerListPage() {
                                 <tr>
                                     <th className={tableHeaderStyle}>Customer Code</th>
                                     <th className={tableHeaderStyle}>Customer Name</th>
+                                    <th className={tableHeaderStyle}>Child Customer</th>
                                     <th className={tableHeaderStyle}>Contact Person</th>
                                     <th className={tableHeaderStyle}>City</th>
                                     <th className={tableHeaderStyle}>Mobile</th>
@@ -107,6 +108,7 @@ export default function CustomerListPage() {
                                         <tr key={customer.id}>
                                             <td className={tableCellStyle}>{customer.customerCode}</td>
                                             <td className={tableCellStyle}>{customer.customerName}</td>
+                                            <td className={tableCellStyle}>{customer.childCustomer || customer.customerName}</td>
                                             <td className={tableCellStyle}>{customer.contactPerson || 'N/A'}</td>
                                             <td className={tableCellStyle}>{customer.city || 'N/A'}</td>
                                             <td className={tableCellStyle}>{customer.mobile || 'N/A'}</td>
