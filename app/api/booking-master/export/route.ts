@@ -4,7 +4,19 @@ import ExcelJS from "exceljs";
 
 export async function GET() {
     try {
-        const bookings = await prisma.bookingMaster.findMany({ include: { customer: true }, orderBy: { bookingDate: "desc" } });
+        const bookings = await prisma.bookingMaster.findMany({
+            where: {
+                customerId: {
+                    not: null
+                }
+            }, 
+            include: { 
+                customer: true 
+            }, 
+            orderBy: { 
+                bookingDate: "desc" 
+            } 
+        });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Bookings");
