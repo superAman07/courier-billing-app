@@ -9,7 +9,7 @@ const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
-  "customerType", "senderDetail", "paymentStatus", "senderContactNo", "address", "adhaarNo",
+  "customerType", "senderDetail", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
   "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
 ];
@@ -40,6 +40,7 @@ const COLUMN_MAP: Record<string, string> = {
   regularCustomerAmount: "Regular Cust. Amount",
   customerType: "Customer Type",
   senderDetail: "Sender Detail",
+  childCustomer: "Child Customer",
   paymentStatus: "Payment Status",
   senderContactNo: "Sender Contact No",
   address: "Address",
@@ -320,7 +321,9 @@ export default function AllBookingsPage() {
                       </td>
                     ) : (
                       <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
-                        {isDateField ? parseDateString(row[col]) : row[col]}
+                        {col === 'childCustomer' 
+                          ? row.customer?.childCustomer || row.customer?.customerName 
+                          : isDateField ? parseDateString(row[col]) : row[col]}
                       </td>
                     )
                   })}
