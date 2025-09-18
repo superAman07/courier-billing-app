@@ -513,9 +513,19 @@ export default function SmartBookingMasterPage() {
             setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
             return;
         }
-
         try {
             const { data } = await axios.get(`/api/customers?query=${searchTerm}`);
+
+            const exactMatch = data.find(
+                (c: any) => c.customerCode?.toLowerCase() === searchTerm.trim().toLowerCase()
+            );
+
+            if (exactMatch) {
+                handleCustomerSelect(idx, exactMatch);
+                setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
+                return;
+            }
+
             setCustomerSuggestions(prev => ({ ...prev, [idx]: data }));
         } catch (error) {
             console.error("Error searching customers:", error);
