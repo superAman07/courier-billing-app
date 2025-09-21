@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { CustomerMaster } from '@prisma/client';
 import { toast } from 'sonner';
 import CustomerImportButton from './temp/CustomerImportButton';
+import { Download } from 'lucide-react';
 
 export default function CustomerListPage() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
-    const [search , setSearch] = useState('');
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -71,9 +72,19 @@ export default function CustomerListPage() {
                 <div className="p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 shadow-md flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-white">Customer List</h1>
                     {/* <CustomerImportButton /> */}
-                    <Link href="/customer" className="px-4 py-2 bg-white text-blue-600 font-semibold rounded-md hover:bg-gray-100">
-                        Add New Customer
-                    </Link>
+                    <div className='flex gap-4'>
+                        <button
+                            onClick={() => window.open("/api/customers/download", "_blank")}
+                            className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+                        >
+                            <Download className="w-5 h-5" />
+                            Download Customer List
+                        </button>
+                        <Link href="/customer" className="px-4 py-2 bg-white text-blue-600 font-semibold rounded-md hover:bg-gray-100">
+                            Add New Customer
+                        </Link>
+
+                    </div>
                 </div>
 
                 <div className="p-6">
