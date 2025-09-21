@@ -107,9 +107,18 @@ export default function CustomerForm() {
     }
   };
 
-  const handleGenerateCode = () => {
-    const newCustomerCode = `CUST-${Date.now()}`;
-    setFormData(prev => ({ ...prev, customerCode: newCustomerCode }));
+  const handleGenerateCode = async () => {
+    try{
+      const response = await axios.get('/api/customers/next-code');
+      const nextNumber = response.data.nextNumber;
+  
+      const formattedNumber = String(nextNumber).padStart(4, '0');
+      const generatedCode = `CUST-${formattedNumber}`;
+      setFormData(prev => ({ ...prev, customerCode: generatedCode }));
+    }catch(e){
+      console.error("Error generating customer code", e);
+      toast.error("Error generating customer code");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
