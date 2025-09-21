@@ -78,7 +78,7 @@ export default function CustomerListPage() {
                             className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
                         >
                             <Download className="w-5 h-5" />
-                            Download Customer List
+                            Download Customer ID's
                         </button>
                         <Link href="/customer" className="px-4 py-2 bg-white text-blue-600 font-semibold rounded-md hover:bg-gray-100">
                             Add New Customer
