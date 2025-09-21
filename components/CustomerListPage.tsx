@@ -5,6 +5,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { CustomerMaster } from '@prisma/client';
 import { toast } from 'sonner';
+import CustomerImportButton from './temp/CustomerImportButton';
 
 export default function CustomerListPage() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
@@ -69,6 +70,7 @@ export default function CustomerListPage() {
             <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 shadow-md flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-white">Customer List</h1>
+                    {/* <CustomerImportButton /> */}
                     <Link href="/customer" className="px-4 py-2 bg-white text-blue-600 font-semibold rounded-md hover:bg-gray-100">
                         Add New Customer
                     </Link>

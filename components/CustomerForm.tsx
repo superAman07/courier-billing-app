@@ -69,8 +69,12 @@ export default function CustomerForm() {
         try {
           const response = await axios.get(`/api/customers/${customerId}`);
           const customerData = response.data;
+          const processedData = Object.entries(customerData).reduce((acc, [key, value]) => {
+            acc[key] = value === null ? '' : value;
+            return acc;
+          }, {} as any);
           const data = {
-            ...customerData,
+            ...processedData,
             dateOfBirth: customerData.dateOfBirth ? customerData.dateOfBirth.split('T')[0] : '',
             contractDate: customerData.contractDate ? customerData.contractDate.split('T')[0] : '',
             childCustomer: customerData.childCustomer || customerData.customerName,
@@ -108,14 +112,14 @@ export default function CustomerForm() {
   };
 
   const handleGenerateCode = async () => {
-    try{
+    try {
       const response = await axios.get('/api/customers/next-code');
       const nextNumber = response.data.nextNumber;
-  
+
       const formattedNumber = String(nextNumber).padStart(4, '0');
       const generatedCode = `CUST-${formattedNumber}`;
       setFormData(prev => ({ ...prev, customerCode: generatedCode }));
-    }catch(e){
+    } catch (e) {
       console.error("Error generating customer code", e);
       toast.error("Error generating customer code");
     }
