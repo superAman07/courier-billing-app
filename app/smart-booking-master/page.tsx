@@ -236,9 +236,11 @@ export default function SmartBookingMasterPage() {
         setLoading(true);
         toast.info("Processing imported file...");
 
+        let customerData: any[] = [];
         try {
-            const { data: customerData } = await axios.get("/api/customers");
-            setCustomers(customerData);
+            const { data } = await axios.get("/api/customers");
+            customerData = data;
+            setCustomers(data);
         } catch {
             toast.error("Failed to fetch customers");
             setLoading(false);
@@ -256,6 +258,29 @@ export default function SmartBookingMasterPage() {
 
         const mappedRows = rows.map((row, idx) => {
             const mapped: any = { srNo: idx + 1 };
+
+            const importedCustomerCode = row['Customer Code'] || row['CustomerCode'];
+
+            if (importedCustomerCode) {
+                // Find matching customer
+                const matchingCustomer = customerData.find(
+                    (c: any) => c.customerCode?.toLowerCase() === importedCustomerCode.toString().trim().toLowerCase()
+                );
+
+                if (matchingCustomer) {
+                    // Auto-fill customer details
+                    mapped.customerCode = matchingCustomer.customerCode;
+                    mapped.customerId = matchingCustomer.id;
+                    mapped.customerName = matchingCustomer.customerName;
+                    mapped.childCustomer = matchingCustomer.childCustomer || matchingCustomer.customerName;
+                    mapped.customerAttendBy = matchingCustomer.contactPerson || "";
+                    mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
+                    mapped.senderDetail = matchingCustomer.customerName || "";
+                    mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
+                    mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "");
+                    mapped.address = matchingCustomer.address || "";
+                }
+            }
 
             columns.forEach(col => {
                 if (col === "srNo") return;
