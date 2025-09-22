@@ -9,7 +9,7 @@ const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
-  "customerType", "senderDetail", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
+  "customerType", "senderDetail", "customerName", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
   "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
 ];
@@ -40,6 +40,7 @@ const COLUMN_MAP: Record<string, string> = {
   regularCustomerAmount: "Regular Cust. Amount",
   customerType: "Customer Type",
   senderDetail: "Sender Detail",
+  customerName: "Customer Name",
   childCustomer: "Child Customer",
   paymentStatus: "Payment Status",
   senderContactNo: "Sender Contact No",
@@ -64,6 +65,9 @@ export default function AllBookingsPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
+  const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
+  const [taxMaster, setTaxMaster] = useState<any[]>([]);
+  const [companyState, setCompanyState] = useState<string>("delhi");
 
   const [filters, setFilters] = useState({
     customerName: "",
@@ -98,6 +102,22 @@ export default function AllBookingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [pincodeRes, taxRes] = await Promise.all([
+          axios.get('/api/pincode-master'),
+          axios.get('/api/taxMaster')
+        ]);
+        setPincodeMaster(pincodeRes.data);
+        setTaxMaster(taxRes.data);
+      } catch (error) {
+        console.error("Failed to fetch master data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const applyFilters = () => {
     let filtered = [...bookings];
@@ -156,9 +176,35 @@ export default function AllBookingsPage() {
     }
   };
 
+  const getGSTPercentage = (customerPincode: string): number => {
+    if (!customerPincode) return 0;
+
+    const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
+    const customerState = pincodeData?.state?.name || "";
+
+    if (!customerState) return 0;
+
+    if (customerState.toLowerCase() === companyState.toLowerCase()) {
+      const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
+      const cgstTax = taxMaster.find(tax => tax.taxCode === 'CGST');
+
+      const sgstRate = sgstTax ? parseFloat(sgstTax.ratePercent) : 9;
+      const cgstRate = cgstTax ? parseFloat(cgstTax.ratePercent) : 9;
+      return sgstRate + cgstRate;
+    } else {
+      const igstTax = taxMaster.find(tax => tax.taxCode === 'IGST');
+      return igstTax ? parseFloat(igstTax.ratePercent) : 18;
+    }
+  };
+
   const handleEdit = (row: any) => {
+    const editableRow = { ...row };
+
+    editableRow._fuelSurchargePercent = row.customer?.fuelSurchargePercent || 0;
+    editableRow._gstPercent = getGSTPercentage(row.customer?.pincode || "");
+
     setEditingId(row.id);
-    setEditForm({ ...row });
+    setEditForm(editableRow);
   };
 
   const handleCancel = () => {
@@ -175,31 +221,51 @@ export default function AllBookingsPage() {
       delete payload.createdAt;
       delete payload.customer;
       delete payload.customerId;
-      if (payload.length) payload.length = Number(payload.length);
-      if (payload.width) payload.width = Number(payload.width);
-      if (payload.height) payload.height = Number(payload.height);
-      if (payload.valumetric) payload.valumetric = Number(payload.valumetric);
-      if (payload.frCharge) payload.frCharge = Number(payload.frCharge);
-      if (payload.fuelSurcharge) payload.fuelSurcharge = Number(payload.fuelSurcharge);
-      if (payload.shipperCost) payload.shipperCost = Number(payload.shipperCost);
-      if (payload.otherExp) payload.otherExp = Number(payload.otherExp);
-      if (payload.gst) payload.gst = Number(payload.gst);
+
+      [
+        'length', 'width', 'height',
+        'valumetric', 'frCharge', 'fuelSurcharge',
+        'shipperCost', 'otherExp', 'gst',
+        'pcs', 'invoiceValue', 'actualWeight',
+        'chargeWeight', 'invoiceWt', 'clientBillingValue',
+        'creditCustomerAmount', 'regularCustomerAmount',
+        'pendingDaysNotDelivered'
+      ].forEach(field => {
+        if (payload[field]) {
+          payload[field] = Number(payload[field]);
+        }
+      });
+
+      ['bookingDate', 'statusDate', 'dateOfDelivery', 'todayDate'].forEach(field => {
+        if (payload[field]) {
+          payload[field] = new Date(payload[field]);
+        }
+      });
+
+      if (payload.frCharge || payload.shipperCost || payload.otherExp) {
+        const recalculated = recalculateClientBilling(payload);
+        payload.gst = Number(recalculated.gst);
+        payload.clientBillingValue = Number(recalculated.clientBillingValue);
+      }
+
       await axios.put(`/api/booking-master/${editForm.id}`, payload);
-      toast.success("Booking updated successfully.")
-      setEditingId(null)
-      setEditForm({})
-      fetchBookings()
+      toast.success("Booking updated successfully.");
+
+      setEditingId(null);
+      setEditForm({});
+
+      fetchBookings();
     } catch (err) {
-      toast.error("Error updating booking. Please try again.")
-      console.error(err)
+      toast.error("Error updating booking. Please try again.");
+      console.error(err);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const updatedForm = { ...editForm, [name]: value };
+    let updatedForm = { ...editForm, [name]: value };
 
     // Auto-calculate valumetric when length, width, or height changes
     if (['length', 'width', 'height'].includes(name)) {
@@ -208,12 +274,51 @@ export default function AllBookingsPage() {
       const h = parseFloat(updatedForm.height) || 0;
 
       if (l > 0 && w > 0 && h > 0) {
-        updatedForm.valumetric = ((l * w * h) / 5000).toFixed(2);
+        const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+        updatedForm.valumetric = volumetricValue;
+
+        const actualWeight = parseFloat(updatedForm.actualWeight) || 0;
+        const volumetricWeight = parseFloat(volumetricValue);
+        if (volumetricWeight > actualWeight) {
+          updatedForm.chargeWeight = volumetricValue;
+        } else if (actualWeight > 0) {
+          updatedForm.chargeWeight = updatedForm.actualWeight;
+        }
+        updatedForm.invoiceWt = Math.max(actualWeight, parseFloat(updatedForm.chargeWeight) || 0).toFixed(2);
+      }
+    }
+    if (name === "frCharge") {
+      const frCharge = parseFloat(value) || 0;
+      const fuelSurchargePercent = updatedForm._fuelSurchargePercent || 0;
+      if (frCharge > 0 && fuelSurchargePercent > 0) {
+        updatedForm.fuelSurcharge = ((frCharge * fuelSurchargePercent) / 100).toFixed(2);
+      } else {
+        updatedForm.fuelSurcharge = "0.00";
       }
     }
 
+    if (["frCharge", "shipperCost", "otherExp"].includes(name)) {
+      updatedForm = recalculateClientBilling(updatedForm);
+    }
+
     setEditForm(updatedForm);
-    // setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const recalculateClientBilling = (row: any) => {
+    const frCharge = parseFloat(row.frCharge) || 0;
+    const fuelSurcharge = parseFloat(row.fuelSurcharge) || 0;
+    const shipperCost = parseFloat(row.shipperCost) || 0;
+    const otherExp = parseFloat(row.otherExp) || 0;
+    const gstPercent = row._gstPercent || 0;
+
+    const subtotal = frCharge + fuelSurcharge + shipperCost + otherExp;
+    const gstAmount = (subtotal * gstPercent) / 100;
+    const clientBillingValue = subtotal + gstAmount;
+
+    const updatedRow = { ...row };
+    updatedRow.gst = gstAmount.toFixed(2);
+    updatedRow.clientBillingValue = clientBillingValue.toFixed(2);
+    return updatedRow;
   };
 
   return (
@@ -356,6 +461,13 @@ export default function AllBookingsPage() {
                           {row.customer?.customerName && row.customer?.customerCode
                             ? `${row.customer.customerName} (${row.customer.customerCode}) - ${row.receiverName || ""}`
                             : row.receiverName}
+                        </td>
+                      );
+                    }
+                    if (col === "customerName") {
+                      return (
+                        <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
+                          {row.customer?.customerName || ""}
                         </td>
                       );
                     }
