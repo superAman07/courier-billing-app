@@ -5,7 +5,6 @@ import axios from 'axios';
 import Link from 'next/link';
 import { CustomerMaster } from '@prisma/client';
 import { toast } from 'sonner';
-import CustomerImportButton from './temp/CustomerImportButton';
 import { Download } from 'lucide-react';
 
 export default function CustomerListPage() {
@@ -83,7 +82,6 @@ export default function CustomerListPage() {
                         <Link href="/customer" className="px-4 py-2 bg-white text-blue-600 font-semibold rounded-md hover:bg-gray-100">
                             Add New Customer
                         </Link>
-
                     </div>
                 </div>
 
