@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
@@ -68,6 +68,8 @@ export default function AllBookingsPage() {
   const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
   const [taxMaster, setTaxMaster] = useState<any[]>([]);
   const [companyState, setCompanyState] = useState<string>("delhi");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const statusFilterRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState({
     customerName: "",
@@ -75,7 +77,7 @@ export default function AllBookingsPage() {
     consignStartNo: "",
     consignEndNo: "",
     consignNo: "",
-    status: '',
+    status: [] as string[],
     paymentStatus: '',
     startDate: '',
     endDate: '',
@@ -84,6 +86,18 @@ export default function AllBookingsPage() {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (statusFilterRef.current && !statusFilterRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [statusFilterRef]);
 
   useEffect(() => {
     applyFilters();
@@ -137,8 +151,8 @@ export default function AllBookingsPage() {
       filtered = filtered.filter(b => b.awbNo?.includes(filters.consignNo));
     if (filters.bookingDate)
       filtered = filtered.filter(b => b.bookingDate?.startsWith(filters.bookingDate));
-    if (filters.status) {
-      filtered = filtered.filter(b => b.status === filters.status);
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(b => filters.status.includes(b.status));
     }
     if (filters.paymentStatus) {
       filtered = filtered.filter(b => b.paymentStatus === filters.paymentStatus);
@@ -161,6 +175,16 @@ export default function AllBookingsPage() {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleStatusChange = (status: string) => {
+    setFilters(prev => {
+      const newStatus = prev.status.includes(status)
+        ? prev.status.filter(s => s !== status)
+        : [...prev.status, status];
+      return { ...prev, status: newStatus };
+    });
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this booking?")) return;
     try {
@@ -351,15 +375,37 @@ export default function AllBookingsPage() {
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition"
             />
           </div>
-          <div>
+          <div className="relative" ref={statusFilterRef}>
             <label htmlFor="status" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Status</label>
-            <select name="status" id="status" value={filters.status} onChange={handleFilterChange} className="w-full px-3 py-2 cursor-pointer rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition">
-              <option value="">All</option>
-              <option value="BOOKED">Booked</option>
-              <option value="IN-TRANSIT">In-Transit</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
+            <button
+              type="button"
+              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              className="w-full px-3 py-2 text-left rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition flex justify-between items-center"
+            >
+              <span className="truncate">
+                {filters.status.length > 0 ? filters.status.join(', ') : 'Select Statuses'}
+              </span>
+              <span className="ml-2">▼</span>
+            </button>
+            {isStatusDropdownOpen && (
+              <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-xl border border-gray-200">
+                <ul>
+                  {['BOOKED', 'IN-TRANSIT', 'DELIVERED', 'CANCELLED', 'RETURNED'].map(status => (
+                    <li key={status} className="px-3 py-2 hover:bg-blue-50 text-gray-700">
+                      <label className="flex items-center cursor-pointer w-full">
+                        <input
+                          type="checkbox"
+                          checked={filters.status.includes(status)}
+                          onChange={() => handleStatusChange(status)}
+                          className="mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        {status}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="paymentStatus" className="block mb-1 text-[15px] text-blue-900 font-semibold tracking-wide">Payment Status</label>
