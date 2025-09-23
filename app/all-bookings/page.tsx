@@ -1,9 +1,10 @@
 'use client'
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
 import { handleDownloadForAllBookings } from "@/lib/downloadExcel";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -70,6 +71,9 @@ export default function AllBookingsPage() {
   const [companyState, setCompanyState] = useState<string>("delhi");
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [filters, setFilters] = useState({
     customerName: "",
@@ -169,6 +173,25 @@ export default function AllBookingsPage() {
     }
 
     setFilteredBookings(filtered);
+  };
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredBookings.slice(startIndex, endIndex);
+  }, [filteredBookings, currentPage, pageSize]);
+
+  useEffect(() => {
+    const newTotalPages = Math.ceil(filteredBookings.length / pageSize);
+    setTotalPages(newTotalPages > 0 ? newTotalPages : 1);
+    if (currentPage > newTotalPages) {
+      setCurrentPage(newTotalPages > 0 ? newTotalPages : 1);
+    }
+  }, [filteredBookings, pageSize, currentPage]);
+
+  const goToPage = (page: number) => {
+    const pageNumber = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(pageNumber);
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -479,7 +502,7 @@ export default function AllBookingsPage() {
       {!loading && (
         <div className="overflow-x-auto bg-white rounded-xl shadow border">
           <table className="min-w-full text-xs md:text-sm table-auto">
-            <thead className="bg-blue-50">
+            <thead className="bg-blue-50 sticky top-0 z-10">
               <tr>
                 {columns.map(col => (
                   <th
@@ -494,7 +517,7 @@ export default function AllBookingsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((row, idx) => (
+              {paginatedBookings.map((row, idx) => (
                 <tr key={row.id || idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                   {columns.map(col => {
                     if (col === "receiverName") {
@@ -578,6 +601,42 @@ export default function AllBookingsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}{!loading && totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages} ({filteredBookings.length} total records)
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              value={currentPage}
+              onChange={(e) => goToPage(Number(e.target.value))}
+              className="w-12 p-1 text-gray-400 text-center border rounded text-sm"
+              min="1"
+              max={totalPages}
+            />
+            <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div>
+            <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="text-sm border border-gray-300 text-blue-600 cursor-pointer rounded p-1">
+              <option value="50">50 / page</option>
+              <option value="100">100 / page</option>
+              <option value="200">200 / page</option>
+              <option value="500">500 / page</option>
+            </select>
+          </div>
         </div>
       )}
     </div>
