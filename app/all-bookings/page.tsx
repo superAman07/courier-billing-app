@@ -608,10 +608,10 @@ export default function AllBookingsPage() {
             Page {currentPage} of {totalPages} ({filteredBookings.length} total records)
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+            <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="p-1 rounded cursor-pointer border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
               <ChevronsLeft className="w-4 h-4" />
             </button>
-            <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+            <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="p-1 rounded cursor-pointer border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
               <ChevronLeft className="w-4 h-4" />
             </button>
             <input
@@ -622,10 +622,10 @@ export default function AllBookingsPage() {
               min="1"
               max={totalPages}
             />
-            <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+            <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="p-1 rounded cursor-pointer border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
+            <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="p-1 rounded cursor-pointer border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100">
               <ChevronsRight className="w-4 h-4" />
             </button>
           </div>
