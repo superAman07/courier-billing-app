@@ -500,7 +500,7 @@ export default function AllBookingsPage() {
 
       {loading && <div className="p-6 flex justify-center text-center font-medium text-blue-700"><div className="loader"></div></div>}
       {!loading && (
-        <div className="overflow-x-auto bg-white rounded-xl shadow border">
+        <div className="overflow-x-auto bg-white rounded-xl shadow border max-h-[70vh] overflow-y-auto">
           <table className="min-w-full text-xs md:text-sm table-auto">
             <thead className="bg-blue-50 sticky top-0 z-10">
               <tr>
