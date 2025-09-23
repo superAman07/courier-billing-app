@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import ExcelJS from "exceljs";
 
@@ -17,7 +17,7 @@ export async function GET() {
                 bookingDate: "desc" 
             } 
         });
-        return await generateExcel(boookings);
+        return await generateExcel(bookings);
     } catch (error) {
         console.error("Excel export error:", error);
         return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
