@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
-import { handleDownload } from "@/lib/downloadExcel";
+import { handleDownloadForAllBookings } from "@/lib/downloadExcel";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -374,7 +374,7 @@ export default function AllBookingsPage() {
             <button
               onClick={() => {
                 toast('Downloading Excel...');
-                handleDownload();
+                handleDownloadForAllBookings(filteredBookings);
               }}
               className="px-5 py-2 cursor-pointer bg-blue-700 text-white rounded-md shadow-md hover:bg-blue-800 transition"
               disabled={loading}

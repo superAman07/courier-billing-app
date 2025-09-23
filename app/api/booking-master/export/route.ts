@@ -17,8 +17,28 @@ export async function GET() {
                 bookingDate: "desc" 
             } 
         });
+        return await generateExcel(boookings);
+    } catch (error) {
+        console.error("Excel export error:", error);
+        return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
+    }
+}
 
-        const workbook = new ExcelJS.Workbook();
+export async function POST(req: NextRequest) {
+    try {
+        const { bookings } = await req.json();
+        if (!Array.isArray(bookings)) {
+            return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
+        }
+        return await generateExcel(bookings);
+    } catch (error) {
+        console.error("Excel export error:", error);
+        return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
+    }
+}
+
+async function generateExcel(bookings: any[]){
+    const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Bookings");
 
         worksheet.columns = [
@@ -199,8 +219,4 @@ export async function GET() {
                 "Content-Disposition": `attachment; filename="BookingMaster_${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.xlsx"`,
             },
         });
-    } catch (error) {
-        console.error("Excel export error:", error);
-        return NextResponse.json({ message: "Error exporting bookings" }, { status: 500 });
-    }
 }
