@@ -11,7 +11,7 @@ const columns = [
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "customerName", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
-  "customerAttendBy", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
+  "customerAttendBy", "status", "manualStatus", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
 ];
 
@@ -49,6 +49,7 @@ const COLUMN_MAP: Record<string, string> = {
   adhaarNo: "Adhaar No",
   customerAttendBy: "Customer Attend By",
   status: "Status",
+  manualStatus: "Manual Status",
   statusDate: "Status Date",
   pendingDaysNotDelivered: "Pending Days Not Delivered",
   receiverName: "Receiver Name",
@@ -62,6 +63,7 @@ const COLUMN_MAP: Record<string, string> = {
 const OPTIONS = {
   mode: ["AIR", "EXPRESS", "PREMIUM", "RAIL", "SURFACE", "OTHER MODE"],
   status: ["BOOKED", "IN-TRANSIT", "DELIVERED", "CANCELLED", "RETURNED"],
+  manualStatus: ["BOOKED", "IN-TRANSIT", "DELIVERED", "CANCELLED", "RETURNED"],
   paymentStatus: ["PAID", "UNPAID", "PARTIALLY_PAID"],
   dsrNdxPaper: ["D", "N"],
   customerType: ["CREDIT", "REGULAR", "WALK-IN"],
@@ -547,7 +549,7 @@ export default function AllBookingsPage() {
                       );
                     }
                     const isDateField = ["bookingDate", "statusDate", "createdAt", "dateOfDelivery", "todayDate"].includes(col);
-                    const isSelectField = ["mode", "status", "paymentStatus", "dsrNdxPaper", "customerType", "delivered"].includes(col);
+                    const isSelectField = ["mode", "status", "manualStatus", "paymentStatus", "dsrNdxPaper", "customerType", "delivered"].includes(col);
 
                     return editingId === row.id ? (
                       <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">

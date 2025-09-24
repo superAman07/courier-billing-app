@@ -306,6 +306,7 @@ model BookingMaster {
   adhaarNo                String?
   customerAttendBy        String?
   status                  String?
+  manualStatus            String?         @default("")
   statusDate              DateTime?       @db.Date
   pendingDaysNotDelivered Int?
   receiverName            String?
@@ -497,7 +498,7 @@ model CustomerPayment {
   referenceNo   String?
   imageUrl      String?
   receivedBy    String?
-  remarks       String?  
+  remarks       String?
   discuss       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
