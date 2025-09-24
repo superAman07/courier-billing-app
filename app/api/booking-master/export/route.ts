@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
     }
 }
 
+function isNumericString(str: any) {
+    return /^\d+$/.test(str);
+}
+
 async function generateExcel(bookings: any[]) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Bookings");
@@ -44,12 +48,12 @@ async function generateExcel(bookings: any[]) {
     worksheet.columns = [
         { header: "SR NO.", key: "srNo", width: 8 },
         { header: "Booking Date", key: "bookingDate", width: 16 },
-        { header: "Docket", key: "awbNo", width: 18, style: { numFmt: '@' } },
+        { header: "Docket", key: "awbNo", width: 18 },
         { header: "Location", key: "location", width: 18 },
         { header: "Destination", key: "destinationCity", width: 18 },
         { header: "Mode", key: "mode", width: 8 },
         { header: "No of Pcs", key: "pcs", width: 10 },
-        { header: "Pincode", key: "pin", width: 10, style: { numFmt: '@' } },
+        { header: "Pincode", key: "pin", width: 10 },
         { header: "Content", key: "dsrContents", width: 28 },
         { header: "Dox / Non Dox", key: "dsrNdxPaper", width: 14 },
         { header: "Material Value", key: "invoiceValue", width: 14 },
@@ -142,6 +146,10 @@ async function generateExcel(bookings: any[]) {
         const formattedBooking = {
             ...booking,
             srNo: idx + 1,
+            awbNo: booking.awbNo ? (isNumericString(String(booking.awbNo)) ?
+                parseInt(booking.awbNo, 10) : String(booking.awbNo)) : '',
+            pin: booking.pin ? (isNumericString(String(booking.pin)) ?
+                parseInt(booking.pin, 10) : String(booking.pin)) : '',
             customerCode: booking.customer?.customerCode,
             customerName: booking.customer?.customerName,
             childCustomer: booking.customer?.childCustomer || booking.customer?.customerName,
