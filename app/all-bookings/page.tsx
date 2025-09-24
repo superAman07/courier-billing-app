@@ -59,6 +59,15 @@ const COLUMN_MAP: Record<string, string> = {
   todayDate: "Today Date"
 };
 
+const OPTIONS = {
+  mode: ["AIR", "EXPRESS", "PREMIUM", "RAIL", "SURFACE", "OTHER MODE"],
+  status: ["BOOKED", "IN-TRANSIT", "DELIVERED", "CANCELLED", "RETURNED"],
+  paymentStatus: ["PAID", "UNPAID", "PARTIALLY_PAID"],
+  dsrNdxPaper: ["D", "N"],
+  customerType: ["CREDIT", "REGULAR", "WALK-IN"],
+  delivered: ["YES", "NO"],
+};
+
 export default function AllBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
@@ -538,15 +547,32 @@ export default function AllBookingsPage() {
                       );
                     }
                     const isDateField = ["bookingDate", "statusDate", "createdAt", "dateOfDelivery", "todayDate"].includes(col);
+                    const isSelectField = ["mode", "status", "paymentStatus", "dsrNdxPaper", "customerType", "delivered"].includes(col);
+
                     return editingId === row.id ? (
                       <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
-                        <input
-                          name={col}
-                          value={editForm[col] ?? ""}
-                          onChange={handleInputChange}
-                          className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
-                          readOnly={col === "srNo" || col === "id" || col === "valumetric"}
-                        />
+                        {isSelectField ? (
+                          <select
+                            name={col}
+                            value={editForm[col] ?? ""}
+                            onChange={(e) => handleInputChange(e as any)}
+                            className="w-full h-full px-2 py-1 border border-gray-300 rounded-sm bg-white text-gray-700 text-xs md:text-sm cursor-pointer"
+                          >
+                            <option value="">Select</option>
+                            {OPTIONS[col as keyof typeof OPTIONS].map(option => (
+                              <option key={option} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            name={col}
+                            type={isDateField ? 'date' : 'text'}
+                            value={isDateField ? (editForm[col] ? new Date(editForm[col]).toISOString().split('T')[0] : '') : (editForm[col] ?? "")}
+                            onChange={handleInputChange}
+                            className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
+                            readOnly={["srNo", "id", "valumetric", "gst", "fuelSurcharge", "clientBillingValue", "customerName", "childCustomer"].includes(col)}
+                          />
+                        )}
                       </td>
                     ) : (
                       <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
