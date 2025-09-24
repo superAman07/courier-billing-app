@@ -53,21 +53,21 @@ export default function EmployeeMaster() {
     axios.get('/api/employee-master').then(res => setEmployees(res.data));
   }, []);
 
-  useEffect(()=>{
-    if(form.shiftStartTime && form.shiftEndTime){
+  useEffect(() => {
+    if (form.shiftStartTime && form.shiftEndTime) {
       const [startHours, startMinutes] = form.shiftStartTime.split(':').map(Number);
       const [endHours, endMinutes] = form.shiftEndTime.split(':').map(Number);
-      const startDate = new Date(0,0,0,startHours,startMinutes);
-      const endDate = new Date(0,0,0,endHours, endMinutes);
+      const startDate = new Date(0, 0, 0, startHours, startMinutes);
+      const endDate = new Date(0, 0, 0, endHours, endMinutes);
 
       let diff = endDate.getTime() - startDate.getTime();
-      if(diff < 0){
+      if (diff < 0) {
         diff += 24 * 60 * 60 * 1000;
       }
-      const hours = diff/(1000 * 60 * 60);
-      setForm(prev => ({...prev, workingHours: parseFloat(hours.toFixed(2))}));
+      const hours = diff / (1000 * 60 * 60);
+      setForm(prev => ({ ...prev, workingHours: parseFloat(hours.toFixed(2)) }));
     }
-  },[form.shiftStartTime, form.shiftEndTime])
+  }, [form.shiftStartTime, form.shiftEndTime])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -281,39 +281,41 @@ export default function EmployeeMaster() {
           <button type="button" className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-600 hover:text-gray-200 cursor-pointer rounded" onClick={() => setSearch('')}>Clear</button>
         </div>
         <div className="p-6">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mobile</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((emp, idx) => (
-                <tr key={emp.id}>
-                  <td className="px-3 py-2 text-gray-600">{emp.employeeCode}</td>
-                  <td className="px-3 py-2 text-gray-600">{emp.employeeName}</td>
-                  <td className="px-3 py-2 text-gray-600">{emp.mobile}</td>
-                  <td className="px-3 py-2 text-gray-600">{emp.email}</td>
-                  <td className="px-3 py-2 text-center">
-                    <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <button type="button" onClick={() => handleDelete(idx)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+          <div className="overflow-y-auto max-h-[50vh] border rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <td colSpan={6} className="text-center text-gray-400 py-4">No employees found.</td>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mobile</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Delete</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filtered.map((emp, idx) => (
+                  <tr key={emp.id}>
+                    <td className="px-3 py-2 text-gray-600">{emp.employeeCode}</td>
+                    <td className="px-3 py-2 text-gray-600">{emp.employeeName}</td>
+                    <td className="px-3 py-2 text-gray-600">{emp.mobile}</td>
+                    <td className="px-3 py-2 text-gray-600">{emp.email}</td>
+                    <td className="px-3 py-2 text-center">
+                      <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:underline cursor-pointer">✏️</button>
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <button type="button" onClick={() => handleDelete(idx)} className="text-red-600 hover:underline cursor-pointer">🗑️</button>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center text-gray-400 py-4">No employees found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

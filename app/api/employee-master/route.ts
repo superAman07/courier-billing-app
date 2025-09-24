@@ -14,8 +14,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
-    const employee = await prisma.employeeMaster.create({ data });
+    const data = await req.json(); 
+    const employeeData = {
+      ...data,
+      email: data.email === '' ? null: data.email,
+    }
+    const employee = await prisma.employeeMaster.create({ data: employeeData }); 
     return NextResponse.json(employee, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
