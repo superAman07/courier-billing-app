@@ -11,7 +11,7 @@ const columns = [
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "customerName", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
-  "customerAttendBy", "status", "manualStatus", "statusDate", "pendingDaysNotDelivered", "receiverName",
+  "customerAttendBy", "status", "manualStatus", "manualStatusDate", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
 ];
 
@@ -50,6 +50,7 @@ const COLUMN_MAP: Record<string, string> = {
   customerAttendBy: "Customer Attend By",
   status: "Status",
   manualStatus: "Manual Status",
+  manualStatusDate: "Manual Status Date",
   statusDate: "Status Date",
   pendingDaysNotDelivered: "Pending Days Not Delivered",
   receiverName: "Receiver Name",
@@ -324,6 +325,10 @@ export default function AllBookingsPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let updatedForm = { ...editForm, [name]: value };
+
+    if (name === 'manualStatus') {
+      updatedForm.manualStatusDate = new Date().toISOString();
+    }
 
     // Auto-calculate valumetric when length, width, or height changes
     if (['length', 'width', 'height'].includes(name)) {

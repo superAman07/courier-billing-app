@@ -307,6 +307,7 @@ model BookingMaster {
   customerAttendBy        String?
   status                  String?
   manualStatus            String?         @default("")
+  manualStatusDate        DateTime?       @db.Date
   statusDate              DateTime?       @db.Date
   pendingDaysNotDelivered Int?
   receiverName            String?

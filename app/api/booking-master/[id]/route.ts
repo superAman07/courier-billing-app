@@ -56,6 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.customerAttendBy !== undefined) updateData.customerAttendBy = data.customerAttendBy;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.manualStatus !== undefined) updateData.manualStatus = data.manualStatus;
+    if (data.manualStatusDate !== undefined) updateData.manualStatusDate = data.manualStatusDate ? new Date(data.manualStatusDate) : null;
     if (data.statusDate !== undefined) updateData.statusDate = data.statusDate ? new Date(data.statusDate) : null;
     if (data.pendingDaysNotDelivered !== undefined) updateData.pendingDaysNotDelivered = data.pendingDaysNotDelivered ? Number(data.pendingDaysNotDelivered) : null;
     if (data.receiverName !== undefined) updateData.receiverName = data.receiverName;
