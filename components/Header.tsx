@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { ChevronDown, Menu, X, LayoutDashboard, Settings, Truck, FileText, DollarSign, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, Menu, X, LayoutDashboard, Settings, Truck, FileText, DollarSign, Users, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const navLinks = {
     Masters: [
@@ -68,6 +71,30 @@ const NavDropDown = ({ title, links }: { title: string, links: { href: string, l
 
 export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+    const handleLogout = async()=> {
+        try {
+            await axios.post('/api/logout');
+            localStorage.removeItem('userInfo');
+            toast.success('You have been logged out.');
+            router.push('/login');
+        } catch (error) {
+            toast.error('Logout failed. Please try again.');
+        }
+    }
+    if(!isLoggedIn){
+        return null;
+    }
+
     return (
         <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md sticky top-0 z-50 print:hidden">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -82,6 +109,10 @@ export default function Header() {
                         {Object.entries(navLinks).map(([title, links]) => (
                             <NavDropDown key={title} title={title} links={links} />
                         ))}
+                        <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-white cursor-pointer font-semibold bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
                     </div>
                     <div className="md:hidden flex items-center">
                         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-blue-700 focus:outline-none">

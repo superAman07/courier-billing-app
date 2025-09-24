@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
             httpOnly: true,
             sameSite: "lax",
             path: "/",
-            // secure: true, // enable in production
+            secure: true, // enable in production
             maxAge: 60 * 60 * 8 
         });
 
