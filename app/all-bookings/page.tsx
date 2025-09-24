@@ -322,6 +322,24 @@ export default function AllBookingsPage() {
     }
   };
 
+  const formatDate = (dateString: string | Date | null): string => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleString('en-US', { month: 'short' });
+      const year = date.getFullYear();
+
+      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+
+      return `${day}-${capitalizedMonth}-${year}`;
+    } catch (e) {
+      return "";
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let updatedForm = { ...editForm, [name]: value };
@@ -553,7 +571,7 @@ export default function AllBookingsPage() {
                         </td>
                       );
                     }
-                    const isDateField = ["bookingDate", "statusDate", "createdAt", "dateOfDelivery", "todayDate"].includes(col);
+                    const isDateField = ["bookingDate", "statusDate", "createdAt", "dateOfDelivery", "todayDate", "manualStatusDate"].includes(col);
                     const isSelectField = ["mode", "status", "manualStatus", "paymentStatus", "dsrNdxPaper", "customerType", "delivered"].includes(col);
 
                     return editingId === row.id ? (
@@ -585,7 +603,7 @@ export default function AllBookingsPage() {
                       <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
                         {col === 'childCustomer'
                           ? row.customer?.childCustomer || row.customer?.customerName
-                          : isDateField ? parseDateString(row[col]) : row[col]}
+                          : isDateField ? formatDate(row[col]) : row[col]}
                       </td>
                     )
                   })}

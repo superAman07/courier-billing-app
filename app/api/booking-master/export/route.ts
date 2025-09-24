@@ -163,6 +163,7 @@ async function generateExcel(bookings: any[]) {
                 month: 'short',
                 year: 'numeric'
             }).toLowerCase() : '',
+            manualStatusDate: booking.manualStatusDate ? new Date(booking.manualStatusDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : '',
             dateOfDelivery: booking.dateOfDelivery ? new Date(booking.dateOfDelivery).toLocaleDateString('en-IN', {
                 day: 'numeric',
                 month: 'short',
