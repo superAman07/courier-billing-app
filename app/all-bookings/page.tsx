@@ -405,7 +405,7 @@ export default function AllBookingsPage() {
               onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
               className="w-full px-3 py-2 text-left rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 font-medium bg-blue-50 text-gray-800 transition flex justify-between items-center"
             >
-              <span className="truncate">
+              <span className="truncate cursor-pointer">
                 {filters.status.length > 0 ? filters.status.join(', ') : 'Select Statuses'}
               </span>
               <span className="ml-2">▼</span>
@@ -525,11 +525,8 @@ export default function AllBookingsPage() {
                         <td
                           key={col}
                           className="px-3 py-2 border-b font-semibold whitespace-nowrap text-gray-700"
-                          title={`${row.customer?.customerName || ""} (${row.customer?.customerCode || ""}) - ${row.receiverName || ""}`}
                         >
-                          {row.customer?.customerName && row.customer?.customerCode
-                            ? `${row.customer.customerName} (${row.customer.customerCode}) - ${row.receiverName || ""}`
-                            : row.receiverName}
+                          {row.receiverName || ""}
                         </td>
                       );
                     }
