@@ -1021,9 +1021,7 @@ export default function SmartBookingMasterPage() {
                                                             value={col === "todayDate" ? getCurrentDate() :
                                                                 col === "pendingDaysNotDelivered" ?
                                                                     calculatePendingDays(row.bookingDate, row.status) :
-                                                                    col === "gst" && row.gst && document.activeElement !== document.getElementById(`gst-input-${row.__origIndex}`)
-                                                                        ? `${row.gst}%`
-                                                                        : row[col] || ""
+                                                                    row[col] || ""
                                                             }
                                                             id={col === "gst" ? `gst-input-${row.__origIndex}` : undefined}
                                                             onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
