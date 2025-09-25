@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
             }
         }
         let riskSurcharge = 0;
-        if (sectorRate.serviceProvider === 'DTDC' && invoiceValue > 5000) {
+        if (sectorRate.serviceProvider === 'DTDC' && invoiceValue > 50000) {
             riskSurcharge = parseFloat(invoiceValue) * 0.002;
         }
         
