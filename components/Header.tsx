@@ -44,6 +44,10 @@ const navLinks = {
         { href: '/generate-credit-client-invoice', label: 'Generate Invoice (Credit)' },
         { href: '/modify-credit-client-invoice', label: 'Modify / Delete Invoice (Credit)' },
     ],
+    New_Rates: [
+        { href: '/new-rate-master', label: 'New Rate Master' },
+        { href: '/new-copy-rates', label: 'New Copy Rates' },
+    ],
     Others: [
         { href: '/employee-attendance', label: 'Employee Attendance' },
         { href: '/docket-stock', label: 'Docket Stock' },
