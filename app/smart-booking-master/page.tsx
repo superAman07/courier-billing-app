@@ -105,7 +105,7 @@ export default function SmartBookingMasterPage() {
     };
 
     const debouncedRateCalculation = debounce(async (idx: number, row: any) => {
-        if (!row.customerId || !row.pin || !row.chargeWeight) {
+        if (!row.customerId || !row.pin || !row.chargeWeight || !row.mode) {
             return;
         }
 
@@ -115,6 +115,7 @@ export default function SmartBookingMasterPage() {
                 destinationPincode: row.pin,
                 chargeWeight: row.chargeWeight,
                 isDox: row.dsrNdxPaper === 'D',
+                mode: row.mode,
                 invoiceValue: row.invoiceValue,
             });
 
@@ -590,38 +591,91 @@ export default function SmartBookingMasterPage() {
         }
     }, 300);
 
+    // const handleCustomerSelect = async (idx: number, customer: any) => {
+    //     setTableRows(rows =>
+    //         rows.map((row, i) => {
+    //             if (i !== idx) return row;
+
+    //             const gstPercentage = getGSTPercentage(customer.pincode || "");
+    //             let updatedRow = {
+    //                 ...row,
+    //                 customerCode: customer.customerCode,
+    //                 customerId: customer.id,
+    //                 customerName: customer.customerName,
+    //                 childCustomer: customer.childCustomer || customer.customerName,
+    //                 customerAttendBy: customer.contactPerson || "",
+    //                 senderContactNo: customer.mobile || customer.phone || "",
+    //                 senderDetail: customer.customerName || "",
+    //                 _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
+    //                 _gstPercent: gstPercentage,
+    //                 address: customer.address || "",
+    //                 todayDate: getCurrentDate(),
+    //             };
+    //             debouncedRateCalculation(idx, updatedRow);
+
+    //             const frCharge = parseFloat(updatedRow.frCharge) || 0;
+    //             const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+    //             updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+    //             return recalculateClientBilling(updatedRow);
+    //         })
+    //     );
+
+    //     setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
+    //     toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
+    // };
+
     const handleCustomerSelect = async (idx: number, customer: any) => {
-        setTableRows(rows =>
-            rows.map((row, i) => {
-                if (i !== idx) return row;
+        const originalRow = tableRows[idx];
 
-                const gstPercentage = getGSTPercentage(customer.pincode || "");
-                let updatedRow = {
-                    ...row,
-                    customerCode: customer.customerCode,
-                    customerId: customer.id,
-                    customerName: customer.customerName,
-                    childCustomer: customer.childCustomer || customer.customerName,
-                    customerAttendBy: customer.contactPerson || "",
-                    senderContactNo: customer.mobile || customer.phone || "",
-                    senderDetail: customer.customerName || "",
-                    _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
-                    _gstPercent: gstPercentage,
-                    address: customer.address || "",
-                    todayDate: getCurrentDate(),
-                };
-                debouncedRateCalculation(idx, updatedRow);
-                
-                const frCharge = parseFloat(updatedRow.frCharge) || 0;
-                const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
-                updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
-
-                return recalculateClientBilling(updatedRow);
-            })
-        );
+        const gstPercentage = getGSTPercentage(customer.pincode || "");
+        let updatedRow = {
+            ...originalRow,
+            customerCode: customer.customerCode,
+            customerId: customer.id,
+            customerName: customer.customerName,
+            childCustomer: customer.childCustomer || customer.customerName,
+            customerAttendBy: customer.contactPerson || "",
+            senderContactNo: customer.mobile || customer.phone || "",
+            senderDetail: customer.customerName || "",
+            _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
+            _gstPercent: gstPercentage,
+            address: customer.address || "",
+            todayDate: getCurrentDate(),
+        };
 
         setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
-        toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
+        toast.success(`Customer ${customer.customerName} selected. Calculating rates...`);
+
+        if (updatedRow.pin && updatedRow.chargeWeight > 0 && updatedRow.mode) {
+            try {
+                const { data } = await axios.post('/api/calculate-rate', {
+                    customerId: updatedRow.customerId,
+                    destinationPincode: updatedRow.pin,
+                    chargeWeight: updatedRow.chargeWeight,
+                    isDox: updatedRow.dsrNdxPaper === 'D',
+                    mode: updatedRow.mode,
+                    invoiceValue: updatedRow.invoiceValue,
+                });
+
+                updatedRow.frCharge = data.frCharge.toFixed(2);
+                updatedRow.otherExp = data.otherExp.toFixed(2);
+                toast.success(`Rate calculated for AWB #${updatedRow.awbNo} (Sector: ${data.calculatedSector})`);
+
+            } catch (error: any) {
+                const errorMessage = error.response?.data?.error || "Could not calculate rate.";
+                toast.error(errorMessage, { id: `rate-error-${updatedRow.awbNo}` });
+            }
+        }
+        const frCharge = parseFloat(updatedRow.frCharge) || 0;
+        const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+        updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+        const finalRow = recalculateClientBilling(updatedRow);
+
+        setTableRows(rows =>
+            rows.map((row, i) => (i === idx ? finalRow : row))
+        );
     };
 
     const handleEdit = (idx: number, field: string, value: string) => {
