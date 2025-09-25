@@ -531,3 +531,26 @@ model InvoiceCounter {
   lastNumber Int      @default(0)
   updatedAt  DateTime @updatedAt
 }
+
+model DailyLedger {
+  id                      String    @id @default(cuid())
+  date                    DateTime  @db.Date
+  particulars             String
+
+  saleAmount              Float? @default(0)
+  clientPaymentReceived   Float? @default(0)
+  digitalSaleAmount       Float? @default(0) 
+
+  expenseAmount           Float? @default(0)
+  employeeAdvance         Float? @default(0)
+  expenseByDigital        Float? @default(0) 
+  officeAdvance           Float? @default(0)
+  depositInBank           Float? @default(0)
+  tsDeposit               Float? @default(0) 
+
+  physicalMatch           Boolean? @default(false)
+  others                  String?
+
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}

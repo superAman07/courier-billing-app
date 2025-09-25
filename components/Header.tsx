@@ -48,6 +48,7 @@ const navLinks = {
         { href: '/employee-attendance', label: 'Employee Attendance' },
         { href: '/docket-stock', label: 'Docket Stock' },
         { href: '/customer-payments', label: 'Customer Payments' },
+        { href: '/sale-expense', label: 'Sale Expense' },
     ],
 };
 
