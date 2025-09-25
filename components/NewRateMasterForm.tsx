@@ -177,7 +177,7 @@ export default function NewRateMasterForm() {
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border-b">
                     <div>
                         <label htmlFor="customerSelect" className="block text-base font-medium text-gray-800 mb-2">1. Select Customer</label>
-                        <select id="customerSelect" onChange={handleCustomerChange} value={selectedCustomer?.id || ''} className={`${inputStyle} text-base`}>
+                        <select id="customerSelect" onChange={handleCustomerChange} value={selectedCustomer?.id || ''} className={`${inputStyle} text-base cursor-pointer`}>
                             <option value="">-- Select a Customer --</option>
                             {customers.map(customer => (
                                 <option key={customer.id} value={customer.id}>
@@ -188,7 +188,7 @@ export default function NewRateMasterForm() {
                     </div>
                     <div>
                         <label htmlFor="sectorSelect" className="block text-base font-medium text-gray-800 mb-2">2. Select Sector</label>
-                        <select id="sectorSelect" onChange={e => setSelectedSector(e.target.value)} value={selectedSector} className={`${inputStyle} text-base`} disabled={!selectedCustomer}>
+                        <select id="sectorSelect" onChange={e => setSelectedSector(e.target.value)} value={selectedSector} className={`${inputStyle} text-base cursor-pointer`} disabled={!selectedCustomer}>
                             <option value="">-- Select a Sector --</option>
                             {SECTORS.map(sector => (
                                 <option key={sector} value={sector}>{sector}</option>
