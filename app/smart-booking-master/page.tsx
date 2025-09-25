@@ -104,6 +104,39 @@ export default function SmartBookingMasterPage() {
         return updatedRow;
     };
 
+    const debouncedRateCalculation = debounce(async (idx: number, row: any) => {
+        if (!row.customerId || !row.pin || !row.chargeWeight) {
+            return;
+        }
+
+        try {
+            const { data } = await axios.post('/api/calculate-rate', {
+                customerId: row.customerId,
+                destinationPincode: row.pin,
+                chargeWeight: row.chargeWeight,
+                isDox: row.dsrNdxPaper === 'D',
+                invoiceValue: row.invoiceValue,
+            });
+
+            setTableRows(rows =>
+                rows.map((r, i) => {
+                    if (i !== idx) return r;
+                    let updatedRow = { ...r, frCharge: data.frCharge.toFixed(2), otherExp: data.otherExp.toFixed(2) };
+
+                    const frCharge = parseFloat(updatedRow.frCharge) || 0;
+                    const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+                    updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+                    return recalculateClientBilling(updatedRow);
+                })
+            );
+            toast.success(`Rate calculated for AWB #${row.awbNo}`);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || "Could not calculate rate.";
+            toast.error(errorMessage, { id: `rate-error-${row.awbNo}` });
+        }
+    }, 800);
+
     const fetchUnassignedBookings = async () => {
         setLoading(true);
         try {
@@ -577,6 +610,8 @@ export default function SmartBookingMasterPage() {
                     address: customer.address || "",
                     todayDate: getCurrentDate(),
                 };
+                debouncedRateCalculation(idx, updatedRow);
+                
                 const frCharge = parseFloat(updatedRow.frCharge) || 0;
                 const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
                 updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
@@ -594,6 +629,11 @@ export default function SmartBookingMasterPage() {
             rows.map((row, i) => {
                 if (i !== idx) return row;
                 let updated = { ...row, [field]: value };
+
+                const rateTriggerFields = ["pin", "chargeWeight", "actualWeight", "dsrNdxPaper", "invoiceValue"];
+                if (rateTriggerFields.includes(field) || (field === "customerCode" && !value)) {
+                    debouncedRateCalculation(idx, updated);
+                }
 
                 if (field === "frCharge") {
                     const frCharge = parseFloat(value) || 0;

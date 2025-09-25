@@ -3,17 +3,25 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
+const SECTORS = [
+    "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
+    "North (Haryana / Punjaab / Rajasthaan)",
+    "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)",
+];
+
 type StateForm = {
   id?: string;
   code: string;
   name: string;
   zoneId: string;
   active: boolean;
+  sector?: string;
 };
 
 type Zone = { id: string; code: string; name: string; active: boolean; };
 
-const initialForm: StateForm = { code: '', name: '', zoneId: '', active: true };
+const initialForm: StateForm = { code: '', name: '', zoneId: '', active: true, sector: '' };
 
 export default function StateMaster() {
   const [form, setForm] = useState<StateForm>(initialForm);
@@ -63,6 +71,7 @@ export default function StateMaster() {
       name: states[idx].name,
       zoneId: states[idx].zoneId,
       active: states[idx].active,
+      sector: states[idx].sector || '',
     });
     setEditingIndex(idx);
   };
@@ -99,6 +108,10 @@ export default function StateMaster() {
             <option value="">-- Select Zone --</option>
             {zones.map(z => <option key={z.id} value={z.id} className='uppercase'>{z.name.toUpperCase()}</option>)}
           </select>
+          <select name="sector" value={form.sector} onChange={handleChange} className="p-2 border cursor-pointer rounded text-gray-500 border-gray-300">
+            <option value="">-- Select Sector --</option>
+            {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
           <label className="flex items-center space-x-2">
             <input type="checkbox" name="active" checked={form.active} onChange={handleChange} className="text-gray-600 cursor-pointer" />
             <span className="text-gray-600 cursor-pointer">Active</span>
@@ -120,6 +133,7 @@ export default function StateMaster() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">State</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">State Description</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">State Zone</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sector</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Delete</th>
@@ -131,6 +145,7 @@ export default function StateMaster() {
                   <td className="px-3 py-2 text-gray-600 uppercase">{state.code}</td>
                   <td className="px-3 py-2 text-gray-600 uppercase">{state.name}</td>
                   <td className="px-3 py-2 text-gray-600 uppercase">{state.zone?.name || ''}</td>
+                  <td className="px-3 py-2 text-gray-600">{state.sector || 'N/A'}</td>
                   <td className="px-3 py-2 text-gray-600 text-center">{state.active ? '✔️' : ''}</td>
                   <td className="px-3 py-2 text-gray-600 text-center">
                     <button type="button" onClick={() => handleEdit(idx)} className="text-green-600 hover:underline cursor-pointer">✏️</button>

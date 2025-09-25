@@ -111,6 +111,7 @@ model StateMaster {
   rates     RateMaster[]
   cities    CityMaster[]
   pincodes  PincodeMaster[]
+  sector    String?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
@@ -534,55 +535,56 @@ model InvoiceCounter {
 }
 
 model DailyLedger {
-  id                      String    @id @default(cuid())
-  date                    DateTime  @db.Date
-  particulars             String
-
-  saleAmount              Float? @default(0)
-  clientPaymentReceived   Float? @default(0)
-  digitalSaleAmount       Float? @default(0) 
-
-  expenseAmount           Float? @default(0)
-  employeeAdvance         Float? @default(0)
-  expenseByDigital        Float? @default(0) 
-  officeAdvance           Float? @default(0)
-  depositInBank           Float? @default(0)
-  tsDeposit               Float? @default(0) 
-
-  physicalMatch           Boolean? @default(false)
-  others                  String?
-
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-}
-model SectorRate {
   id          String   @id @default(cuid())
-  customerId  String
-  customer    CustomerMaster @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  particulars String
 
-  sectorName  String
+  saleAmount            Float? @default(0)
+  clientPaymentReceived Float? @default(0)
+  digitalSaleAmount     Float? @default(0)
+
+  expenseAmount    Float? @default(0)
+  employeeAdvance  Float? @default(0)
+  expenseByDigital Float? @default(0)
+  officeAdvance    Float? @default(0)
+  depositInBank    Float? @default(0)
+  tsDeposit        Float? @default(0)
+
+  physicalMatch Boolean? @default(false)
+  others        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SectorRate {
+  id         String         @id @default(cuid())
+  customerId String
+  customer   CustomerMaster @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  sectorName      String
   serviceProvider String @default("DTDC")
 
-  bulkMinWeightSurface    Float?
-  bulkMinWeightAir        Float?
-  bulkRateSurfaceUpto20   Float?
-  bulkRateSurfaceAbove20  Float?
-  bulkRateAirUpto20       Float?
-  bulkRateAirAbove20      Float?
+  bulkMinWeightSurface   Float?
+  bulkMinWeightAir       Float?
+  bulkRateSurfaceUpto20  Float?
+  bulkRateSurfaceAbove20 Float?
+  bulkRateAirUpto20      Float?
+  bulkRateAirAbove20     Float?
 
-  doxUpto100g             Float?
-  doxUpto250g             Float?
-  doxAdd250g              Float?
-  doxUpto500g             Float?
-  doxAdd500g              Float?
+  doxUpto100g Float?
+  doxUpto250g Float?
+  doxAdd250g  Float?
+  doxUpto500g Float?
+  doxAdd500g  Float?
 
-  premiumUpto250g         Float?
-  premiumAdd250g          Float?
-  premiumUpto500g         Float?
-  premiumAdd500g          Float?
+  premiumUpto250g Float?
+  premiumAdd250g  Float?
+  premiumUpto500g Float?
+  premiumAdd500g  Float?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([customerId, sectorName]) 
+  @@unique([customerId, sectorName])
 }
