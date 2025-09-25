@@ -32,6 +32,7 @@ model CustomerMaster {
   openingBalance       Float?
   balanceType          String?
   rates                RateMaster[]
+  sectorRates          SectorRate[]
 
   creditClientBookings              CreditClientBooking[]
   internationalCreditClientBookings InternationalCreditClientBooking[]
@@ -553,4 +554,37 @@ model DailyLedger {
 
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
+}
+model SectorRate {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    CustomerMaster @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  sectorName  String 
+
+  // --- Bulk Load (Non-Dox) ---
+  bulkMinWeightSurface    Float?
+  bulkMinWeightAir        Float?
+  bulkRateSurfaceUpto20   Float?
+  bulkRateSurfaceAbove20  Float?
+  bulkRateAirUpto20       Float?
+  bulkRateAirAbove20      Float?
+
+  // --- Doox (Documents) ---
+  doxUpto100g             Float?
+  doxUpto250g             Float?
+  doxAdd250g              Float?
+  doxUpto500g             Float?
+  doxAdd500g              Float?
+
+  // --- Premium RS ---
+  premiumUpto250g         Float?
+  premiumAdd250g          Float?
+  premiumUpto500g         Float?
+  premiumAdd500g          Float?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([customerId, sectorName]) 
 }
