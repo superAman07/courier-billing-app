@@ -9,6 +9,7 @@ import { Edit, Loader2, Save, Trash2 } from 'lucide-react';
 type SectorRate = {
     id?: string;
     sectorName: string;
+    serviceProvider?: string;
     bulkMinWeightSurface?: number;
     bulkMinWeightAir?: number;
     bulkRateSurfaceUpto20?: number;
@@ -33,7 +34,9 @@ const SECTORS = [
     "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)"
 ];
 
-const initialFormState: Omit<SectorRate, 'sectorName'> = {};
+const initialFormState: Omit<SectorRate, 'sectorName'> = {
+    serviceProvider: "DTDC"
+};
 
 export default function NewRateMasterForm() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
@@ -77,7 +80,7 @@ export default function NewRateMasterForm() {
     useEffect(() => {
         if (selectedSector) {
             const existingRate = rates.find(r => r.sectorName === selectedSector);
-            setFormData(existingRate || initialFormState);
+            setFormData(existingRate || { ...initialFormState, serviceProvider: 'DTDC' });
         } else {
             setFormData(initialFormState);
         }
@@ -91,11 +94,13 @@ export default function NewRateMasterForm() {
         setFormData(initialFormState);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value === '' ? undefined : parseFloat(value),
+            [name]: name.includes('Weight') || name.includes('Rate') || name.includes('dox') || name.includes('premium')
+                ? (value === '' ? undefined : parseFloat(value))
+                : value,
         }));
     };
 
@@ -131,7 +136,7 @@ export default function NewRateMasterForm() {
             };
             const response = await axios.post('/api/sector-rates', payload);
             toast.success(`Rates for ${selectedSector} saved successfully!`);
-           
+
             setRates(prev => {
                 const index = prev.findIndex(r => r.sectorName === selectedSector);
                 if (index > -1) {
@@ -205,6 +210,7 @@ export default function NewRateMasterForm() {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sector</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bulk Surface Rate (&lt;20kg)</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Dox Rate (&lt;250g)</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -214,6 +220,7 @@ export default function NewRateMasterForm() {
                                     {rates.map(rate => (
                                         <tr key={rate.id}>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{rate.sectorName}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.serviceProvider ?? 'NA'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.bulkRateSurfaceUpto20 ?? 'NA'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.doxUpto250g ?? 'NA'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
@@ -235,9 +242,27 @@ export default function NewRateMasterForm() {
                 {/* Rate Entry Form */}
                 {selectedCustomer && selectedSector && (
                     <form onSubmit={handleSubmit} className="p-6">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            Editing Rates for: <span className="text-blue-600">{selectedSector}</span>
-                        </h2> 
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                                    Editing Rates for: <span className="text-blue-600">{selectedSector}</span>
+                                </h2>
+                            </div>
+                            <div className="w-1/4">
+                                <label htmlFor="serviceProvider" className={labelStyle}>Service Provider</label>
+                                <select
+                                    id="serviceProvider"
+                                    name="serviceProvider"
+                                    value={formData.serviceProvider ?? 'DTDC'}
+                                    onChange={handleChange}
+                                    className={`${inputStyle} cursor-pointer`}
+                                >
+                                    <option value="DTDC">DTDC</option>
+                                    <option value="Trackon">Trackon</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                        </div>
                         <div className="mb-8">
                             <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Bulk Load (Non-Dox)</h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
