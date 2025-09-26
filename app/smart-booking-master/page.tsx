@@ -591,40 +591,6 @@ export default function SmartBookingMasterPage() {
         }
     }, 300);
 
-    // const handleCustomerSelect = async (idx: number, customer: any) => {
-    //     setTableRows(rows =>
-    //         rows.map((row, i) => {
-    //             if (i !== idx) return row;
-
-    //             const gstPercentage = getGSTPercentage(customer.pincode || "");
-    //             let updatedRow = {
-    //                 ...row,
-    //                 customerCode: customer.customerCode,
-    //                 customerId: customer.id,
-    //                 customerName: customer.customerName,
-    //                 childCustomer: customer.childCustomer || customer.customerName,
-    //                 customerAttendBy: customer.contactPerson || "",
-    //                 senderContactNo: customer.mobile || customer.phone || "",
-    //                 senderDetail: customer.customerName || "",
-    //                 _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
-    //                 _gstPercent: gstPercentage,
-    //                 address: customer.address || "",
-    //                 todayDate: getCurrentDate(),
-    //             };
-    //             debouncedRateCalculation(idx, updatedRow);
-
-    //             const frCharge = parseFloat(updatedRow.frCharge) || 0;
-    //             const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
-    //             updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
-
-    //             return recalculateClientBilling(updatedRow);
-    //         })
-    //     );
-
-    //     setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
-    //     toast.success(`Customer ${customer.customerName} selected and details auto-filled!`);
-    // };
-
     const handleCustomerSelect = async (idx: number, customer: any) => {
         const originalRow = tableRows[idx];
 
@@ -709,25 +675,43 @@ export default function SmartBookingMasterPage() {
                     updated.invoiceWt = Math.max(actualWeight, chargeWeight).toFixed(2);
                 }
 
-                if (["length", "width", "height"].includes(field)) {
+                // if (["length", "width", "height"].includes(field)) {
+                //     const l = parseFloat(updated.length) || 0;
+                //     const w = parseFloat(updated.width) || 0;
+                //     const h = parseFloat(updated.height) || 0;
+                //     if (l > 0 && w > 0 && h > 0) {
+                //         const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+                //         updated.valumetric = volumetricValue;
+
+                //         const actualWeight = parseFloat(updated.actualWeight) || 0;
+                //         const volumetricWeight = parseFloat(volumetricValue);
+                //         if (volumetricWeight > actualWeight) {
+                //             updated.chargeWeight = volumetricValue;
+                //         } else if (actualWeight > 0) {
+                //             updated.chargeWeight = updated.actualWeight;
+                //         }
+                //         updated.invoiceWt = Math.max(actualWeight, parseFloat(updated.chargeWeight) || 0).toFixed(2);
+                //     } else {
+                //         updated.valumetric = "0.00";
+                //     }
+                // }
+                const weightTriggerFields = ["length", "width", "height", "actualWeight"];
+                if (weightTriggerFields.includes(field)) {
                     const l = parseFloat(updated.length) || 0;
                     const w = parseFloat(updated.width) || 0;
                     const h = parseFloat(updated.height) || 0;
-                    if (l > 0 && w > 0 && h > 0) {
-                        const volumetricValue = ((l * w * h) / 5000).toFixed(2);
-                        updated.valumetric = volumetricValue;
+                    const actualWeight = parseFloat(updated.actualWeight) || 0;
+                    let volumetricWeight = 0;
 
-                        const actualWeight = parseFloat(updated.actualWeight) || 0;
-                        const volumetricWeight = parseFloat(volumetricValue);
-                        if (volumetricWeight > actualWeight) {
-                            updated.chargeWeight = volumetricValue;
-                        } else if (actualWeight > 0) {
-                            updated.chargeWeight = updated.actualWeight;
-                        }
-                        updated.invoiceWt = Math.max(actualWeight, parseFloat(updated.chargeWeight) || 0).toFixed(2);
+                    if (l > 0 && w > 0 && h > 0) {
+                        volumetricWeight = parseFloat(((l * w * h) / 5000).toFixed(2));
+                        updated.valumetric = volumetricWeight.toFixed(2);
                     } else {
                         updated.valumetric = "0.00";
                     }
+
+                    updated.chargeWeight = Math.max(actualWeight, volumetricWeight).toFixed(2);
+                    updated.invoiceWt = updated.chargeWeight;
                 }
                 console.log(updated.valumetric);
 
