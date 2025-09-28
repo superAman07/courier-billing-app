@@ -5,6 +5,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
 import { handleDownloadForAllBookings } from "@/lib/downloadExcel";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { debounce } from "lodash";
 
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
@@ -77,7 +78,7 @@ export default function AllBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Record<string, any>>({});
   const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
   const [taxMaster, setTaxMaster] = useState<any[]>([]);
   const [companyState, setCompanyState] = useState<string>("delhi");
@@ -98,6 +99,33 @@ export default function AllBookingsPage() {
     startDate: '',
     endDate: '',
   });
+
+  const debouncedPincodeLookup = debounce(async (pincode: string) => {
+    if (pincode.length !== 6) return;
+
+    toast.info(`Searching for pincode: ${pincode}...`);
+    try {
+      const { data } = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
+
+      if (data && data[0].Status === 'Success') {
+        const postOffice = data[0].PostOffice[0];
+        const cityName = postOffice.District;
+        // Assuming a similar getCityCode helper exists or can be created
+        const cityCode = cityName.substring(0, 3).toUpperCase();
+
+        setEditForm(prev => ({
+          ...prev,
+          location: cityName,
+          destinationCity: cityCode
+        }));
+        toast.success(`Location found: ${cityName}`);
+      } else {
+        toast.warning(`No location found for pincode: ${pincode}`);
+      }
+    } catch (error) {
+      toast.error("Pincode API request failed.");
+    }
+  }, 800);
 
   useEffect(() => {
     fetchBookings();
@@ -343,6 +371,10 @@ export default function AllBookingsPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let updatedForm = { ...editForm, [name]: value };
+
+    if (name === 'pin') {
+      debouncedPincodeLookup(value);
+    }
 
     if (name === 'manualStatus') {
       updatedForm.manualStatusDate = new Date().toISOString();
