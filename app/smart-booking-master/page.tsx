@@ -138,6 +138,34 @@ export default function SmartBookingMasterPage() {
         }
     }, 800);
 
+    const debouncedPincodeLookup = debounce(async (idx: number, pincode: string) => {
+        if (pincode.length !== 6) return;
+
+        toast.info(`Searching for pincode: ${pincode}...`);
+        try {
+            const { data } = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
+
+            if (data && data[0].Status === 'Success') {
+                const postOffice = data[0].PostOffice[0];
+                const cityName = postOffice.District;
+                const cityCode = getCityCode(cityName);
+
+                setTableRows(rows =>
+                    rows.map((row, i) => {
+                        if (i !== idx) return row;
+                        toast.success(`Location found: ${cityName} (${cityCode})`);
+                        return { ...row, location: cityName, destinationCity: cityCode };
+                    })
+                );
+            } else {
+                toast.warning(`No location found for pincode: ${pincode}`);
+            }
+        } catch (error) {
+            toast.error("Pincode API request failed.");
+            console.error("Pincode lookup error:", error);
+        }
+    }, 800);
+
     const fetchUnassignedBookings = async () => {
         setLoading(true);
         try {
@@ -649,6 +677,9 @@ export default function SmartBookingMasterPage() {
             rows.map((row, i) => {
                 if (i !== idx) return row;
                 let updated = { ...row, [field]: value };
+                if (field === "pin") {
+                    debouncedPincodeLookup(idx, value);
+                }
 
                 const rateTriggerFields = ["pin", "chargeWeight", "actualWeight", "dsrNdxPaper", "invoiceValue"];
                 if (rateTriggerFields.includes(field) || (field === "customerCode" && !value)) {
@@ -715,17 +746,17 @@ export default function SmartBookingMasterPage() {
                 }
                 console.log(updated.valumetric);
 
-                if (field === "location") {
-                    updated.location = getCityName(value);
-                    updated.destinationCity = getCityCode(updated.location);
-                } else if (field === "destinationCity") {
-                    updated.destinationCity = value;
-                    updated.location = getCityName(value);
+                // if (field === "location") {
+                //     updated.location = getCityName(value);
+                //     updated.destinationCity = getCityCode(updated.location);
+                // } else if (field === "destinationCity") {
+                //     updated.destinationCity = value;
+                //     updated.location = getCityName(value);
 
-                    if (getCityCode(value) !== value) {
-                        updated.destinationCity = getCityCode(value);
-                    }
-                }
+                //     if (getCityCode(value) !== value) {
+                //         updated.destinationCity = getCityCode(value);
+                //     }
+                // }
 
                 if (field === "customerCode") {
                     handleCustomerSearch(idx, value);
