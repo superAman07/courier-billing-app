@@ -15,9 +15,7 @@ const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
     "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
     "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue",
-
     "customerCode", "customerName", "childCustomer", "customerAttendBy", "senderDetail", "senderContactNo", "address",
-
     "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "paymentStatus", "adhaarNo", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
     "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
