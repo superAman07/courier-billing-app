@@ -11,8 +11,8 @@ const navLinks = {
     Masters: [
         { href: '/customer', label: 'Customer Master' },
         { href: '/all-customers', label: 'All Customers' },
-        { href: '/rate-master', label: 'Rate Master' },
-        { href: '/copy-rates', label: 'Copy Rate' },
+        // { href: '/rate-master', label: 'Rate Master' },
+        // { href: '/copy-rates', label: 'Copy Rate' },
         { href: '/rate-template', label: 'Customer Rate Template' },
         { href: '/tax-master', label: 'Tax Master' },
         { href: '/country-master', label: 'Country Master' },
