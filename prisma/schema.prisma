@@ -290,6 +290,7 @@ model BookingMaster {
   frCharge                Float?
   fuelSurcharge           Float?
   shipperCost             Float?
+  waybillSurcharge        Float?
   otherExp                Float?
   gst                     Float?
   length                  Float?
