@@ -28,6 +28,7 @@ model CustomerMaster {
   gstNo                String?
   fuelSurchargePercent Float?
   discountPercent      Float?
+  defaultShipperCost   Float?  @default(0)
   openingBalance       Float?
   balanceType          String?
   rates                RateMaster[]

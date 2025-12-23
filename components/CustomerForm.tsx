@@ -25,6 +25,7 @@ type CustomerFormData = {
   gstNo?: string;
   fuelSurchargePercent?: number;
   discountPercent?: number;
+  defaultShipperCost?: number;
   openingBalance?: number;
   balanceType?: 'Dr' | 'Cr';
 };
@@ -49,6 +50,7 @@ const initialFormData: CustomerFormData = {
   gstNo: '',
   fuelSurchargePercent: 0,
   discountPercent: 0,
+  defaultShipperCost: 0,
   openingBalance: 0,
   balanceType: 'Dr',
 };
@@ -135,6 +137,7 @@ export default function CustomerForm() {
         ...formData,
         fuelSurchargePercent: parseFloat(String(formData.fuelSurchargePercent)),
         discountPercent: parseFloat(String(formData.discountPercent)) || 0,
+        defaultShipperCost: parseFloat(String(formData.defaultShipperCost)) || 0,
         openingBalance: parseFloat(String(formData.openingBalance)) || 0,
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
         contractDate: formData.contractDate ? new Date(formData.contractDate).toISOString() : null,
@@ -272,6 +275,18 @@ export default function CustomerForm() {
               <div>
                 <label htmlFor="fuelSurchargePercent" className={labelStyle}>Fuel Surcharge %</label>
                 <input type="number" name="fuelSurchargePercent" id="fuelSurchargePercent" placeholder='Enter Fuel Surcharge %' value={formData.fuelSurchargePercent} onChange={handleChange} className={inputStyle} />
+              </div>
+              <div>
+                <label htmlFor="defaultShipperCost" className={labelStyle}>Default Shipper Cost (Rs.)</label>
+                <input 
+                  type="number" 
+                  name="defaultShipperCost" 
+                  id="defaultShipperCost" 
+                  placeholder='e.g. 50' 
+                  value={formData.defaultShipperCost} 
+                  onChange={handleChange} 
+                  className={inputStyle} 
+                />
               </div>
               <div>
                 <label htmlFor="discountPercent" className={labelStyle}>Discount %</label>

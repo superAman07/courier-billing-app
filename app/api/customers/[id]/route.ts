@@ -25,6 +25,11 @@ export async function GET(request: Request, { params }: {params: Promise<{ id: s
 export async function PUT(request: Request, { params }: {params: Promise<{id: string}>}) {
   try {
     const body = await request.json();
+    if (body.email === "") body.email = null;
+    if (body.customerCode === "") body.customerCode = null;
+    if (body.defaultShipperCost) {
+        body.defaultShipperCost = parseFloat(body.defaultShipperCost);
+    }
     const updatedCustomer = await prisma.customerMaster.update({
       where: { id: (await params).id },
       data: body,
