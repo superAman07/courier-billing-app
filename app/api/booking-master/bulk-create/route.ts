@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
             if (b.regularCustomerAmount) bookingData.regularCustomerAmount = Number(b.regularCustomerAmount);
             if (b.fuelSurcharge) bookingData.fuelSurcharge = Number(b.fuelSurcharge);
             if (b.shipperCost) bookingData.shipperCost = Number(b.shipperCost);
+            if (b.waybillSurcharge) bookingData.waybillSurcharge = Number(b.waybillSurcharge);
             if (b.otherExp) bookingData.otherExp = Number(b.otherExp);
             if (b.gst) bookingData.gst = Number(b.gst);
             if (b.customerType) bookingData.customerType = b.customerType;

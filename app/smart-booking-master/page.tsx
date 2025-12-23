@@ -14,7 +14,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 const columns = [
     "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
     "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
-    "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue",
+    "fuelSurcharge", "shipperCost", "waybillSurcharge", "otherExp", "gst", "clientBillingValue",
     "customerCode", "customerName", "childCustomer", "customerAttendBy", "senderDetail", "senderContactNo", "address",
     "creditCustomerAmount", "regularCustomerAmount", "customerType",
     "paymentStatus", "adhaarNo", "status", "statusDate", "pendingDaysNotDelivered", "receiverName",
@@ -26,7 +26,7 @@ const COLUMN_MAP: Record<string, string> = {
     destinationCity: "Destination", mode: "Mode", pcs: "No of Pcs", pin: "Pincode",
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", frCharge: "FR Charge", fuelSurcharge: "Fuel Surcharge",
-    shipperCost: "Shipper Cost", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
+    shipperCost: "Shipper Cost", waybillSurcharge: "Waybill Surcharge", otherExp: "Other Exp", gst: "GST", length: "Length", width: "Width", height: "Height", valumetric: "Valumatric",
     invoiceWt: "Invoice Wt", clientBillingValue: "Client Billing Value",
 
     customerCode: "Customer Code",
@@ -89,10 +89,11 @@ export default function SmartBookingMasterPage() {
         const frCharge = parseFloat(row.frCharge) || 0;
         const fuelSurcharge = parseFloat(row.fuelSurcharge) || 0;
         const shipperCost = parseFloat(row.shipperCost) || 0;
+        const waybillSurcharge = parseFloat(row.waybillSurcharge) || 0;
         const otherExp = parseFloat(row.otherExp) || 0;
         const gstPercent = row._gstPercent || 0;
 
-        const subtotal = frCharge + fuelSurcharge + shipperCost + otherExp;
+        const subtotal = frCharge + fuelSurcharge + shipperCost + waybillSurcharge + otherExp;
         const gstAmount = (subtotal * gstPercent) / 100;
         const clientBillingValue = subtotal + gstAmount;
 
@@ -120,7 +121,12 @@ export default function SmartBookingMasterPage() {
             setTableRows(rows =>
                 rows.map((r, i) => {
                     if (i !== idx) return r;
-                    let updatedRow = { ...r, frCharge: data.frCharge.toFixed(2), otherExp: data.otherExp.toFixed(2) };
+                    let updatedRow = {
+                        ...r, 
+                        frCharge: data.frCharge.toFixed(2),
+                        waybillSurcharge: data.waybillSurcharge.toFixed(2),
+                        otherExp: data.otherExp.toFixed(2) 
+                    };
 
                     const frCharge = parseFloat(updatedRow.frCharge) || 0;
                     const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
@@ -633,6 +639,7 @@ export default function SmartBookingMasterPage() {
             _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
             _gstPercent: gstPercentage,
             address: customer.address || "",
+            shipperCost: customer.defaultShipperCost || 0,
             todayDate: getCurrentDate(),
         };
 
@@ -651,8 +658,14 @@ export default function SmartBookingMasterPage() {
                 });
 
                 updatedRow.frCharge = data.frCharge.toFixed(2);
+                updatedRow.waybillSurcharge = data.waybillSurcharge.toFixed(2);
                 updatedRow.otherExp = data.otherExp.toFixed(2);
-                toast.success(`Rate calculated for AWB #${updatedRow.awbNo} (Sector: ${data.calculatedSector})`);
+                const frCharge = parseFloat(updatedRow.frCharge) || 0;
+                const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+                updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+                updatedRow = recalculateClientBilling(updatedRow);
+                toast.success(`Rate calculated (Sector: ${data.calculatedSector})`);
 
             } catch (error: any) {
                 const errorMessage = error.response?.data?.error || "Could not calculate rate.";
@@ -694,7 +707,7 @@ export default function SmartBookingMasterPage() {
                     }
                 }
 
-                if (["frCharge", "shipperCost", "otherExp"].includes(field)) {
+                if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge"].includes(field)) {
                     updated = recalculateClientBilling(updated);
                 }
 
@@ -803,7 +816,7 @@ export default function SmartBookingMasterPage() {
         cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
 
         ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
-            "shipperCost", "otherExp", "gst", "valumetric", "invoiceWt",
+            "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
             "pendingDaysNotDelivered"].forEach(field => {
                 if (field === "gst") {

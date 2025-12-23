@@ -45,6 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.regularCustomerAmount !== undefined) updateData.regularCustomerAmount = data.regularCustomerAmount ? Number(data.regularCustomerAmount) : null;
     if (data.fuelSurcharge !== undefined) updateData.fuelSurcharge = data.fuelSurcharge ? Number(data.fuelSurcharge) : null;
     if (data.shipperCost !== undefined) updateData.shipperCost = data.shipperCost ? Number(data.shipperCost) : null;
+    if (data.waybillSurcharge !== undefined) updateData.waybillSurcharge = data.waybillSurcharge ? Number(data.waybillSurcharge) : null;
     if (data.otherExp !== undefined) updateData.otherExp = data.otherExp ? Number(data.otherExp) : null;
     if (data.gst !== undefined) updateData.gst = data.gst ? Number(data.gst) : null;
     if (data.customerType !== undefined) updateData.customerType = data.customerType;

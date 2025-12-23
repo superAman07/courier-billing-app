@@ -81,12 +81,19 @@ export async function POST(req: NextRequest) {
                 frCharge = Math.max(calculatedCharge, minCharge);
             }
         }
-        let riskSurcharge = 0;
-        if (sectorRate.serviceProvider === 'DTDC' && invoiceValue > 50000) {
-            riskSurcharge = parseFloat(invoiceValue) * 0.002;
+        let waybillSurcharge = 0;
+        const value = parseFloat(invoiceValue) || 0;
+
+        if (sectorRate.serviceProvider === 'DTDC' && value > 49999) {
+            waybillSurcharge = value * 0.002;
         }
         
-        return NextResponse.json({ frCharge, otherExp: riskSurcharge, calculatedSector: sectorName });
+        return NextResponse.json({ 
+            frCharge, 
+            waybillSurcharge, 
+            otherExp: 0,
+            calculatedSector: sectorName 
+        });
 
     } catch (error) {
         console.error("Rate calculation error:", error);

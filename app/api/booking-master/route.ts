@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       ...(data.regularCustomerAmount !== undefined && { regularCustomerAmount: Number(data.regularCustomerAmount) }),
       ...(data.fuelSurcharge !== undefined && { fuelSurcharge: Number(data.fuelSurcharge) }),
       ...(data.shipperCost !== undefined && { shipperCost: Number(data.shipperCost) }),
+      ...(data.waybillSurcharge !== undefined && { waybillSurcharge: Number(data.waybillSurcharge) }),
       ...(data.otherExp !== undefined && { otherExp: Number(data.otherExp) }),
       ...(data.gst !== undefined && { gst: Number(data.gst) }),
       ...(data.customerType && { customerType: data.customerType }),
