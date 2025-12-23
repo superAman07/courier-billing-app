@@ -51,15 +51,33 @@ export async function POST(req: NextRequest) {
         } else {
             if (mode === 'SURFACE') {
                 const minWeight = sectorRate.bulkMinWeightSurface || 0;
-                const rate = weightInKg <= 20 ? sectorRate.bulkRateSurfaceUpto20 : sectorRate.bulkRateSurfaceAbove20;
-                const calculatedCharge = (rate || 0) * weightInKg;
-                const minCharge = (rate || 0) * minWeight;
+                let rate = 0;
+                if (weightInKg <= 10 && sectorRate.bulkRateSurfaceUpto10) {
+                    rate = sectorRate.bulkRateSurfaceUpto10;
+                } else if (weightInKg <= 15 && sectorRate.bulkRateSurfaceUpto15) {
+                    rate = sectorRate.bulkRateSurfaceUpto15;
+                } else if (weightInKg <= 20) {
+                    rate = sectorRate.bulkRateSurfaceUpto20 || 0;
+                } else {
+                    rate = sectorRate.bulkRateSurfaceAbove20 || 0;
+                }
+                const calculatedCharge = (rate) * weightInKg;
+                const minCharge = (rate) * minWeight;
                 frCharge = Math.max(calculatedCharge, minCharge);
             } else if (mode === 'AIR') {
                 const minWeight = sectorRate.bulkMinWeightAir || 0;
-                const rate = weightInKg <= 20 ? sectorRate.bulkRateAirUpto20 : sectorRate.bulkRateAirAbove20;
-                const calculatedCharge = (rate || 0) * weightInKg;
-                const minCharge = (rate || 0) * minWeight;
+                let rate = 0;
+                if (weightInKg <= 10 && sectorRate.bulkRateAirUpto10) {
+                    rate = sectorRate.bulkRateAirUpto10;
+                } else if (weightInKg <= 15 && sectorRate.bulkRateAirUpto15) {
+                    rate = sectorRate.bulkRateAirUpto15;
+                } else if (weightInKg <= 20) {
+                    rate = sectorRate.bulkRateAirUpto20 || 0;
+                } else {
+                    rate = sectorRate.bulkRateAirAbove20 || 0;
+                }
+                const calculatedCharge = (rate) * weightInKg;
+                const minCharge = (rate) * minWeight;
                 frCharge = Math.max(calculatedCharge, minCharge);
             }
         }

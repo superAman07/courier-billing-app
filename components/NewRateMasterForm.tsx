@@ -12,6 +12,10 @@ type SectorRate = {
     serviceProvider?: string;
     bulkMinWeightSurface?: number;
     bulkMinWeightAir?: number;
+    bulkRateSurfaceUpto10?: number;
+    bulkRateSurfaceUpto15?: number;
+    bulkRateAirUpto10?: number;
+    bulkRateAirUpto15?: number;
     bulkRateSurfaceUpto20?: number;
     bulkRateSurfaceAbove20?: number;
     bulkRateAirUpto20?: number;
@@ -211,7 +215,9 @@ export default function NewRateMasterForm() {
                                     <tr>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sector</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bulk Surface Rate (&lt;20kg)</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Surf &lt;10</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Surf &lt;15</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Surf &lt;20</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Dox Rate (&lt;250g)</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                     </tr>
@@ -221,6 +227,8 @@ export default function NewRateMasterForm() {
                                         <tr key={rate.id}>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{rate.sectorName}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.serviceProvider ?? 'NA'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.bulkRateSurfaceUpto10 ?? '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.bulkRateSurfaceUpto15 ?? '-'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.bulkRateSurfaceUpto20 ?? 'NA'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{rate.doxUpto250g ?? 'NA'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
@@ -268,10 +276,15 @@ export default function NewRateMasterForm() {
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                                 {renderRateField('bulkMinWeightSurface', 'Min Wt Surface (KG)', '0.1')}
                                 {renderRateField('bulkMinWeightAir', 'Min Wt Air (KG)', '0.1')}
-                                {renderRateField('bulkRateSurfaceUpto20', 'Surface < 20KG Rate')}
-                                {renderRateField('bulkRateSurfaceAbove20', 'Surface > 20KG Rate')}
-                                {renderRateField('bulkRateAirUpto20', 'Air < 20KG Rate')}
-                                {renderRateField('bulkRateAirAbove20', 'Air > 20KG Rate')}
+                                {renderRateField('bulkRateSurfaceUpto10', 'Surface < 10KG')}
+                                {renderRateField('bulkRateSurfaceUpto15', 'Surface < 15KG')}
+                                {renderRateField('bulkRateSurfaceUpto20', 'Surface < 20KG')}
+                                {renderRateField('bulkRateSurfaceAbove20', 'Surface > 20KG')}
+
+                                {renderRateField('bulkRateAirUpto10', 'Air < 10KG')}
+                                {renderRateField('bulkRateAirUpto15', 'Air < 15KG')}
+                                {renderRateField('bulkRateAirUpto20', 'Air < 20KG')}
+                                {renderRateField('bulkRateAirAbove20', 'Air > 20KG')}
                             </div>
                         </div>
 
