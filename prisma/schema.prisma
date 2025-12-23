@@ -567,8 +567,13 @@ model SectorRate {
 
   bulkMinWeightSurface   Float?
   bulkMinWeightAir       Float?
+  bulkRateSurfaceUpto10  Float?
+  bulkRateSurfaceUpto15  Float?
   bulkRateSurfaceUpto20  Float?
   bulkRateSurfaceAbove20 Float?
+  
+  bulkRateAirUpto10      Float?
+  bulkRateAirUpto15      Float?
   bulkRateAirUpto20      Float?
   bulkRateAirAbove20     Float?
 

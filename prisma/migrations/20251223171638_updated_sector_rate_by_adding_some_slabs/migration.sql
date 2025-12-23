@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "SectorRate" ADD COLUMN     "bulkRateAirUpto10" DOUBLE PRECISION,
+ADD COLUMN     "bulkRateAirUpto15" DOUBLE PRECISION,
+ADD COLUMN     "bulkRateSurfaceUpto10" DOUBLE PRECISION,
+ADD COLUMN     "bulkRateSurfaceUpto15" DOUBLE PRECISION;
