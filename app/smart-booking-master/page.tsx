@@ -116,6 +116,7 @@ export default function SmartBookingMasterPage() {
                 isDox: row.dsrNdxPaper === 'D',
                 mode: row.mode,
                 invoiceValue: row.invoiceValue,
+                state: row.state,
             });
 
             setTableRows(rows =>
@@ -152,15 +153,25 @@ export default function SmartBookingMasterPage() {
             if (data && data[0].Status === 'Success') {
                 const postOffice = data[0].PostOffice[0];
                 const cityName = postOffice.District;
+                const stateName = postOffice.State;
                 const cityCode = getCityCode(cityName);
 
-                setTableRows(rows =>
-                    rows.map((row, i) => {
+                setTableRows(rows => {
+                    const newRows = rows.map((row, i) => {
                         if (i !== idx) return row;
-                        toast.success(`Location found: ${cityName} (${cityCode})`);
-                        return { ...row, location: cityName, destinationCity: cityCode };
-                    })
-                );
+                        // Save state to the row
+                        return { ...row, location: cityName, destinationCity: cityCode, state: stateName };
+                    });
+                    
+                    // Trigger rate calculation immediately with the new state
+                    const updatedRow = newRows[idx];
+                    if (updatedRow.customerId && updatedRow.chargeWeight) {
+                        debouncedRateCalculation(idx, updatedRow);
+                    }
+                    
+                    return newRows;
+                });
+                toast.success(`Location found: ${cityName}, ${stateName}`);
             } else {
                 toast.warning(`No location found for pincode: ${pincode}`);
             }
@@ -655,6 +666,7 @@ export default function SmartBookingMasterPage() {
                     isDox: updatedRow.dsrNdxPaper === 'D',
                     mode: updatedRow.mode,
                     invoiceValue: updatedRow.invoiceValue,
+                    state: updatedRow.state,
                 });
 
                 updatedRow.frCharge = data.frCharge.toFixed(2);
@@ -717,26 +729,6 @@ export default function SmartBookingMasterPage() {
                     updated.invoiceWt = Math.max(actualWeight, chargeWeight).toFixed(2);
                 }
 
-                // if (["length", "width", "height"].includes(field)) {
-                //     const l = parseFloat(updated.length) || 0;
-                //     const w = parseFloat(updated.width) || 0;
-                //     const h = parseFloat(updated.height) || 0;
-                //     if (l > 0 && w > 0 && h > 0) {
-                //         const volumetricValue = ((l * w * h) / 5000).toFixed(2);
-                //         updated.valumetric = volumetricValue;
-
-                //         const actualWeight = parseFloat(updated.actualWeight) || 0;
-                //         const volumetricWeight = parseFloat(volumetricValue);
-                //         if (volumetricWeight > actualWeight) {
-                //             updated.chargeWeight = volumetricValue;
-                //         } else if (actualWeight > 0) {
-                //             updated.chargeWeight = updated.actualWeight;
-                //         }
-                //         updated.invoiceWt = Math.max(actualWeight, parseFloat(updated.chargeWeight) || 0).toFixed(2);
-                //     } else {
-                //         updated.valumetric = "0.00";
-                //     }
-                // }
                 const weightTriggerFields = ["length", "width", "height", "actualWeight"];
                 if (weightTriggerFields.includes(field)) {
                     const l = parseFloat(updated.length) || 0;
