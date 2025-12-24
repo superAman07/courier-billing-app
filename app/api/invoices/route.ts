@@ -109,9 +109,10 @@ export async function POST(req: NextRequest) {
             weight: b.invoiceWt,
             numPcs: b.pcs,
             frCharge: b.frCharge,
-            fuelSurcharge: b.fuelSurcharge,
             shipperCost: b.shipperCost,
+            waybillSurcharge: b.waybillSurcharge,
             otherExp: b.otherExp,
+            fuelSurcharge: b.fuelSurcharge,
             gst: b.gst,
           };
         });

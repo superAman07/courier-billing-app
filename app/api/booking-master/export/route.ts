@@ -70,10 +70,11 @@ async function generateExcel(bookings: any[]) {
         { header: "Regular Cust. Amt", key: "regularCustomerAmount", width: 20 },
         { header: "Fuel Surcharge", key: "fuelSurcharge", width: 14 },
         { header: "Shipper Cost", key: "shipperCost", width: 14 },
+        { header: "Waybill Surcharge", key: "waybillSurcharge", width: 16 },
         { header: "Other Exp", key: "otherExp", width: 14 },
         { header: "GST", key: "gst", width: 10 },
-        { header: "Customer Code", key: "customerCode", width: 16 },       // NEW
-        { header: "Customer Name", key: "customerName", width: 25 },       // NEW
+        { header: "Customer Code", key: "customerCode", width: 16 },       
+        { header: "Customer Name", key: "customerName", width: 25 },       
         { header: "Child Customer", key: "childCustomer", width: 25 },
         { header: "Customer Type", key: "customerType", width: 16 },
         { header: "Sender Detail", key: "senderDetail", width: 18 },

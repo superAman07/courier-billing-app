@@ -10,7 +10,7 @@ import { debounce } from "lodash";
 const columns = [
   "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
-  "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+  "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "waybillSurcharge", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "customerName", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
   "customerAttendBy", "status", "manualStatus", "manualStatusDate", "statusDate", "pendingDaysNotDelivered", "receiverName",
   "receiverContactNo", "ref", "delivered", "dateOfDelivery", "todayDate"
@@ -35,6 +35,7 @@ const COLUMN_MAP: Record<string, string> = {
   frCharge: "FR Charge",
   fuelSurcharge: "Fuel Surcharge",
   shipperCost: "Shipper Cost",
+  waybillSurcharge: "Waybill Surcharge",
   otherExp: "Other Exp",
   gst: "GST",
   clientBillingValue: "Client Billing Value",
@@ -312,7 +313,7 @@ export default function AllBookingsPage() {
       [
         'length', 'width', 'height',
         'valumetric', 'frCharge', 'fuelSurcharge',
-        'shipperCost', 'otherExp', 'gst',
+        'shipperCost', 'waybillSurcharge', 'otherExp', 'gst',
         'pcs', 'invoiceValue', 'actualWeight',
         'chargeWeight', 'invoiceWt', 'clientBillingValue',
         'creditCustomerAmount', 'regularCustomerAmount',
@@ -329,7 +330,7 @@ export default function AllBookingsPage() {
         }
       });
 
-      if (payload.frCharge || payload.shipperCost || payload.otherExp) {
+      if (payload.frCharge || payload.shipperCost || payload.otherExp || payload.waybillSurcharge || payload.fuelSurcharge) {
         const recalculated = recalculateClientBilling(payload);
         payload.gst = Number(recalculated.gst);
         payload.clientBillingValue = Number(recalculated.clientBillingValue);
@@ -410,7 +411,7 @@ export default function AllBookingsPage() {
       }
     }
 
-    if (["frCharge", "shipperCost", "otherExp"].includes(name)) {
+    if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge", "fuelSurcharge"].includes(name)) {
       updatedForm = recalculateClientBilling(updatedForm);
     }
 
@@ -422,9 +423,10 @@ export default function AllBookingsPage() {
     const fuelSurcharge = parseFloat(row.fuelSurcharge) || 0;
     const shipperCost = parseFloat(row.shipperCost) || 0;
     const otherExp = parseFloat(row.otherExp) || 0;
-    const gstPercent = row._gstPercent || 0;
+    const waybillSurcharge = parseFloat(row.waybillSurcharge) || 0;
+    const gstPercent = row._gstPercent || 18;
 
-    const subtotal = frCharge + fuelSurcharge + shipperCost + otherExp;
+    const subtotal = frCharge + fuelSurcharge + shipperCost + waybillSurcharge + otherExp;
     const gstAmount = (subtotal * gstPercent) / 100;
     const clientBillingValue = subtotal + gstAmount;
 
