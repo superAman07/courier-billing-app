@@ -842,7 +842,7 @@ export default function SmartBookingMasterPage() {
             if (cleanRow.awbNo) {
                 await axios.put('/api/docket-stock', { awbNo: cleanRow.awbNo, status: 'USED' });
             }
-        } catch {
+        } catch (error: any) {
             console.error("Save error:", error);
             toast.error("Failed to save booking");
         } finally {
