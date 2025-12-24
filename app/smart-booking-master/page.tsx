@@ -794,23 +794,30 @@ export default function SmartBookingMasterPage() {
 
         if (!row.customerId) {
             toast.error("Please select a customer first");
+            setLoading(false);
             return;
         }
-
-        const cleanRow = { ...row };
+        const currentPendingDays = calculatePendingDays(row.bookingDate, row.status);
+        const cleanRow = { 
+            ...row,
+            pendingDaysNotDelivered: currentPendingDays 
+        };
         delete cleanRow._awbExists;
         delete cleanRow._bookingId;
         delete cleanRow.__origIndex;
         delete cleanRow.customerName;
+        delete cleanRow._fuelSurchargePercent;
+        delete cleanRow._gstPercent;
 
         cleanRow.bookingDate = new Date(cleanRow.bookingDate);
         cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
         cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
+        cleanRow.todayDate = cleanRow.todayDate ? new Date(cleanRow.todayDate) : new Date();
 
         ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
             "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
-            "pendingDaysNotDelivered"].forEach(field => {
+            "pendingDaysNotDelivered", "length", "width", "height"].forEach(field => {
                 if (field === "gst") {
                     const gstValue = cleanRow[field];
                     if (typeof gstValue === 'string' && gstValue.includes('%')) {
@@ -828,11 +835,15 @@ export default function SmartBookingMasterPage() {
                 await axios.put(`/api/booking-master/${row._bookingId}`, cleanRow);
                 toast.success("Booking updated!");
             } else {
-                await axios.post("/api/booking-master", cleanRow);
-                toast.success("Booking created!");
+                const { data } = await axios.post("/api/booking-master", cleanRow);
+                setTableRows(rows => rows.map((r, i) => i === idx ? { ...r, _awbExists: true, _bookingId: data.id } : r));
+                toast.success("Booking created successfully!");
             }
-            await axios.put('/api/docket-stock', { awbNo: cleanRow.awbNo, status: 'USED' });
+            if (cleanRow.awbNo) {
+                await axios.put('/api/docket-stock', { awbNo: cleanRow.awbNo, status: 'USED' });
+            }
         } catch {
+            console.error("Save error:", error);
             toast.error("Failed to save booking");
         } finally {
             setLoading(false);
