@@ -12,7 +12,7 @@ import { debounce } from 'lodash';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const columns = [
-    "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
+    "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
     "dsrContents", "dsrNdxPaper", "invoiceValue", "length", "width", "height", "valumetric", "actualWeight", "chargeWeight", "frCharge", "invoiceWt",
     "fuelSurcharge", "shipperCost", "waybillSurcharge", "otherExp", "gst", "clientBillingValue",
     "customerCode", "customerName", "childCustomer", "customerAttendBy", "senderDetail", "senderContactNo", "address",
@@ -22,7 +22,7 @@ const columns = [
 ];
 
 const COLUMN_MAP: Record<string, string> = {
-    srNo: "SR NO.", bookingDate: "Booking Date", awbNo: "Docket", location: "Location",
+    srNo: "SR NO.", bookingDate: "Booking Date", awbNo: "Docket", serviceProvider: "Provider", location: "Location",
     destinationCity: "Destination", mode: "Mode", pcs: "No of Pcs", pin: "Pincode",
     dsrContents: "Content", dsrNdxPaper: "Dox / Non Dox", invoiceValue: "Material Value",
     actualWeight: "FR Weight", chargeWeight: "Charge Weight", frCharge: "FR Charge", fuelSurcharge: "Fuel Surcharge",
@@ -126,7 +126,8 @@ export default function SmartBookingMasterPage() {
                         ...r, 
                         frCharge: data.frCharge.toFixed(2),
                         waybillSurcharge: data.waybillSurcharge.toFixed(2),
-                        otherExp: data.otherExp.toFixed(2) 
+                        otherExp: data.otherExp.toFixed(2),
+                        serviceProvider: data.serviceProvider || "DTDC"
                     };
 
                     const frCharge = parseFloat(updatedRow.frCharge) || 0;
@@ -709,7 +710,18 @@ export default function SmartBookingMasterPage() {
                     debouncedPincodeLookup(idx, value);
                 }
 
-                const rateTriggerFields = ["pin", "chargeWeight", "actualWeight", "dsrNdxPaper", "invoiceValue"];
+                if (field === "serviceProvider" || field === "invoiceValue") {
+                    const provider = field === "serviceProvider" ? value : updated.serviceProvider;
+                    const invValue = parseFloat(field === "invoiceValue" ? value : updated.invoiceValue) || 0;
+                    
+                    if (provider === "DTDC" && invValue > 49999) {
+                        updated.waybillSurcharge = (invValue * 0.002).toFixed(2);
+                    } else {
+                        updated.waybillSurcharge = "0.00";
+                    }
+                }
+
+                const rateTriggerFields = ["pin", "chargeWeight", "actualWeight", "dsrNdxPaper"];
                 if (rateTriggerFields.includes(field) || (field === "customerCode" && !value)) {
                     debouncedRateCalculation(idx, updated);
                 }
@@ -724,7 +736,7 @@ export default function SmartBookingMasterPage() {
                     }
                 }
 
-                if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge"].includes(field)) {
+                if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge", "serviceProvider", "invoiceValue", "fuelSurcharge"].includes(field)) {
                     updated = recalculateClientBilling(updated);
                 }
 
@@ -999,6 +1011,16 @@ export default function SmartBookingMasterPage() {
                                                             {OPTIONS[col as keyof typeof OPTIONS].map(opt => (
                                                                 <option key={opt} value={opt}>{opt}</option>
                                                             ))}
+                                                        </select>
+                                                    ) : col === "serviceProvider" ? (
+                                                        <select
+                                                            value={row[col] || "DTDC"}
+                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                            className="w-full p-1 border rounded text-xs bg-white"
+                                                        >
+                                                            <option value="DTDC">DTDC</option>
+                                                            <option value="Trackon">Trackon</option>
+                                                            <option value="Others">Others</option>
                                                         </select>
                                                     ) : ["bookingDate", "statusDate", "dateOfDelivery", "todayDate"].includes(col) ? (
                                                         <input

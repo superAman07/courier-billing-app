@@ -277,6 +277,7 @@ model BookingMaster {
   srNo                    Int?
   bookingDate             DateTime        @db.Date
   awbNo                   String          @unique
+  serviceProvider         String?
   location                String?
   destinationCity         String
   mode                    String

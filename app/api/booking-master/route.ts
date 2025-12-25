@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       mode: data.mode,
       pcs: Number(data.pcs),
       pin: String(data.pin),
+      ...(data.serviceProvider && { serviceProvider: data.serviceProvider }),
       ...(data.customerId && { customerId: data.customerId }),
       ...(data.srNo !== undefined && data.srNo !== null && data.srNo !== "" && { srNo: Number(data.srNo) }),
       ...(data.location && { location: data.location }),

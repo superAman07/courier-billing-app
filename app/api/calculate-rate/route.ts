@@ -135,7 +135,8 @@ export async function POST(req: NextRequest) {
             frCharge, 
             waybillSurcharge, 
             otherExp: 0,
-            calculatedSector: sectorName 
+            calculatedSector: sectorName,
+            serviceProvider: sectorRate.serviceProvider
         });
 
     } catch (error) {

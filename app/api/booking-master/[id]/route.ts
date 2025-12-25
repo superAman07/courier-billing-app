@@ -28,6 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.mode !== undefined) updateData.mode = data.mode;
     if (data.pcs !== undefined) updateData.pcs = Number(data.pcs);
     if (data.pin !== undefined) updateData.pin = String(data.pin);
+    if (data.serviceProvider !== undefined) updateData.serviceProvider = data.serviceProvider;
     if (data.srNo !== undefined) updateData.srNo = data.srNo ? Number(data.srNo) : null;
     if (data.dsrContents !== undefined) updateData.dsrContents = data.dsrContents;
     if (data.dsrNdxPaper !== undefined) updateData.dsrNdxPaper = data.dsrNdxPaper;
