@@ -569,34 +569,35 @@ export default function SmartBookingMasterPage() {
     };
 
     const getGSTPercentage = (customerPincode: string, customerState?: string): number => {
-        // 1. Use the provided state if available
-        let stateName = customerState;
+        // // 1. Use the provided state if available
+        // let stateName = customerState;
 
-        // 2. Fallback: If state not provided, try looking it up in local PincodeMaster
-        if (!stateName && customerPincode) {
-            const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
-            stateName = pincodeData?.state?.name || "";
-        }
+        // // 2. Fallback: If state not provided, try looking it up in local PincodeMaster
+        // if (!stateName && customerPincode) {
+        //     const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
+        //     stateName = pincodeData?.state?.name || "";
+        // }
 
-        if (!stateName) return 0; // If we still don't know the state, we can't calculate GST
+        // if (!stateName) return 0; // If we still don't know the state, we can't calculate GST
 
-        if (stateName.toLowerCase() === companyState.toLowerCase()) {
-            const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
-            const cgstTax = taxMaster.find(tax => tax.taxCode === 'CGST');
+        // if (stateName.toLowerCase() === companyState.toLowerCase()) {
+        //     const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
+        //     const cgstTax = taxMaster.find(tax => tax.taxCode === 'CGST');
 
-            const sgstRate = sgstTax ? parseFloat(sgstTax.ratePercent) : 9;
-            const cgstRate = cgstTax ? parseFloat(cgstTax.ratePercent) : 9;
-            const totalRate = sgstRate + cgstRate;
+        //     const sgstRate = sgstTax ? parseFloat(sgstTax.ratePercent) : 9;
+        //     const cgstRate = cgstTax ? parseFloat(cgstTax.ratePercent) : 9;
+        //     const totalRate = sgstRate + cgstRate;
 
-            console.log(`📍 Intra-state GST: SGST(${sgstRate}%) + CGST(${cgstRate}%) = ${totalRate}%`);
-            return totalRate;
-        } else {
-            const igstTax = taxMaster.find(tax => tax.taxCode === 'IGST');
-            const igstRate = igstTax ? parseFloat(igstTax.ratePercent) : 18;
+        //     console.log(`📍 Intra-state GST: SGST(${sgstRate}%) + CGST(${cgstRate}%) = ${totalRate}%`);
+        //     return totalRate;
+        // } else {
+        //     const igstTax = taxMaster.find(tax => tax.taxCode === 'IGST');
+        //     const igstRate = igstTax ? parseFloat(igstTax.ratePercent) : 18;
 
-            console.log(`🌍 Inter-state GST: IGST(${igstRate}%)`);
-            return igstRate;
-        }
+        //     console.log(`🌍 Inter-state GST: IGST(${igstRate}%)`);
+        //     return igstRate;
+        // }
+        return 18;
     };
 
     const calculatePendingDays = (bookingDate: string, status: string): number => {

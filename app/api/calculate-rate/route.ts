@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
 
         let frCharge = 0;
         const weightInKg = parseFloat(chargeWeight);
+        const roundedWeight = Math.ceil(weightInKg);
 
         if (mode === 'PREMIUM') {
             if (weightInKg <= 0.25) {
@@ -85,7 +86,9 @@ export async function POST(req: NextRequest) {
                 frCharge = calculateSlabRate(weightInKg, sectorRate.premiumUpto500g || 0, 0.5, sectorRate.premiumAdd500g || 0, 0.5);
             }
         } else if (isDox) {
-            if (weightInKg <= 0.25) {
+            if (weightInKg <= 0.1) {
+                 frCharge = sectorRate.doxUpto100g || 0;
+            } else if (weightInKg <= 0.25) {
                 frCharge = sectorRate.doxUpto250g || 0;
             } else {
                 frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
@@ -103,9 +106,8 @@ export async function POST(req: NextRequest) {
                 } else {
                     rate = sectorRate.bulkRateSurfaceAbove20 || 0;
                 }
-                const calculatedCharge = (rate) * weightInKg;
-                const minCharge = (rate) * minWeight;
-                frCharge = Math.max(calculatedCharge, minCharge);
+                const chargeableWeight = Math.max(roundedWeight, minWeight);
+                frCharge = rate * chargeableWeight;
             } else if (mode === 'AIR') {
                 const minWeight = sectorRate.bulkMinWeightAir || 0;
                 let rate = 0;
@@ -118,9 +120,8 @@ export async function POST(req: NextRequest) {
                 } else {
                     rate = sectorRate.bulkRateAirAbove20 || 0;
                 }
-                const calculatedCharge = (rate) * weightInKg;
-                const minCharge = (rate) * minWeight;
-                frCharge = Math.max(calculatedCharge, minCharge);
+                const chargeableWeight = Math.max(roundedWeight, minWeight);
+                frCharge = rate * chargeableWeight;
             }
         }
         let waybillSurcharge = 0;
