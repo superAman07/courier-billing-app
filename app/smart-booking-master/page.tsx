@@ -354,7 +354,7 @@ export default function SmartBookingMasterPage() {
                     mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
                     mapped.senderDetail = matchingCustomer.customerName || "";
                     mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
-                    mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "");
+                    mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "", matchingCustomer.state);
                     mapped.address = matchingCustomer.address || "";
                 }
             }
@@ -568,15 +568,19 @@ export default function SmartBookingMasterPage() {
         return name || cityCode;
     };
 
-    const getGSTPercentage = (customerPincode: string): number => {
-        if (!customerPincode) return 0;
+    const getGSTPercentage = (customerPincode: string, customerState?: string): number => {
+        // 1. Use the provided state if available
+        let stateName = customerState;
 
-        const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
-        const customerState = pincodeData?.state?.name || "";
+        // 2. Fallback: If state not provided, try looking it up in local PincodeMaster
+        if (!stateName && customerPincode) {
+            const pincodeData = pincodeMaster.find(p => p.pincode === customerPincode);
+            stateName = pincodeData?.state?.name || "";
+        }
 
-        if (!customerState) return 0;
+        if (!stateName) return 0; // If we still don't know the state, we can't calculate GST
 
-        if (customerState.toLowerCase() === companyState.toLowerCase()) {
+        if (stateName.toLowerCase() === companyState.toLowerCase()) {
             const sgstTax = taxMaster.find(tax => tax.taxCode === 'SGST');
             const cgstTax = taxMaster.find(tax => tax.taxCode === 'CGST');
 
@@ -637,7 +641,7 @@ export default function SmartBookingMasterPage() {
     const handleCustomerSelect = async (idx: number, customer: any) => {
         const originalRow = tableRows[idx];
 
-        const gstPercentage = getGSTPercentage(customer.pincode || "");
+        const gstPercentage = getGSTPercentage(customer.pincode || "", customer.state);
         let updatedRow = {
             ...originalRow,
             customerCode: customer.customerCode,
