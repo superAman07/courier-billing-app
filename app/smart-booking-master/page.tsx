@@ -351,7 +351,7 @@ export default function SmartBookingMasterPage() {
                     mapped.customerId = matchingCustomer.id;
                     mapped.customerName = matchingCustomer.customerName;
                     mapped.childCustomer = matchingCustomer.childCustomer || matchingCustomer.customerName;
-                    mapped.customerAttendBy = matchingCustomer.contactPerson || "";
+                    mapped.customerAttendBy = "";
                     mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
                     mapped.senderDetail = matchingCustomer.customerName || "";
                     mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
@@ -650,7 +650,7 @@ export default function SmartBookingMasterPage() {
             customerId: customer.id,
             customerName: customer.customerName,
             childCustomer: customer.childCustomer || customer.customerName,
-            customerAttendBy: customer.contactPerson || "",
+            customerAttendBy: "",
             senderContactNo: customer.mobile || customer.phone || "",
             senderDetail: customer.customerName || "",
             _fuelSurchargePercent: customer.fuelSurchargePercent || 0,
