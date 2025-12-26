@@ -44,7 +44,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
     const colSpanValue = showConsignmentValue ? 9 : 8;
 
     return (
-        <div className="max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
+        <div className="invoice-container max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
             <div className="text-center border-b-2 border-black pb-4 mb-6">
                 <h1 className="text-2xl font-bold text-black">{company?.companyName || 'Awdhoot Global Solutions'}</h1>
                 <p className="text-sm text-gray-700">
@@ -105,7 +105,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="mb-6 overflow-x-auto">
-                <table className="w-full border-collapse border-2 border-black">
+                <table className="invoice-table w-full border-collapse border-2 border-black">
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Sr.</th>

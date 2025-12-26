@@ -72,12 +72,32 @@ body {
 }
 
 @media print {
-  .print-bg-gray-600 {
-    background-color: #4b5563 !important; /* Tailwind's gray-600 */
+  footer, nav, header, .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 5mm;
+  }
+
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  .print-text-gray-100 {
-    color: #f3f4f6 !important; /* Tailwind's gray-100 */
+
+  .invoice-table th, 
+  .invoice-table td {
+    font-size: 10px !important; 
+    padding: 2px 4px !important; 
+    white-space: normal !important;
+  }
+  
+  .invoice-container {
+    width: 100% !important;
+    max-width: none !important;
   }
 }
