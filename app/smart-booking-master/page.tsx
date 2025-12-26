@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
-import { Download, Plus, Users } from "lucide-react";
+import { FileDown, Download, Plus, Users } from "lucide-react";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -766,19 +766,6 @@ export default function SmartBookingMasterPage() {
                     updated.invoiceWt = updated.chargeWeight;
                 }
                 console.log(updated.valumetric);
-
-                // if (field === "location") {
-                //     updated.location = getCityName(value);
-                //     updated.destinationCity = getCityCode(updated.location);
-                // } else if (field === "destinationCity") {
-                //     updated.destinationCity = value;
-                //     updated.location = getCityName(value);
-
-                //     if (getCityCode(value) !== value) {
-                //         updated.destinationCity = getCityCode(value);
-                //     }
-                // }
-
                 if (field === "customerCode") {
                     handleCustomerSearch(idx, value);
                     if (!value) {
@@ -896,6 +883,10 @@ export default function SmartBookingMasterPage() {
             setCurrentPage(1);
         }
     }, [filteredRows, pageSize]);
+    
+    const handleDownloadSample = () => {
+        window.open("/api/booking-master/sample-import", "_blank");
+    };
 
     // Add these pagination control functions
     const goToPage = (page: number) => {
@@ -915,10 +906,20 @@ export default function SmartBookingMasterPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Smart Booking Master</h1>
                     <div className="flex justify-between max-w-full">
                         <p className="text-lg font-semibold text-purple-900">Bulk Import & Edit Bookings</p>
-                        <button onClick={handleAddRow} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">
-                            <Plus className="w-5 h-5" />
-                            Add New Booking
-                        </button>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={handleDownloadSample} 
+                                className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-sm text-sm"
+                                title="Download a sample Excel file to see the correct format"
+                            >
+                                <FileDown className="w-4 h-4" />
+                                Sample Format
+                            </button>
+                            <button onClick={handleAddRow} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">
+                                <Plus className="w-5 h-5" />
+                                Add New Booking
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
