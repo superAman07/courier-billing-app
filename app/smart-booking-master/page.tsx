@@ -214,6 +214,7 @@ export default function SmartBookingMasterPage() {
             srNo: tableRows.length + 1,
             bookingDate: new Date().toISOString().split('T')[0],
             awbNo: "",
+            serviceProvider: "DTDC",
             location: "",
             destinationCity: "",
             mode: "SURFACE",
@@ -817,6 +818,7 @@ export default function SmartBookingMasterPage() {
         const currentPendingDays = calculatePendingDays(row.bookingDate, row.status);
         const cleanRow = { 
             ...row,
+            serviceProvider: row.serviceProvider || "DTDC",
             pendingDaysNotDelivered: currentPendingDays 
         };
         delete cleanRow._awbExists;

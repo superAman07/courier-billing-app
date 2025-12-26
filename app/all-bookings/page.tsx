@@ -305,6 +305,7 @@ export default function AllBookingsPage() {
     setSaving(true);
     try {
       const payload = { ...editForm };
+      payload.serviceProvider = payload.serviceProvider || "DTDC";
       delete payload.srNo;
       delete payload.id;
       delete payload.createdAt;
@@ -666,6 +667,7 @@ export default function AllBookingsPage() {
                       <td key={col} className="px-3 py-2 border-b text-gray-700 whitespace-nowrap">
                         {col === 'childCustomer'
                           ? row.customer?.childCustomer || row.customer?.customerName
+                          : col === 'serviceProvider' ? (row[col] || "-")
                           : isDateField ? formatDate(row[col]) : row[col]}
                       </td>
                     )
