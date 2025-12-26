@@ -41,6 +41,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
     const companyStateCode = company?.gstNo?.substring(0, 2);
     const customerStateCode = invoice.customer?.gstNo?.substring(0, 2);
     const isIntraState = companyStateCode && customerStateCode && companyStateCode === customerStateCode;
+    const colSpanValue = showConsignmentValue ? 9 : 8;
 
     return (
         <div className="max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
@@ -111,13 +112,14 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Booking Date</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Consignment No.</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Destination City</th>
-                            {showConsignmentValue && (
-                                <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Consignment Value</th>
-                            )}
+                            
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Dox/Non Dox</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">No. of Pcs</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Service Type</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Weight</th>
+                            {showConsignmentValue && (
+                                <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Material Value</th>
+                            )}
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Amt.</th>
                         </tr>
                     </thead>
@@ -130,70 +132,71 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.city}</td>
+                                
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                    {booking.doxType || (booking.docType === 'D' ? 'DOX' : 'NON-DOX') || ''}
+                                </td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
+                                {/* Map 'serviceType' or fallback to 'mode' */}
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                    {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
+                                </td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight ?? ''}</td>
                                 {showConsignmentValue && (
                                     <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                        {booking.consignmentValue > 0 ? booking.consignmentValue : ''}
+                                        {booking.consignmentValue > 49999 ? Number(booking.consignmentValue).toFixed(2) : '-'}
                                     </td>
                                 )}
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.doxType || ''}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.serviceType || ''}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight ?? ''}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged ?? ''}</td>
                             </tr>
                         ))}
-
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{invoice.netAmount.toFixed(2)}</td>
-                        </tr> 
-                        <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">FR Charge</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">FR Charge</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{frChargeTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{shipperCostTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Way Bill Surcharge @ 0.2%</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Way Bill Surcharge @ 0.2%</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{waybillSurchargeTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Other Exp.</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Other Exp.</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{otherExpTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Fuel Surcharge</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{fuelSurchargeTotal.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue.toFixed(2)}</td>
                         </tr>
                         {isIntraState ? (
                             <>
                                 <tr>
-                                    <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">CGST {(gstRate / 2).toFixed(0)}%</td>
+                                    <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">CGST {(gstRate / 2).toFixed(0)}%</td>
                                     <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{(igstAmount / 2).toFixed(2)}</td>
                                 </tr>
                                 <tr>
-                                    <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">SGST {(gstRate / 2).toFixed(0)}%</td>
+                                    <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">SGST {(gstRate / 2).toFixed(0)}%</td>
                                     <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{(igstAmount / 2).toFixed(2)}</td>
                                 </tr>
                             </>
                         ) : (
                             <tr>
-                                <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
+                                <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
                                 <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>
                             </tr>
                         )} 
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total :</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm font-semibold">Total :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm font-semibold">{totalAfterTax.toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={showConsignmentValue ? 9 : 8} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Round Off</td>
+                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Round Off</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{finalAmount}</td>
                         </tr>
                     </tbody>

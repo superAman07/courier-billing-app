@@ -114,6 +114,9 @@ export async function POST(req: NextRequest) {
             otherExp: b.otherExp,
             fuelSurcharge: b.fuelSurcharge,
             gst: b.gst,
+            consignmentValue: b.invoiceValue, // Maps Material Value
+            doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX', // Maps Dox/Non-Dox
+            serviceType: b.mode,
           };
         });
 
