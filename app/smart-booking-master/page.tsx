@@ -1058,7 +1058,7 @@ export default function SmartBookingMasterPage() {
                                                                 placeholder="Search customer..."
                                                             />
                                                             {customerSuggestions[row.__origIndex]?.length > 0 && (
-                                                                <div className="absolute top-full left-0 z-10 w-64 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                                                                <div className="absolute top-full left-0 z-[9999] w-64 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                                                     {customerSuggestions[row.__origIndex].map(customer => (
                                                                         <div
                                                                             key={customer.id}
