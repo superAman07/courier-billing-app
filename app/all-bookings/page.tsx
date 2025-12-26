@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-r
 import { debounce } from "lodash";
 
 const columns = [
-  "srNo", "bookingDate", "awbNo", "location", "destinationCity", "mode", "pcs", "pin",
+  "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
   "dsrContents", "dsrNdxPaper", "invoiceValue", "actualWeight", "chargeWeight", "length", "width", "height",
   "valumetric", "invoiceWt", "frCharge", "fuelSurcharge", "shipperCost", "waybillSurcharge", "otherExp", "gst", "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
   "customerType", "senderDetail", "customerName", "childCustomer", "paymentStatus", "senderContactNo", "address", "adhaarNo",
@@ -20,6 +20,7 @@ const COLUMN_MAP: Record<string, string> = {
   srNo: "SR NO.",
   bookingDate: "Booking Date",
   awbNo: "Docket",
+  serviceProvider: "Provider",
   location: "Location",
   destinationCity: "Destination",
   mode: "Mode",
@@ -377,6 +378,18 @@ export default function AllBookingsPage() {
       debouncedPincodeLookup(value);
     }
 
+    if (name === "serviceProvider" || name === "invoiceValue") {
+        const provider = name === "serviceProvider" ? value : (updatedForm.serviceProvider || "DTDC");
+        const invValue = parseFloat(name === "invoiceValue" ? value : updatedForm.invoiceValue) || 0;
+
+        if (provider === "DTDC" && invValue > 49999) {
+            updatedForm.waybillSurcharge = (invValue * 0.002).toFixed(2);
+        } else {
+            updatedForm.waybillSurcharge = "0.00";
+        }
+        updatedForm = recalculateClientBilling(updatedForm);
+    }
+
     if (name === 'manualStatus') {
       updatedForm.manualStatusDate = new Date().toISOString();
     }
@@ -411,7 +424,7 @@ export default function AllBookingsPage() {
       }
     }
 
-    if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge", "fuelSurcharge"].includes(name)) {
+    if (["frCharge", "shipperCost", "otherExp", "waybillSurcharge", "fuelSurcharge", "serviceProvider", "invoiceValue"].includes(name)) {
       updatedForm = recalculateClientBilling(updatedForm);
     }
 
@@ -610,7 +623,18 @@ export default function AllBookingsPage() {
 
                     return editingId === row.id ? (
                       <td key={col} className="px-3 py-2 border-b w-[120px] whitespace-nowrap">
-                        {isSelectField ? (
+                        {col === "serviceProvider" ? (
+                          <select
+                            name={col}
+                            value={editForm[col] || "DTDC"}
+                            onChange={handleInputChange}
+                            className="w-full h-full px-2 py-1 border border-gray-300 rounded-sm bg-white text-gray-700 text-xs md:text-sm cursor-pointer"
+                          >
+                            <option value="DTDC">DTDC</option>
+                            <option value="Trackon">Trackon</option>
+                            <option value="Others">Others</option>
+                          </select>
+                        ) : isSelectField ? (
                           <select
                             name={col}
                             value={editForm[col] ?? ""}
@@ -628,7 +652,12 @@ export default function AllBookingsPage() {
                             type={isDateField ? 'date' : 'text'}
                             value={isDateField ? (editForm[col] ? new Date(editForm[col]).toISOString().split('T')[0] : '') : (editForm[col] ?? "")}
                             onChange={handleInputChange}
-                            className="w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm"
+                            className={`w-full h-full px-2 py-1 border border-gray-200 rounded-sm bg-white text-gray-700 text-xs md:text-sm ${
+                                // Visual cue for read-only fields
+                                ["srNo", "id", "valumetric", "gst", "fuelSurcharge", "clientBillingValue", "customerName", "childCustomer"].includes(col) 
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed" 
+                                : ""
+                            }`}
                             readOnly={["srNo", "id", "valumetric", "gst", "fuelSurcharge", "clientBillingValue", "customerName", "childCustomer"].includes(col)}
                           />
                         )}
