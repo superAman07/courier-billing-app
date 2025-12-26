@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CustomerMaster } from '@prisma/client';
 import { toast } from 'sonner';
-import { Edit, Loader2, Save, Trash2 } from 'lucide-react';
+import { Edit, Loader2, Save, Trash2, Copy, X } from 'lucide-react';
 
 type SectorRate = {
     id?: string;
@@ -49,6 +49,10 @@ export default function NewRateMasterForm() {
     const [rates, setRates] = useState<SectorRate[]>([]);
     const [formData, setFormData] = useState<Omit<SectorRate, 'sectorName'>>(initialFormState);
     const [isLoading, setIsLoading] = useState(false);
+
+    const [copyModal, setCopyModal] = useState<{ open: boolean; sourceSector: string }>({ open: false, sourceSector: '' });
+    const [targetSectors, setTargetSectors] = useState<Set<string>>(new Set());
+    const [isCopying, setIsCopying] = useState(false);
 
     useEffect(() => {
         const fetchAllCustomers = async () => {
@@ -122,6 +126,44 @@ export default function NewRateMasterForm() {
             }
         } catch (error) {
             toast.error("Failed to delete rates.");
+        }
+    };
+
+    const openCopyModal = (sourceSector: string) => {
+        setCopyModal({ open: true, sourceSector });
+        setTargetSectors(new Set());
+    };
+
+    const toggleTargetSector = (sector: string) => {
+        setTargetSectors(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(sector)) newSet.delete(sector);
+            else newSet.add(sector);
+            return newSet;
+        });
+    };
+
+    const handleExecuteCopy = async () => {
+        if (!selectedCustomer || targetSectors.size === 0) return;
+        
+        setIsCopying(true);
+        try {
+            await axios.post('/api/sector-rates/copy', {
+                customerId: selectedCustomer.id,
+                sourceSector: copyModal.sourceSector,
+                targetSectors: Array.from(targetSectors)
+            });
+            
+            toast.success(`Rates copied to ${targetSectors.size} sectors!`);
+            
+            const response = await axios.get(`/api/sector-rates?customerId=${selectedCustomer.id}`);
+            setRates(response.data);
+            
+            setCopyModal({ open: false, sourceSector: '' });
+        } catch (error) {
+            toast.error("Failed to copy rates.");
+        } finally {
+            setIsCopying(false);
         }
     };
 
@@ -235,6 +277,9 @@ export default function NewRateMasterForm() {
                                                 <button onClick={() => setSelectedSector(rate.sectorName)} className="text-indigo-600 hover:text-indigo-900 p-1">
                                                     <Edit size={16} />
                                                 </button>
+                                                <button onClick={() => openCopyModal(rate.sectorName)} className="text-blue-600 hover:text-blue-900 p-1" title="Copy to other sectors">
+                                                    <Copy size={16} />
+                                                </button>
                                                 <button onClick={() => handleDelete(rate.id!, rate.sectorName)} className="text-red-600 hover:text-red-900 p-1">
                                                     <Trash2 size={16} />
                                                 </button>
@@ -318,6 +363,50 @@ export default function NewRateMasterForm() {
                     </form>
                 )}
             </div>
+            {copyModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden">
+                        <div className="p-4 bg-blue-600 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-white">Copy Rates from: {copyModal.sourceSector}</h3>
+                            <button onClick={() => setCopyModal({ open: false, sourceSector: '' })} className="text-white hover:text-gray-200">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="mb-4 text-gray-700 font-medium">Select target sectors to apply these rates to:</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto mb-6">
+                                {SECTORS.filter(s => s !== copyModal.sourceSector).map(sector => (
+                                    <label key={sector} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={targetSectors.has(sector)}
+                                            onChange={() => toggleTargetSector(sector)}
+                                            className="h-4 w-4 text-blue-600 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">{sector}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button 
+                                    onClick={() => setCopyModal({ open: false, sourceSector: '' })}
+                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleExecuteCopy}
+                                    disabled={isCopying || targetSectors.size === 0}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2"
+                                >
+                                    {isCopying ? <Loader2 className="animate-spin w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    {isCopying ? 'Copying...' : `Copy to ${targetSectors.size} Sectors`}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
