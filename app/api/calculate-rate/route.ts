@@ -81,15 +81,26 @@ export async function POST(req: NextRequest) {
 
         if (mode === 'PREMIUM') {
             if (weightInKg <= 0.25) {
-                frCharge = sectorRate.premiumUpto250g || 0;
+                const rate250 = sectorRate.premiumUpto250g || 0;
+                const rate500 = sectorRate.premiumUpto500g || 0;
+                frCharge = rate250 > 0 ? rate250 : rate500;
             } else {
                 frCharge = calculateSlabRate(weightInKg, sectorRate.premiumUpto500g || 0, 0.5, sectorRate.premiumAdd500g || 0, 0.5);
             }
         } else if (isDox) {
             if (weightInKg <= 0.1) {
-                 frCharge = sectorRate.doxUpto100g || 0;
+                 const rate100 = sectorRate.doxUpto100g || 0;
+                 const rate250 = sectorRate.doxUpto250g || 0;
+                 const rate500 = sectorRate.doxUpto500g || 0;
+
+                 if (rate100 > 0) frCharge = rate100;
+                 else if (rate250 > 0) frCharge = rate250;
+                 else frCharge = rate500;
             } else if (weightInKg <= 0.25) {
-                frCharge = sectorRate.doxUpto250g || 0;
+                const rate250 = sectorRate.doxUpto250g || 0;
+                const rate500 = sectorRate.doxUpto500g || 0;
+                
+                frCharge = rate250 > 0 ? rate250 : rate500;
             } else {
                 frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
             }
