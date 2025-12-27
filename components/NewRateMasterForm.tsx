@@ -104,11 +104,20 @@ export default function NewRateMasterForm() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        
+        // --- FIX: Handle empty string correctly ---
+        let newValue: string | number | undefined = value;
+
+        if (name.includes('Weight') || name.includes('Rate') || name.includes('dox') || name.includes('premium')) {
+            // If value is empty string, set to null (so it sends null to API)
+            // If value is a number, parse it
+            newValue = value === '' ? null : parseFloat(value);
+        }
+        // ------------------------------------------
+
         setFormData(prev => ({
             ...prev,
-            [name]: name.includes('Weight') || name.includes('Rate') || name.includes('dox') || name.includes('premium')
-                ? (value === '' ? undefined : parseFloat(value))
-                : value,
+            [name]: newValue,
         }));
     };
 
