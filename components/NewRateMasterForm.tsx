@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CustomerMaster } from '@prisma/client';
 import { toast } from 'sonner';
-import { Edit, Loader2, Save, Trash2, Copy, X } from 'lucide-react';
+import { Edit, Loader2, Save, Trash2, Copy, X, Upload } from 'lucide-react';
+import SectorRateImportModal from './SectorRateImportModal';
 
 type SectorRate = {
     id?: string;
@@ -53,6 +54,8 @@ export default function NewRateMasterForm() {
     const [copyModal, setCopyModal] = useState<{ open: boolean; sourceSector: string }>({ open: false, sourceSector: '' });
     const [targetSectors, setTargetSectors] = useState<Set<string>>(new Set());
     const [isCopying, setIsCopying] = useState(false);
+
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchAllCustomers = async () => {
@@ -135,6 +138,17 @@ export default function NewRateMasterForm() {
             }
         } catch (error) {
             toast.error("Failed to delete rates.");
+        }
+    };
+
+    const handleImportSuccess = async () => {
+        if (selectedCustomer) {
+            try {
+                const response = await axios.get(`/api/sector-rates?customerId=${selectedCustomer.id}`);
+                setRates(response.data);
+            } catch (error) {
+                console.error(error);
+            }
         }
     };
 
@@ -230,8 +244,15 @@ export default function NewRateMasterForm() {
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
-                <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-700">
+                <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-white">Customer Sector Rate Master</h1>
+                    <button 
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Bulk Import
+                    </button>
                 </div>
 
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border-b">
@@ -416,6 +437,11 @@ export default function NewRateMasterForm() {
                     </div>
                 </div>
             )}
+            <SectorRateImportModal 
+                isOpen={isImportModalOpen} 
+                onClose={() => setIsImportModalOpen(false)}
+                onSuccess={handleImportSuccess}
+            />
         </div>
     );
 }
