@@ -5,7 +5,11 @@ export async function GET() {
     try {
         const unassignedBookings = await prisma.bookingMaster.findMany({
             where: {
-                customerId: null,
+                OR: [
+                    { customerId: null },           
+                    { clientBillingValue: 0 },      
+                    { clientBillingValue: null } 
+                ]
             },
             include: {
                 customer: true,

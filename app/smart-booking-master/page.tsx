@@ -6,10 +6,9 @@ import { toast } from "sonner";
 import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
-import { FileDown, Download, Plus, Users } from "lucide-react";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -66,6 +65,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     length: ["Length", "L"],
     width: ["Width", "W"],
     height: ["Height", "H"],
+    customerCode: ["Customer Code", "CustomerCode", "Code"],
 };
 
 export default function SmartBookingMasterPage() {
@@ -306,7 +306,9 @@ export default function SmartBookingMasterPage() {
     const MODE_MAP: Record<string, string> = {
         E: "EXPRESS",
         S: "SURFACE",
+        SF: "SURFACE",
         A: "AIR",
+        AR: "AIR",
         P: "PREMIUM",
         R: "RAIL",
         O: "OTHER MODE"
@@ -363,9 +365,9 @@ export default function SmartBookingMasterPage() {
 
             columns.forEach(col => {
                 if (col === "srNo") return;
-                const customerFields = ["customerCode", "customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
+                const customerFields = ["customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
                 if (customerFields.includes(col)) {
-                    mapped[col] = "";
+                    if (!mapped[col]) mapped[col] = "";
                     return;
                 }
 
@@ -469,21 +471,77 @@ export default function SmartBookingMasterPage() {
             return { ...mapped, _awbExists: false };
         });
 
-        if (mappedRows.length > 0) {
-            try {
-                toast.info(`Saving/Updating ${mappedRows.length} bookings in the database...`);
-                const { data: createResult } = await axios.post('/api/booking-master/bulk-create', mappedRows); // Send all mappedRows
-                toast.success(createResult.message || `${createResult.count} bookings processed successfully.`);
+        const calculatedRows = await Promise.all(mappedRows.map(async (row) => {
+            // Check if we have enough info to calculate
+            if (row.customerId && row.pin && row.chargeWeight && row.mode) {
+                try {
+                    const { data } = await axios.post('/api/calculate-rate', {
+                        customerId: row.customerId,
+                        destinationPincode: row.pin,
+                        chargeWeight: row.chargeWeight,
+                        isDox: row.dsrNdxPaper === 'D',
+                        mode: row.mode,
+                        invoiceValue: row.invoiceValue,
+                        state: row.state,
+                    });
 
-                await fetchUnassignedBookings();
-            } catch (error: any) {
-                console.error("Bulk booking creation/update failed:", error);
-                toast.error(error.response?.data?.error || "Failed to save/update bookings.");
-                setTableRows(mappedRows);
+                    let updatedRow = {
+                        ...row,
+                        frCharge: data.frCharge.toFixed(2),
+                        waybillSurcharge: data.waybillSurcharge.toFixed(2),
+                        otherExp: data.otherExp.toFixed(2),
+                        serviceProvider: data.serviceProvider || "DTDC"
+                    };
+
+                    const frCharge = parseFloat(updatedRow.frCharge) || 0;
+                    const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+                    updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+
+                    return recalculateClientBilling(updatedRow);
+                } catch (error) {
+                    console.error(`Calculation failed for row ${row.srNo}`, error);
+                    return row; // Return original row if calculation fails
+                }
             }
-        } else {
-            toast.info("No data to import.");
+            return row; // Return original row if missing data
+        }));
+
+        try {
+            toast.info(`Saving ${calculatedRows.length} bookings to database...`);
+            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', calculatedRows);
+            toast.success("Imported and saved! Review the rows below.");
+            
+            const rowsForDisplay = calculatedRows.map((r, i) => ({
+                ...r,
+                _awbExists: true,
+                srNo: i + 1
+            }));
+            
+            setTableRows(rowsForDisplay); 
+
+        } catch (error: any) {
+            console.error("Bulk save failed:", error);
+            toast.error("Saved locally but DB sync failed. Please click Save All.");
+            setTableRows(calculatedRows);
         }
+
+        setLoading(false);
+
+        // if (mappedRows.length > 0) {
+        //     try {
+        //         toast.info(`Saving/Updating ${mappedRows.length} bookings in the database...`);
+        //         const { data: createResult } = await axios.post('/api/booking-master/bulk-create', mappedRows); // Send all mappedRows
+        //         toast.success(createResult.message || `${createResult.count} bookings processed successfully.`);
+
+        //         await fetchUnassignedBookings();
+        //     } catch (error: any) {
+        //         console.error("Bulk booking creation/update failed:", error);
+        //         toast.error(error.response?.data?.error || "Failed to save/update bookings.");
+        //         setTableRows(mappedRows);
+        //     }
+        // } else {
+        //     toast.info("No data to import.");
+        // }
 
         setLoading(false);
 
@@ -856,6 +914,60 @@ export default function SmartBookingMasterPage() {
         }
     };
 
+    const handleSaveAll = async () => {
+        if (tableRows.length === 0) return;
+        
+        setLoading(true);
+        try {
+            // Filter out rows that are already saved (if you want) or just save everything
+            // For now, let's save everything currently in the table
+            
+            // Prepare data: remove UI-only flags
+            const rowsToSave = tableRows.map(row => {
+                const cleanRow = { ...row };
+                // Ensure defaults
+                cleanRow.serviceProvider = cleanRow.serviceProvider || "DTDC";
+                cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
+                
+                // Remove internal flags
+                delete cleanRow._awbExists;
+                delete cleanRow._bookingId;
+                delete cleanRow.__origIndex;
+                delete cleanRow.customerName;
+                delete cleanRow._fuelSurchargePercent;
+                delete cleanRow._gstPercent;
+
+                // Fix dates
+                cleanRow.bookingDate = new Date(cleanRow.bookingDate);
+                cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
+                cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
+                cleanRow.todayDate = cleanRow.todayDate ? new Date(cleanRow.todayDate) : new Date();
+
+                // Ensure numbers
+                ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
+                "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
+                "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+                "pendingDaysNotDelivered", "length", "width", "height"].forEach(field => {
+                     if (cleanRow[field]) cleanRow[field] = Number(cleanRow[field]);
+                });
+                
+                return cleanRow;
+            });
+
+            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsToSave);
+            toast.success(createResult.message || "All bookings saved successfully!");
+            
+            // Refresh to get IDs and confirm saved state
+            await fetchUnassignedBookings();
+
+        } catch (error: any) {
+            console.error("Bulk save failed:", error);
+            toast.error(error.response?.data?.error || "Failed to save bookings.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredRows = tableRows.filter(row => {
         if (!search) return true;
         const s = search.toLowerCase();
@@ -962,6 +1074,16 @@ export default function SmartBookingMasterPage() {
                             <Download className="w-5 h-5" />
                             Download Excel
                         </button>
+                        {tableRows.length > 0 && (
+                            <button 
+                                onClick={handleSaveAll} 
+                                disabled={loading}
+                                className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg ml-3 shadow-md"
+                            >
+                                {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-5 h-5" />}
+                                Save All ({tableRows.length})
+                            </button>
+                        )}
                     </div>
 
                     <div className="mt-8 overflow-x-auto">
