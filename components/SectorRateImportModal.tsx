@@ -67,7 +67,7 @@ export default function SectorRateImportModal({ isOpen, onClose, onSuccess }: Pr
                     <h2 className="text-white font-bold text-lg flex items-center gap-2">
                         <Upload className="w-5 h-5" /> Bulk Import Rates
                     </h2>
-                    <button onClick={handleClose} className="text-white/80 hover:text-white">
+                    <button onClick={handleClose} className="text-white/80 hover:text-white cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
