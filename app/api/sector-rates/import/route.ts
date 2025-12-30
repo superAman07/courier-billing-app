@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
                     },
                     create: {
                         customerId: customerId,
-                        sectorName: sector,
+                        sectorName: normalizedSector,
                         serviceProvider: row["Service Provider"] || "DTDC",
                         bulkMinWeightSurface: val("Min Wt Surface"),
                         bulkRateSurfaceUpto10: val("Surf < 10kg"),
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
                 successCount++;
             } catch (e) {
                 console.error("Error upserting rate:", e);
-                errors.push({ row: rowNum, customer: code, sector, reason: "Database error" });
+                errors.push({ row: rowNum, customer: code, sector:rawSector, reason: "Database error" });
             }
         }
 
