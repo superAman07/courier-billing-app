@@ -97,6 +97,17 @@ export default function SectorRateImportModal({ isOpen, onClose, onSuccess }: Pr
                                 <p className="text-xs text-gray-500">
                                     Use the Customer List to get valid codes. Fill the Rate Template and upload below.
                                 </p>
+                                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <p className="text-xs font-semibold text-blue-800 mb-1">✅ Valid Sector Names:</p>
+                                    <p className="text-xs text-blue-700">
+                                        Local, UP, UK, Delhi, Bihaar / Jharkhand, North (Haryana / Punjaab / Rajasthaan), 
+                                        Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata), Rest of India, North East, 
+                                        Special Sector ( Darjling, Silchaar, Daman)
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        💡 The system will auto-correct minor typos and spacing issues.
+                                    </p>
+                                </div>
                             </div>
 
                             <hr />

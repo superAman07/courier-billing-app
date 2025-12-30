@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
+const SECTORS = [
+    "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
+    "North (Haryana / Punjaab / Rajasthaan)",
+    "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)"
+];
+
 export async function GET() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sector Rates Import");
@@ -62,6 +69,20 @@ export async function GET() {
         bulkRateAirUpto10: 50,
         doxUpto100g: 40,
         premiumUpto250g: 100
+    });
+
+    const sectorSheet = workbook.addWorksheet("Valid Sectors");
+    sectorSheet.columns = [{ header: "Allowed Sector Names", key: "sector", width: 50 }];
+    const sectorHeaderRow = sectorSheet.getRow(1);
+    sectorHeaderRow.font = { bold: true, color: { argb: "FFFFFF" } };
+    sectorHeaderRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "22C55E" }
+    };
+
+    SECTORS.forEach(sector => {
+        sectorSheet.addRow({ sector });
     });
 
     const buf = await workbook.xlsx.writeBuffer();

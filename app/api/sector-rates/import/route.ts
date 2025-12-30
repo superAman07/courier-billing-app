@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import * as XLSX from 'xlsx';
 
+const VALID_SECTORS = [
+    "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
+    "North (Haryana / Punjaab / Rajasthaan)",
+    "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)"
+];
+
+const normalizeSector = (input: string): string | null => {
+    if (!input) return null;    
+    const trimmed = input.trim();
+    const exactMatch = VALID_SECTORS.find(s => s.toLowerCase() === trimmed.toLowerCase());
+    if (exactMatch) return exactMatch;
+    
+    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedInput = normalize(trimmed);
+    
+    const fuzzyMatch = VALID_SECTORS.find(s => normalize(s) === normalizedInput);
+    return fuzzyMatch || null;
+};
+
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
@@ -24,7 +44,6 @@ export async function POST(req: NextRequest) {
         let successCount = 0;
         const errors: Array<{ row: number; customer?: string; sector?: string; reason: string }> = [];
 
-        // 1. Get all customer codes to minimize DB queries
         const customerCodes = [...new Set(rows.map(r => r["Customer Code"]?.toString().trim()).filter(Boolean))];
         
         const customers = await prisma.customerMaster.findMany({
@@ -34,18 +53,28 @@ export async function POST(req: NextRequest) {
 
         const customerMap = new Map(customers.map(c => [c.customerCode, c.id]));
 
-        // 2. Process rows
         for (const [index, row] of rows.entries()) {
-            const rowNum = index + 2; // Excel row number (1-based + header)
+            const rowNum = index + 2; 
             const code = row["Customer Code"]?.toString().trim();
-            const sector = row["Sector Name"]?.toString().trim();
+            const rawSector = row["Sector Name"]?.toString().trim();
 
             if (!code) {
                 errors.push({ row: rowNum, reason: "Missing Customer Code" });
                 continue;
             }
-            if (!sector) {
+            if (!rawSector) {
                 errors.push({ row: rowNum, customer: code, reason: "Missing Sector Name" });
+                continue;
+            }
+
+            const normalizedSector = normalizeSector(rawSector);
+            if (!normalizedSector) {
+                errors.push({ 
+                    row: rowNum, 
+                    customer: code, 
+                    sector: rawSector, 
+                    reason: `Invalid sector: "${rawSector}". Check "Valid Sectors" sheet in sample file.` 
+                });
                 continue;
             }
 
@@ -55,7 +84,6 @@ export async function POST(req: NextRequest) {
                 continue;
             }
 
-            // Helper to parse float safely
             const val = (key: string) => {
                 const v = parseFloat(row[key]);
                 return isNaN(v) ? null : v;
@@ -66,7 +94,7 @@ export async function POST(req: NextRequest) {
                     where: {
                         customerId_sectorName: {
                             customerId: customerId,
-                            sectorName: sector
+                            sectorName: normalizedSector
                         }
                     },
                     update: {
