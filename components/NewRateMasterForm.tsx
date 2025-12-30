@@ -248,7 +248,7 @@ export default function NewRateMasterForm() {
                     <h1 className="text-2xl font-bold text-white">Customer Sector Rate Master</h1>
                     <button 
                         onClick={() => setIsImportModalOpen(true)}
-                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                     >
                         <Upload className="w-4 h-4" />
                         Bulk Import
