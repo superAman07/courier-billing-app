@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
             const customerId = customerMap.get(code);
             if (!customerId) {
-                errors.push({ row: rowNum, customer: code, sector, reason: `Customer Code '${code}' not found in DB` });
+                errors.push({ row: rowNum, customer: code, sector:rawSector, reason: `Customer Code '${code}' not found in DB` });
                 continue;
             }
 
