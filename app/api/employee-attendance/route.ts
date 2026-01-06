@@ -30,19 +30,26 @@ export async function GET(req: Request) {
     try {
         const targetDate = new Date(date);
 
-        // 1. Fetch all employees
+        // 1. Fetch Global Settings for Rate Per KM
+        // We fetch the single row where id="global"
+        const settings = await prisma.employeeSettings.findUnique({
+             where: { id: "global" } 
+        });
+        const globalRate = settings?.ratePerKm || 0;
+
+        // 2. Fetch all employees
         const employees = await prisma.employeeMaster.findMany({
             orderBy: { employeeName: 'asc' },
         });
 
-        // 2. Fetch existing attendance for this date
+        // 3. Fetch existing attendance for this date
         const attendances = await prisma.employeeAttendance.findMany({
             where: { date: targetDate },
         });
 
         const attendanceMap = new Map(attendances.map(a => [a.employeeId, a]));
 
-        // 3. Merge data
+        // 4. Merge data
         const response = employees.map(emp => {
             const attendance = attendanceMap.get(emp.id);
             return {
@@ -62,8 +69,10 @@ export async function GET(req: Request) {
                 // --- NEW FIELD INCLUDED IN RESPONSE ---
                 travelDistance: attendance?.travelDistance || 0,
                 travelAmount: attendance?.travelAmount || 0,
-                // NEW: Send the master rate so frontend can calc
-                ratePerKm: emp.ratePerKm || 0,
+                
+                // FIXED: Use the global rate variable we fetched above
+                ratePerKm: globalRate, 
+                
                 remarks: attendance?.remarks || '',
             };
         });
@@ -89,11 +98,7 @@ export async function POST(req: Request) {
 
         const targetDate = new Date(date);
 
-        // We REMOVED the logic that fetched "shiftInfo" and recalculated hours here.
-        // This fixes the bug. We now trust the values sent from the Frontend.
-
         const transactions = attendanceData.map((att: any) => {
-            // Just convert timestamps to valid Dates for storage
             const checkInTime = att.checkIn ? new Date(att.checkIn) : null;
             const checkOutTime = att.checkOut ? new Date(att.checkOut) : null;
 
@@ -106,7 +111,6 @@ export async function POST(req: Request) {
                     remarks: att.remarks,
                     fineAmount: att.fineAmount ? parseFloat(att.fineAmount) : null,
                     advanceAmount: att.advanceAmount ? parseFloat(att.advanceAmount) : null,
-                    // --- SAVE VALUES DIRECTLY FROM FRONTEND ---
                     totalHours: att.totalHours,
                     overtimeHours: att.overtimeHours,
                     lateByMinutes: att.lateByMinutes,
@@ -122,7 +126,6 @@ export async function POST(req: Request) {
                     remarks: att.remarks,
                     fineAmount: att.fineAmount ? parseFloat(att.fineAmount) : null,
                     advanceAmount: att.advanceAmount ? parseFloat(att.advanceAmount) : null,
-                    // --- SAVE VALUES DIRECTLY FROM FRONTEND ---
                     totalHours: att.totalHours,
                     overtimeHours: att.overtimeHours,
                     lateByMinutes: att.lateByMinutes,
