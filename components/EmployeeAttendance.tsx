@@ -18,6 +18,7 @@ interface AttendanceRecord {
     lateByMinutes: number | null;
     fineAmount: number | null;
     advanceAmount: number | null;
+    travelDistance: number | null;
     remarks: string;
 }
 
@@ -106,11 +107,29 @@ export default function EmployeeAttendancePage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const payload = attendanceData.map(att => ({
-                ...att,
-                checkIn: att.checkIn ? `${attendanceDate}T${att.checkIn}` : null,
-                checkOut: att.checkOut ? `${attendanceDate}T${att.checkOut}` : null,
-            }));
+            const payload = attendanceData.map(att => {
+                // FIX: Convert "HH:MM" string to a full local Date object, then to ISO string
+                // This ensures "11:00" in your browser becomes the correct moment in time (e.g. 05:30 UTC)
+                // instead of ambiguous "T11:00" which backend assumes is 11:00 UTC.
+                let checkInISO = null;
+                let checkOutISO = null;
+
+                if (att.checkIn) {
+                    const d = new Date(`${attendanceDate}T${att.checkIn}`);
+                    checkInISO = d.toISOString();
+                }
+                
+                if (att.checkOut) {
+                    const d = new Date(`${attendanceDate}T${att.checkOut}`);
+                    checkOutISO = d.toISOString();
+                }
+
+                return {
+                    ...att,
+                    checkIn: checkInISO,
+                    checkOut: checkOutISO,
+                };
+            });
             await axios.post('/api/employee-attendance', { date: attendanceDate, attendanceData: payload });
             toast.success('Attendance saved successfully!');
             fetchAttendance(attendanceDate);
@@ -210,6 +229,7 @@ export default function EmployeeAttendancePage() {
                                         <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Late (min)
                                     </span>
                                 </th>
+                                <th className={thStyle}>Travel (km)</th>
                                 <th className={thStyle}>
                                     <span className="inline-flex items-center gap-1">
                                         <DollarSign className="w-4 h-4" aria-hidden="true" /> Fine
@@ -301,6 +321,18 @@ export default function EmployeeAttendancePage() {
                                             >
                                                 {att.lateByMinutes || 0}
                                             </span>
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-28 align-top">
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={att.travelDistance || ""}
+                                                onChange={(e) => handleAttendanceChange(att.employeeId, "travelDistance", e.target.value)}
+                                                className={inputStyle}
+                                                aria-label={`Travel distance for ${att.employeeName}`}
+                                                inputMode="decimal"
+                                            />
                                         </td>
 
                                         <td className="px-3 py-3 whitespace-nowrap w-32 align-top">

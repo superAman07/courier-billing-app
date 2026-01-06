@@ -224,6 +224,7 @@ model EmployeeAttendance {
   lateByMinutes Int?
   fineAmount    Float?
   advanceAmount Float?
+  travelDistance Float?   @default(0)
   remarks       String?
 
   employee   EmployeeMaster @relation(fields: [employeeId], references: [id], onDelete: Cascade)
