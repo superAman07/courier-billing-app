@@ -35,6 +35,13 @@ const formatMinutesToHHMM = (totalMinutes: number | null) => {
     return `${hours}:${minutes.toString().padStart(2, '0')}`;
 };
 
+const formatDecimalHoursToHHMM = (decimalHours: number | null) => {
+    if (!decimalHours || decimalHours <= 0) return "0:00";
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.round((decimalHours - hours) * 60);
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+};
+
 export default function EmployeeAttendancePage() {
     const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
     const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
@@ -230,7 +237,7 @@ export default function EmployeeAttendancePage() {
                                     </span>
                                 </th>
                                 <th className={thStyle}>Total Hrs</th>
-                                <th className={thStyle}>Overtime</th>
+                                <th className={thStyle}>Overtime (hh:mm)</th>
                                 <th className={thStyle}>
                                     <span className="inline-flex items-center gap-1">
                                         <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Late(hh:mm)
@@ -311,13 +318,13 @@ export default function EmployeeAttendancePage() {
 
                                         <td className="px-3 py-3 whitespace-nowrap text-center align-top">
                                             <span className="inline-flex items-center justify-center min-w-[64px] text-sm font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-800">
-                                                {att.totalHours?.toFixed(2) || "0.00"}
+                                                {formatDecimalHoursToHHMM(att.totalHours)}
                                             </span>
                                         </td>
 
                                         <td className="px-3 py-3 whitespace-nowrap text-center align-top">
                                             <span className="inline-flex items-center justify-center min-w-[64px] text-sm font-mono px-2.5 py-1 rounded-md bg-teal-50 text-teal-700">
-                                                {att.overtimeHours?.toFixed(2) || "0.00"}
+                                                {formatDecimalHoursToHHMM(att.overtimeHours)}
                                             </span>
                                         </td>
 
