@@ -166,11 +166,11 @@ export default function EmployeeMaster() {
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
-        <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md">
+        <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">EMPLOYEE MASTER</h1>
           <button 
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center cursor-pointer gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <Settings className="w-4 h-4" /> Global Config
           </button>
@@ -340,31 +340,31 @@ export default function EmployeeMaster() {
         </div>
       </div>
       {isSettingsOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-xl w-96 p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-gray-800">Global Configuration</h3>
-                                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-500 hover:text-red-500"><X className="w-5 h-5"/></button>
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Universal Rate Per KM (₹)</label>
-                                <input 
-                                    type="number" 
-                                    value={globalRate} 
-                                    onChange={(e) => setGlobalRate(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 text-gray-700 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">This rate will be applied to all employees for travel expenses.</p>
-                            </div>
-                            <button 
-                                onClick={saveGlobalSettings}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer py-2 rounded font-medium flex items-center justify-center gap-2"
-                            >
-                                <Save className="w-4 h-4" /> Save Configuration
-                            </button>
-                        </div>
-                    </div>
-                )}
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl w-96 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-800">Global Configuration</h3>
+                      <button onClick={() => setIsSettingsOpen(false)} className="text-gray-500 cursor-pointer hover:text-red-500"><X className="w-5 h-5"/></button>
+                  </div>
+                  <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Universal Rate Per KM (₹)</label>
+                      <input 
+                          type="number" 
+                          value={globalRate} 
+                          onChange={(e) => setGlobalRate(e.target.value)}
+                          className="w-full p-2 border border-gray-300 text-gray-700 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">This rate will be applied to all employees for travel expenses.</p>
+                  </div>
+                  <button 
+                      onClick={saveGlobalSettings}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer py-2 rounded font-medium flex items-center justify-center gap-2"
+                  >
+                      <Save className="w-4 h-4" /> Save Configuration
+                  </button>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
