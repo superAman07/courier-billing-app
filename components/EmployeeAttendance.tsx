@@ -20,7 +20,7 @@ interface AttendanceRecord {
     advanceAmount: number | null;
     travelDistance: number | null;
     travelAmount: number | null;
-    ratePerKm: number | null;
+    ratePerKm: number;
     remarks: string;
 }
 
@@ -50,6 +50,13 @@ export default function EmployeeAttendancePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
+    const [globalRatePerKm, setGlobalRatePerKm] = useState(0);
+
+    useEffect(() => {
+        axios.get('/api/employee-settings')
+             .then(res => setGlobalRatePerKm(res.data.ratePerKm || 0))
+             .catch(err => console.error("Failed to load global rate"));
+    }, []);
 
     const fetchAttendance = async (date: string) => {
         setLoading(true);
@@ -115,8 +122,7 @@ export default function EmployeeAttendancePage() {
                     }
                     if (field === 'travelDistance') {
                         const dist = parseFloat(value) || 0;
-                        const rate = record.ratePerKm || 0;
-                        updatedRecord.travelAmount = parseFloat((dist * rate).toFixed(2));
+                        updatedRecord.travelAmount = parseFloat((dist * globalRatePerKm).toFixed(2));
                     }
                     return updatedRecord;
                 }
@@ -350,25 +356,24 @@ export default function EmployeeAttendancePage() {
                                             </span>
                                         </td>
 
-                                        <td className="px-3 py-3 whitespace-nowrap w-28 align-top">
+                                        <td className="px-3 py-3 whitespace-nowrap w-24 align-top">
                                             <input
                                                 type="number"
                                                 placeholder="0"
                                                 value={att.travelDistance || ""}
                                                 onChange={(e) => handleAttendanceChange(att.employeeId, "travelDistance", e.target.value)}
                                                 className={inputStyle}
-                                                aria-label={`Travel distance for ${att.employeeName}`}
-                                                inputMode="decimal"
                                             />
+                                            <div className="text-[10px] text-gray-400 text-center">@{globalRatePerKm}/km</div>
                                         </td>
 
                                         <td className="px-3 py-3 whitespace-nowrap w-24 align-top">
                                              <input
                                                 type="number"
-                                                readOnly // Read only because it's calculated
+                                                readOnly
                                                 value={att.travelAmount || ""}
-                                                className={${inputStyle} bg-gray-50 text-blue-600 font-semibold}
-                                                />
+                                                className={`${inputStyle} bg-gray-50 text-blue-600 font-semibold`}
+                                            />
                                         </td>
 
                                         <td className="px-3 py-3 whitespace-nowrap w-32 align-top">

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Settings, X, Save } from 'lucide-react';
 
 type EmployeeForm = {
   id?: string;
@@ -21,7 +22,6 @@ type EmployeeForm = {
   shiftStartTime?: string;
   shiftEndTime?: string;
   workingHours?: number | string;
-  ratePerKm?: number | string;
 };
 
 const initialForm: EmployeeForm = {
@@ -41,7 +41,6 @@ const initialForm: EmployeeForm = {
   shiftStartTime: '10:00',
   shiftEndTime: '18:30',
   workingHours: 8.5,
-  ratePerKm: 0,
 };
 
 export default function EmployeeMaster() {
@@ -51,9 +50,13 @@ export default function EmployeeMaster() {
   const [search, setSearch] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    axios.get('/api/employee-master').then(res => setEmployees(res.data));
-  }, []);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [globalRate, setGlobalRate] = useState<string>('0');
+
+    useEffect(() => {
+        axios.get('/api/employee-master').then(res => setEmployees(res.data));
+        axios.get('/api/employee-settings').then(res => setGlobalRate(res.data.ratePerKm.toString()));
+    }, []);
 
   useEffect(() => {
     if (form.shiftStartTime && form.shiftEndTime) {
@@ -87,6 +90,16 @@ export default function EmployeeMaster() {
     setForm(prev => ({ ...prev, photoUrl: url }));
   };
 
+  const saveGlobalSettings = async () => {
+    try {
+        await axios.post('/api/employee-settings', { ratePerKm: globalRate });
+        toast.success("Universal Rate Updated");
+        setIsSettingsOpen(false);
+    } catch (error) {
+        toast.error("Failed to update rate");
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -95,7 +108,6 @@ export default function EmployeeMaster() {
         dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
         dateOfJoining: form.dateOfJoining ? new Date(form.dateOfJoining).toISOString() : null,
         workingHours: form.workingHours ? parseFloat(form.workingHours as string) : null,
-        ratePerKm: form.ratePerKm ? parseFloat(form.ratePerKm as string) : 0,
       };
       if (editingIndex !== null) {
         const emp = employees[editingIndex];
@@ -156,6 +168,12 @@ export default function EmployeeMaster() {
       <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-md">
           <h1 className="text-2xl font-bold text-white">EMPLOYEE MASTER</h1>
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Settings className="w-4 h-4" /> Global Config
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -264,18 +282,6 @@ export default function EmployeeMaster() {
                     <label className={labelStyle}>Working Hours</label>
                     <input name="workingHours" value={form.workingHours || ''} onChange={handleChange} className={inputStyle} type="number" step="0.1" placeholder="e.g., 8.5" />
                   </div>
-                  <div>
-                    <label className={labelStyle}>Rate Per KM (₹)</label>
-                    <input 
-                        name="ratePerKm" 
-                        value={form.ratePerKm || ''} 
-                        onChange={handleChange} 
-                        className={inputStyle} 
-                        type="number" 
-                        step="0.01" 
-                        placeholder="e.g., 5.00" 
-                    />
-                  </div>
                 </div>
               </fieldset>
             </div>
@@ -333,6 +339,32 @@ export default function EmployeeMaster() {
           </div>
         </div>
       </div>
+      {isSettingsOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-96 p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-800">Global Configuration</h3>
+                                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-500 hover:text-red-500"><X className="w-5 h-5"/></button>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Universal Rate Per KM (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={globalRate} 
+                                    onChange={(e) => setGlobalRate(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 text-gray-700 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">This rate will be applied to all employees for travel expenses.</p>
+                            </div>
+                            <button 
+                                onClick={saveGlobalSettings}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer py-2 rounded font-medium flex items-center justify-center gap-2"
+                            >
+                                <Save className="w-4 h-4" /> Save Configuration
+                            </button>
+                        </div>
+                    </div>
+                )}
     </div>
   );
 }

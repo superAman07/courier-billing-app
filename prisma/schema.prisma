@@ -188,6 +188,12 @@ model BookRateMaster {
   updatedAt  DateTime @updatedAt
 }
 
+model EmployeeSettings {
+  id        String   @id @default("global") 
+  ratePerKm Float    @default(0)
+  updatedAt DateTime @updatedAt
+}
+
 model EmployeeMaster {
   id            String    @id @default(cuid())
   employeeCode  String    @unique
@@ -207,7 +213,6 @@ model EmployeeMaster {
   shiftStartTime String?
   shiftEndTime   String?
   workingHours   Float?
-  ratePerKm      Float?    @default(0)
 
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
