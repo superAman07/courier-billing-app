@@ -21,6 +21,7 @@ type EmployeeForm = {
   shiftStartTime?: string;
   shiftEndTime?: string;
   workingHours?: number | string;
+  ratePerKm?: number | string;
 };
 
 const initialForm: EmployeeForm = {
@@ -40,6 +41,7 @@ const initialForm: EmployeeForm = {
   shiftStartTime: '10:00',
   shiftEndTime: '18:30',
   workingHours: 8.5,
+  ratePerKm: 0,
 };
 
 export default function EmployeeMaster() {
@@ -93,6 +95,7 @@ export default function EmployeeMaster() {
         dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
         dateOfJoining: form.dateOfJoining ? new Date(form.dateOfJoining).toISOString() : null,
         workingHours: form.workingHours ? parseFloat(form.workingHours as string) : null,
+        ratePerKm: form.ratePerKm ? parseFloat(form.ratePerKm as string) : 0,
       };
       if (editingIndex !== null) {
         const emp = employees[editingIndex];
@@ -260,6 +263,18 @@ export default function EmployeeMaster() {
                   <div>
                     <label className={labelStyle}>Working Hours</label>
                     <input name="workingHours" value={form.workingHours || ''} onChange={handleChange} className={inputStyle} type="number" step="0.1" placeholder="e.g., 8.5" />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Rate Per KM (₹)</label>
+                    <input 
+                        name="ratePerKm" 
+                        value={form.ratePerKm || ''} 
+                        onChange={handleChange} 
+                        className={inputStyle} 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="e.g., 5.00" 
+                    />
                   </div>
                 </div>
               </fieldset>

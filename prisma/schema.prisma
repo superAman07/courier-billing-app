@@ -207,6 +207,7 @@ model EmployeeMaster {
   shiftStartTime String?
   shiftEndTime   String?
   workingHours   Float?
+  ratePerKm      Float?    @default(0)
 
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
@@ -225,6 +226,7 @@ model EmployeeAttendance {
   fineAmount    Float?
   advanceAmount Float?
   travelDistance Float?   @default(0)
+  travelAmount   Float?   @default(0)
   remarks       String?
 
   employee   EmployeeMaster @relation(fields: [employeeId], references: [id], onDelete: Cascade)

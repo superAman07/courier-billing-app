@@ -19,6 +19,8 @@ interface AttendanceRecord {
     fineAmount: number | null;
     advanceAmount: number | null;
     travelDistance: number | null;
+    travelAmount: number | null;
+    ratePerKm: number | null;
     remarks: string;
 }
 
@@ -110,6 +112,11 @@ export default function EmployeeAttendancePage() {
                         } else {
                             updatedRecord.lateByMinutes = 0;
                         }
+                    }
+                    if (field === 'travelDistance') {
+                        const dist = parseFloat(value) || 0;
+                        const rate = record.ratePerKm || 0;
+                        updatedRecord.travelAmount = parseFloat((dist * rate).toFixed(2));
                     }
                     return updatedRecord;
                 }
@@ -246,6 +253,11 @@ export default function EmployeeAttendancePage() {
                                 <th className={thStyle}>Travel (km)</th>
                                 <th className={thStyle}>
                                     <span className="inline-flex items-center gap-1">
+                                        <DollarSign className="w-4 h-4" aria-hidden="true" /> Travel Amt
+                                    </span>
+                                </th>
+                                <th className={thStyle}>
+                                    <span className="inline-flex items-center gap-1">
                                         <DollarSign className="w-4 h-4" aria-hidden="true" /> Fine
                                     </span>
                                 </th>
@@ -348,6 +360,15 @@ export default function EmployeeAttendancePage() {
                                                 aria-label={`Travel distance for ${att.employeeName}`}
                                                 inputMode="decimal"
                                             />
+                                        </td>
+
+                                        <td className="px-3 py-3 whitespace-nowrap w-24 align-top">
+                                             <input
+                                                type="number"
+                                                readOnly // Read only because it's calculated
+                                                value={att.travelAmount || ""}
+                                                className={${inputStyle} bg-gray-50 text-blue-600 font-semibold}
+                                                />
                                         </td>
 
                                         <td className="px-3 py-3 whitespace-nowrap w-32 align-top">

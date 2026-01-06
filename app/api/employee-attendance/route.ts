@@ -61,6 +61,9 @@ export async function GET(req: Request) {
                 advanceAmount: attendance?.advanceAmount || 0,
                 // --- NEW FIELD INCLUDED IN RESPONSE ---
                 travelDistance: attendance?.travelDistance || 0,
+                travelAmount: attendance?.travelAmount || 0,
+                // NEW: Send the master rate so frontend can calc
+                ratePerKm: emp.ratePerKm || 0,
                 remarks: attendance?.remarks || '',
             };
         });
@@ -108,6 +111,7 @@ export async function POST(req: Request) {
                     overtimeHours: att.overtimeHours,
                     lateByMinutes: att.lateByMinutes,
                     travelDistance: att.travelDistance ? parseFloat(att.travelDistance) : 0,
+                    travelAmount: att.travelAmount ? parseFloat(att.travelAmount) : 0,
                 },
                 create: {
                     employeeId: att.employeeId,
@@ -123,6 +127,7 @@ export async function POST(req: Request) {
                     overtimeHours: att.overtimeHours,
                     lateByMinutes: att.lateByMinutes,
                     travelDistance: att.travelDistance ? parseFloat(att.travelDistance) : 0,
+                    travelAmount: att.travelAmount ? parseFloat(att.travelAmount) : 0,
                 },
             });
         });
