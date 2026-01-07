@@ -22,24 +22,38 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Source customer has no matching rates to copy." }, { status: 404 });
         }
 
-        const operations = destinationCustomerIds.flatMap(destId =>
-            sourceRates.map(rate => {
-                const { id, customerId, ...rateData } = rate;
-                return prisma.sectorRate.upsert({
-                    where: { customerId_sectorName: { customerId: destId, sectorName: rate.sectorName } },
-                    update: rateData,
-                    create: {
-                        ...rateData,
-                        customerId: destId,
-                    },
-                });
-            })
-        );
+        let totalCopied = 0;
+        let errors = 0;
 
-        // 3. Execute all operations in a single transaction
-        await prisma.$transaction(operations);
+        for (const destId of destinationCustomerIds) {
+            for (const rate of sourceRates) {
+                try {
+                    const { id, customerId, createdAt, updatedAt, ...rateData } = rate;
+                    
+                    await prisma.sectorRate.upsert({
+                        where: {
+                            customerId_sectorName: {
+                                customerId: destId,
+                                sectorName: rate.sectorName
+                            }
+                        },
+                        update: { ...rateData }, 
+                        create: {
+                            ...rateData,
+                            customerId: destId,
+                        },
+                    });
+                    totalCopied++;
+                } catch (err) {
+                    console.error(`Skipping sector ${rate.sectorName} for customer ${destId}:`, err);
+                    errors++;
+                }
+            }
+        }
 
-        return NextResponse.json({ message: `Rates successfully copied to ${destinationCustomerIds.length} customer(s).` });
+        return NextResponse.json({ 
+            message: `Successfully copied ${totalCopied} rates to ${destinationCustomerIds.length} customer(s). ${errors > 0 ? `(${errors} skipped)` : ''}`
+        });
 
     } catch (error) {
         console.error("Failed to copy rates:", error);

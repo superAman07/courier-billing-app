@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CustomerMaster, SectorRate } from '@prisma/client';
 import { toast } from 'sonner';
-import { Copy, Loader2 } from 'lucide-react';
+import { Copy, Loader2, Download } from 'lucide-react';
 
 export default function CopyRatesPage() {
     const [customers, setCustomers] = useState<CustomerMaster[]>([]);
@@ -107,6 +107,10 @@ export default function CopyRatesPage() {
         }
     };
 
+    const handleDownloadAllRates = () => {
+        window.open('/api/sector-rates/download-all', '_blank');
+    };
+
     const destinationCustomers = customers.filter(c => c.id !== sourceCustomerId);
 
     return (
@@ -114,8 +118,17 @@ export default function CopyRatesPage() {
             <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
                 <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
                     <div className="p-6 bg-gradient-to-r from-purple-600 to-pink-600">
-                        <h1 className="text-2xl font-bold text-white">Copy Customer Rates</h1>
-                        <p className="text-purple-100 mt-1">Copy a complete or partial rate card from one customer to others.</p>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">Copy Customer Rates</h1>
+                            <p className="text-purple-100 mt-1">Copy a complete or partial rate card from one customer to others.</p>
+                        </div>
+                        <button
+                            onClick={handleDownloadAllRates}
+                            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                        >
+                            <Download className="w-5 h-5" />
+                            Download All Rates
+                        </button>
                     </div>
 
                     <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
