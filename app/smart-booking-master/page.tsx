@@ -1079,11 +1079,11 @@ export default function SmartBookingMasterPage() {
     const goToLastPage = () => goToPage(totalPages);
 
     const cleanInputClass = (isReadOnly = false, specificColorClass = "") => `
-        w-full h-full px-2 py-1.5 text-xs 
-        border border-transparent 
-        bg-transparent 
-        ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'hover:border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'} 
-        rounded transition-all duration-150 outline-none
+        w-full h-full px-2 py-1.5 text-xs font-semibold
+        border border-gray-300 rounded-sm
+        ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-transparent text-gray-900 hover:border-blue-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600'} 
+        transition-all duration-75 outline-none
+        placeholder:text-gray-400
         ${specificColorClass}
     `;
 
@@ -1218,157 +1218,149 @@ export default function SmartBookingMasterPage() {
                                     <option value="500">500</option>
                                 </select>
                             </div>
-                            {selectedIndices.size > 0 && (
-                                <button 
-                                    onClick={handleDeleteSelected}
-                                    className="flex items-center cursor-pointer gap-2 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 transition"
-                                >
-                                    <Trash2 className="w-4 h-4" /> Delete ({selectedIndices.size})
-                                </button>
-                            )}
                         </div>
-                        <div className="max-h-[300px] overflow-auto border rounded-lg">
-                            <table className="min-w-full text-gray-600">
-                                <thead className="sticky top-0 z-20 bg-blue-100">
+                        <div className="overflow-auto max-h-[65vh] relative">
+                            <table className="min-w-full text-left border-collapse">
+                                <thead className="bg-slate-800 text-slate-200 sticky top-0 z-20 text-xs uppercase tracking-wider font-semibold shadow-md">
                                     <tr>
-                                        <th className="px-3 py-2 border-b w-10 cursor-pointer text-center bg-blue-100">
+                                        <th className="px-3 py-3 border-b border-slate-700 w-10 text-center bg-slate-800 sticky left-0 z-30">
                                             <input type="checkbox" onChange={toggleSelectAll} checked={selectedIndices.size > 0 && selectedIndices.size === paginatedRows.length} />
                                         </th>
                                         {columns.map(col => (
-                                            <th key={col} className="px-3 py-2 text-xs font-semibold text-blue-900 border-b">
+                                            <th key={col} className="px-3 py-3 border-b border-slate-700 min-w-[120px] whitespace-nowrap">
                                                 {COLUMN_MAP[col]}
                                             </th>
                                         ))}
-                                        <th className="px-3 py-2 text-xs font-semibold text-blue-900 border-b">Actions</th>
+                                        <th className="px-3 py-3 border-b border-slate-700 text-center bg-slate-800 sticky right-0 z-30 shadow-[-4px_0px_6px_-2px_rgba(0,0,0,0.2)]">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {/* {filteredRows.map((row) => ( */}
+                                <tbody className="divide-y divide-gray-100 text-sm">
                                     {paginatedRows.map((row) => (
-                                        <tr key={row.__origIndex} className={row._awbExists ? "bg-yellow-50" : ""}>
-                                            <td className="px-1 py-2 border-b text-center">
+                                        <tr key={row.__origIndex} className={`group hover:bg-blue-50/50 transition-colors ${row._awbExists ? "bg-amber-50/30" : "bg-white"}`}>
+                                            <td className="px-1 py-1 border-r border-gray-300 text-center sticky left-0 bg-inherit z-10">
                                                 <input 
                                                     type="checkbox" 
                                                     checked={selectedIndices.has(row.__origIndex)} 
                                                     onChange={() => toggleSelection(row.__origIndex)} 
+                                                    className="rounded border-gray-400 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 />
                                             </td>
-                                            {columns.map(col => (
-                                                <td key={col} className="px-1 py-2 border-b relative">
-                                                    {["paymentStatus", "mode", "status", "delivered"].includes(col) ? (
-                                                        <select
-                                                            value={row[col] || ""}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs"
-                                                            disabled={col === 'paymentStatus' && row.status !== 'INVOICED'}
-                                                            title={col === 'paymentStatus' && row.status !== 'INVOICED' ? 'Payment status can only be changed after an invoice is generated.' : ''}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            {OPTIONS[col as keyof typeof OPTIONS].map(opt => (
-                                                                <option key={opt} value={opt}>{opt}</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : col === "serviceProvider" ? (
-                                                        <select
-                                                            value={row[col] || "DTDC"}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs bg-white"
-                                                        >
-                                                            <option value="DTDC">DTDC</option>
-                                                            <option value="Trackon">Trackon</option>
-                                                            <option value="Others">Others</option>
-                                                        </select>
-                                                    ) : ["bookingDate", "statusDate", "dateOfDelivery", "todayDate"].includes(col) ? (
-                                                        <input
-                                                            type="date"
-                                                            value={row[col] ? new Date(row[col]).toISOString().slice(0, 10) : ""}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs"
-                                                        />
-                                                    ) : col === "dsrNdxPaper" ? (
-                                                        <select
-                                                            value={row[col] || ""}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs"
-                                                        >
-                                                            <option value="">Select</option>
-                                                            <option value="D">D (Dox)</option>
-                                                            <option value="N">N (Non Dox)</option>
-                                                        </select>
-                                                    ) : col === "customerType" ? (
-                                                        <select
-                                                            value={row[col] || "CREDIT"}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className="w-full p-1 border rounded text-xs"
-                                                        >
-                                                            <option value="CREDIT">Credit</option>
-                                                            <option value="REGULAR">Regular</option>
-                                                            <option value="WALK-IN">Walk-in</option>
-                                                        </select>
-                                                    ) : col === "customerCode" ? (
-                                                        <div className="relative">
-                                                            <input
+                                            {columns.map(col => { 
+                                                const bgClass = 
+                                                    col === "todayDate" ? "text-blue-700 font-bold" :
+                                                    col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "text-red-600 font-bold bg-red-50" :
+                                                    col === "gst" ? "text-amber-700 font-medium" :
+                                                    (col === "location" || col === "destinationCity") && row.location === row.destinationCity && row.location ? "text-green-700 font-bold" : 
+                                                    col === "awbNo" ? "font-mono font-bold text-gray-900 tracking-wide" : "";
+
+                                                return (
+                                                    <td key={col} className={`px-0 py-0 border-r border-b border-gray-300 relative h-10 min-w-[100px]`}>
+                                                        {["paymentStatus", "mode", "status", "delivered"].includes(col) ? (
+                                                            <select
                                                                 value={row[col] || ""}
                                                                 onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                                className="w-full p-1 border rounded text-xs"
-                                                                placeholder="Search customer..."
+                                                                className={cleanInputClass(false, "cursor-pointer bg-gray-50")}
+                                                                disabled={col === 'paymentStatus' && row.status !== 'INVOICED'}
+                                                                title={col === 'paymentStatus' && row.status !== 'INVOICED' ? 'Payment status can only be changed after an invoice is generated.' : ''}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {OPTIONS[col as keyof typeof OPTIONS].map(opt => (
+                                                                    <option key={opt} value={opt}>{opt}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : col === "serviceProvider" ? (
+                                                            <select
+                                                                value={row[col] || "DTDC"}
+                                                                onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                className={cleanInputClass(false, "cursor-pointer bg-gray-50")}
+                                                            >
+                                                                <option value="DTDC">DTDC</option>
+                                                                <option value="Trackon">Trackon</option>
+                                                                <option value="Others">Others</option>
+                                                            </select>
+                                                        ) : ["bookingDate", "statusDate", "dateOfDelivery", "todayDate"].includes(col) ? (
+                                                            <input
+                                                                type="date"
+                                                                value={row[col] ? new Date(row[col]).toISOString().slice(0, 10) : ""}
+                                                                onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                className={cleanInputClass(false, bgClass)}
                                                             />
-                                                            {customerSuggestions[row.__origIndex]?.length > 0 && (
-                                                                <div className="absolute top-full left-0 z-[9999] w-64 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                                    {customerSuggestions[row.__origIndex].map(customer => (
-                                                                        <div
-                                                                            key={customer.id}
-                                                                            onClick={() => handleCustomerSelect(row.__origIndex, customer)}
-                                                                            className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-                                                                        >
-                                                                            <div className="font-medium">{customer.customerCode}</div>
-                                                                            <div className="text-gray-500">{customer.customerName}</div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <input
-                                                            value={col === "todayDate" ? getCurrentDate() :
-                                                                col === "pendingDaysNotDelivered" ?
-                                                                    calculatePendingDays(row.bookingDate, row.status) :
-                                                                    row[col] || ""
-                                                            }
-                                                            id={col === "gst" ? `gst-input-${row.__origIndex}` : undefined}
-                                                            onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
-                                                            className={`w-full p-1 border rounded text-xs ${col === "todayDate" ? "bg-blue-50 border-blue-300" :
-                                                                col === "pendingDaysNotDelivered" && row.status !== "DELIVERED" ? "bg-red-50 border-red-300" :
-                                                                    col === "gst" && row.gst ? "bg-yellow-50 border-yellow-300" :
-                                                                        (col === "location" || col === "destinationCity") &&
-                                                                            row.location === row.destinationCity && row.location ?
-                                                                            "bg-green-50 border-green-300" : ""
-                                                                }`}
-                                                            disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue" || col === "customerName" || col === "childCustomer"}
-                                                            placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
-                                                            title={col === "gst" ? "Auto-calculated GST percentage" :
-                                                                col === "valumetric" ? "Auto-calculated from L/W/H" :
-                                                                    col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)` :
-                                                                        col === "clientBillingValue" ? "Auto-calculated from components" : ""
-                                                            }
-                                                        />
-                                                    )}
-                                                </td>
-                                            ))}
-                                            <td className="px-3 py-2 border-b">
-                                                <button
-                                                    onClick={() => handleSave(row.__origIndex)}
-                                                    className="bg-blue-600 text-white px-3 cursor-pointer py-1 rounded text-xs hover:bg-blue-700"
-                                                >
-                                                    {loading ? "Saving..." : "Save"}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteRow(row.__origIndex)}
-                                                    className="text-red-500 hover:text-red-700 cursor-pointer p-1"
-                                                    title="Delete Booking"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                        ) : col === "dsrNdxPaper" ? (
+                                                            <select
+                                                                value={row[col] || ""}
+                                                                onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                className={cleanInputClass(false, "cursor-pointer")}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                <option value="D">D (Dox)</option>
+                                                                <option value="N">N (Non Dox)</option>
+                                                            </select>
+                                                        ) : col === "customerType" ? (
+                                                            <select
+                                                                value={row[col] || "CREDIT"}
+                                                                onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                className={cleanInputClass()}
+                                                            >
+                                                                <option value="CREDIT">Credit</option>
+                                                                <option value="REGULAR">Regular</option>
+                                                                <option value="WALK-IN">Walk-in</option>
+                                                            </select>
+                                                        ) : col === "customerCode" ? (
+                                                            <div className="relative">
+                                                                <input
+                                                                    value={row[col] || ""}
+                                                                    // onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                    onChange={e => {
+                                                                        handleEdit(row.__origIndex, col, e.target.value);
+                                                                        handleCustomerSearch(row.__origIndex, e.target.value);
+                                                                    }}
+                                                                    className={cleanInputClass()}
+                                                                    placeholder="Search..."
+                                                                />
+                                                                {customerSuggestions[row.__origIndex]?.length > 0 && (
+                                                                    <div className="absolute top-10 left-0 z-50 w-64 bg-white border rounded shadow-xl max-h-48 overflow-y-auto">
+                                                                        {customerSuggestions[row.__origIndex].map(customer => (
+                                                                            <div key={customer.id} onClick={() => handleCustomerSelect(row.__origIndex, customer)} className="p-2 hover:bg-blue-50 cursor-pointer text-xs border-b">
+                                                                                <div className="font-bold text-blue-700">{customer.customerCode}</div>
+                                                                                <div className="text-gray-600">{customer.customerName}</div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <input
+                                                                value={col === "todayDate" ? getCurrentDate() :
+                                                                    col === "pendingDaysNotDelivered" ?
+                                                                        calculatePendingDays(row.bookingDate, row.status) :
+                                                                        row[col] || ""
+                                                                }
+                                                                id={col === "gst" ? `gst-input-${row.__origIndex}` : undefined}
+                                                                onChange={e => handleEdit(row.__origIndex, col, e.target.value)}
+                                                                className={cleanInputClass(
+                                                                    col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue" || col === "customerName" || col === "childCustomer", bgClass
+                                                                )}
+                                                                disabled={col === "awbNo" && row._awbExists || col === "todayDate" || col === "pendingDaysNotDelivered" || col === "valumetric" || col === "fuelSurcharge" || col === "gst" || col === "clientBillingValue" || col === "customerName" || col === "childCustomer"}
+                                                                placeholder={col === "fuelSurcharge" && (!row.frCharge || row.frCharge === "0") ? "Enter FR Charge" : ""}
+                                                                title={col === "gst" ? "Auto-calculated GST percentage" :
+                                                                    col === "valumetric" ? "Auto-calculated from L/W/H" :
+                                                                        col === "fuelSurcharge" ? `Auto-calculated from FR Charge (${row._fuelSurchargePercent || 0}%)` :
+                                                                            col === "clientBillingValue" ? "Auto-calculated from components" : ""
+                                                                }
+                                                            />
+                                                        )}
+                                                    </td>
+                                                )}
+                                            )}
+                                            <td className="px-2 py-1 border-l border-gray-200 text-center sticky right-0 bg-white group-hover:bg-blue-50/50 shadow-[-4px_0px_6px_-2px_rgba(0,0,0,0.05)] z-10 w-[100px]">
+                                                <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleSave(row.__origIndex)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded" title="Save">
+                                                        <Save className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteRow(row.__origIndex)} className="p-1.5 text-red-600 hover:bg-red-100 rounded" title="Delete">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
