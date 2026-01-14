@@ -1400,9 +1400,30 @@ export default function SmartBookingMasterPage() {
                                                                 {customerSuggestions[row.__origIndex]?.length > 0 && (
                                                                     <div className="absolute top-10 left-0 z-50 w-64 bg-white border rounded shadow-xl max-h-48 overflow-y-auto">
                                                                         {customerSuggestions[row.__origIndex].map(customer => (
-                                                                            <div key={customer.id} onClick={() => handleCustomerSelect(row.__origIndex, customer)} className="p-2 hover:bg-blue-50 cursor-pointer text-xs border-b">
-                                                                                <div className="font-bold text-blue-700">{customer.customerCode}</div>
-                                                                                <div className="text-gray-600">{customer.customerName}</div>
+                                                                            <div 
+                                                                                key={customer.id} 
+                                                                                onClick={() => handleCustomerSelect(row.__origIndex, customer)} 
+                                                                                className="p-3 hover:bg-blue-50 cursor-pointer text-xs border-b border-gray-100 flex flex-col gap-1 transition-colors"
+                                                                            >
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <span className="font-bold text-blue-700">{customer.customerName}</span>
+                                                                                    <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-mono">
+                                                                                        {customer.customerCode}
+                                                                                    </span>
+                                                                                </div>
+
+                                                                                {customer.childCustomer && customer.childCustomer !== customer.customerName && (
+                                                                                    <div className="text-gray-800 font-medium">
+                                                                                        Branch: {customer.childCustomer}
+                                                                                    </div>
+                                                                                )}
+
+                                                                                <div className="text-gray-500 flex items-center gap-1 mt-0.5">
+                                                                                    <span className="truncate max-w-[200px]">
+                                                                                        {customer.city ? customer.city : 'No City'} 
+                                                                                        {customer.address ? ` - ${customer.address.substring(0, 25)}...` : ''}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
                                                                         ))}
                                                                     </div>
