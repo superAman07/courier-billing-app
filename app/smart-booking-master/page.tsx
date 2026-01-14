@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -84,6 +84,7 @@ export default function SmartBookingMasterPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(100);
     const [totalPages, setTotalPages] = useState(1);
+    const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
 
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
 
@@ -1032,6 +1033,9 @@ export default function SmartBookingMasterPage() {
     };
 
     const filteredRows = tableRows.filter(row => {
+        if (dateFilter.start && row.bookingDate < dateFilter.start) return false;
+        if (dateFilter.end && row.bookingDate > dateFilter.end) return false;
+
         if (!search) return true;
         const s = search.toLowerCase();
         return Object.values(row).some(val =>
@@ -1074,6 +1078,15 @@ export default function SmartBookingMasterPage() {
     const goToNextPage = () => goToPage(currentPage + 1);
     const goToLastPage = () => goToPage(totalPages);
 
+    const cleanInputClass = (isReadOnly = false, specificColorClass = "") => `
+        w-full h-full px-2 py-1.5 text-xs 
+        border border-transparent 
+        bg-transparent 
+        ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'hover:border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'} 
+        rounded transition-all duration-150 outline-none
+        ${specificColorClass}
+    `;
+
     return (
         <div className="max-w-[1440px] mx-auto p-8">
             <div className="flex items-center justify-between mb-6 w-full">
@@ -1098,8 +1111,8 @@ export default function SmartBookingMasterPage() {
                     </div>
                 </div>
             </div>
-            <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
 
+            <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
             <BookingImportPanel onData={handleImport} />
 
             {loading && (
@@ -1123,30 +1136,67 @@ export default function SmartBookingMasterPage() {
 
             {tableRows.length > 0 && (
                 <>
-                    <div className="flex justify-between bg-white py-6 px-6 rounded-xl shadow-sm border mt-10">
-                        <div className="relative w-80">
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                className="w-full p-3 border border-gray-300 text-gray-600 rounded-lg"
-                                placeholder="Search by AWB, Customer, Status..."
-                            />
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mt-6 mb-4 sticky top-4 z-30">
+                        <div className="flex flex-col xl:flex-row gap-4 justify-between items-end xl:items-center">
+                            
+                            {/* LEFT: FILTERS */}
+                            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                                <div className="relative w-full sm:w-64">
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Search..."
+                                    />
+                                    <Filter className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                </div>
+
+                                {/* DATE FILTERS */}
+                                <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
+                                    <Calendar className="w-4 h-4 text-gray-500 ml-2" />
+                                    <input 
+                                        type="date" 
+                                        value={dateFilter.start} 
+                                        onChange={e => setDateFilter(prev => ({...prev, start: e.target.value}))}
+                                        className="bg-transparent border-none text-sm text-gray-700 focus:ring-0 p-1"
+                                    />
+                                    <span className="text-gray-400">-</span>
+                                    <input 
+                                        type="date" 
+                                        value={dateFilter.end} 
+                                        onChange={e => setDateFilter(prev => ({...prev, end: e.target.value}))}
+                                        className="bg-transparent border-none text-sm text-gray-700 focus:ring-0 p-1"
+                                    />
+                                    {(dateFilter.start || dateFilter.end) && (
+                                        <button onClick={() => setDateFilter({start:"", end:""})} className="p-1 hover:text-red-500 text-gray-400"><X className="w-3 h-3"/></button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* RIGHT: ACTIONS */}
+                            <div className="flex items-center gap-2 w-full xl:w-auto justify-end">
+                                {selectedIndices.size > 0 && (
+                                    <button 
+                                        onClick={handleDeleteSelected}
+                                        className="flex items-center gap-2 cursor-pointer bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" /> Delete ({selectedIndices.size})
+                                    </button>
+                                )}
+                                <button onClick={handleDownload} className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors">
+                                    <Download className="w-4 h-4" /> Excel
+                                </button>
+                                <button 
+                                    onClick={handleSaveAll} 
+                                    disabled={loading}
+                                    className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm text-sm font-medium transition-colors"
+                                >
+                                    {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-4 h-4" />}
+                                    Save All ({tableRows.length})
+                                </button>
+                            </div>
                         </div>
-                        <button onClick={handleDownload} className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                            <Download className="w-5 h-5" />
-                            Download Excel
-                        </button>
-                        {tableRows.length > 0 && (
-                            <button 
-                                onClick={handleSaveAll} 
-                                disabled={loading}
-                                className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg ml-3 shadow-md"
-                            >
-                                {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-5 h-5" />}
-                                Save All ({tableRows.length})
-                            </button>
-                        )}
                     </div>
 
                     <div className="mt-8 overflow-x-auto">
