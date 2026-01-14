@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -87,6 +87,7 @@ export default function SmartBookingMasterPage() {
     const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
 
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+    const [isAutoMapping, setIsAutoMapping] = useState(false);
 
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
@@ -147,6 +148,64 @@ export default function SmartBookingMasterPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAutoMapLocations = async () => {
+        const missingLocationIndices = tableRows
+            .map((row, idx) => ({ ...row, idx }))
+            .filter(r => r.pin && r.pin.length === 6 && (!r.location || !r.destinationCity));
+
+        if (missingLocationIndices.length === 0) {
+            toast.info("All valid pincodes are already mapped!");
+            return;
+        }
+
+        setIsAutoMapping(true);
+        toast.info(`Starting auto-map for ${missingLocationIndices.length} rows...`);
+
+        const BATCH_SIZE = 5;
+        const DELAY_MS = 1000;
+
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+        let updatedRows = [...tableRows];
+        let processedCount = 0;
+
+        for (let i = 0; i < missingLocationIndices.length; i += BATCH_SIZE) {
+            const batch = missingLocationIndices.slice(i, i + BATCH_SIZE);
+            
+            await Promise.all(batch.map(async (item) => {
+                try {
+                    const localPin = pincodeMaster.find(p => p.pincode === item.pin);
+                    
+                    if (localPin && localPin.city) {
+                        updatedRows[item.idx].location = localPin.city.name;
+                        updatedRows[item.idx].destinationCity = localPin.city.code;
+                        updatedRows[item.idx].state = localPin.state?.name;
+                    } else {
+                        const { data } = await axios.get(`https://api.postalpincode.in/pincode/${item.pin}`);
+                        if (data && data[0].Status === 'Success') {
+                            const postOffice = data[0].PostOffice[0];
+                            const cityName = postOffice.District; 
+                            const stateName = postOffice.State;
+                            const cityCode = getCityCode(cityName);
+                            
+                            updatedRows[item.idx].location = cityName;
+                            updatedRows[item.idx].destinationCity = cityCode || cityName.substring(0, 3).toUpperCase();
+                            updatedRows[item.idx].state = stateName;
+                        }
+                    }
+                    processedCount++;
+                } catch (e) {
+                    console.warn(`Failed to map pin ${item.pin}`);
+                }
+            }));
+            setTableRows([...updatedRows]);
+            await delay(DELAY_MS);
+        }
+
+        setIsAutoMapping(false);
+        toast.success(`Auto-mapping complete. Processed ${processedCount} locations.`);
     };
 
     const recalculateClientBilling = (row: any) => {
@@ -1194,6 +1253,27 @@ export default function SmartBookingMasterPage() {
                                 >
                                     {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-4 h-4" />}
                                     Save All ({tableRows.length})
+                                </button>
+                                <button 
+                                    onClick={handleAutoMapLocations}
+                                    disabled={isAutoMapping || loading}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                        isAutoMapping 
+                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                        : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                    }`}
+                                >
+                                    {isAutoMapping ? (
+                                        <>
+                                            <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"/>
+                                            Mapping...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MapPin className="w-4 h-4" /> {/* Import MapPin from lucide-react */}
+                                            Auto-Map Locations
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
