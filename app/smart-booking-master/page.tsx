@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2 } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -84,6 +84,69 @@ export default function SmartBookingMasterPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(100);
     const [totalPages, setTotalPages] = useState(1);
+
+    const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+
+    const toggleSelection = (index: number) => {
+        const newSelection = new Set(selectedIndices);
+        if (newSelection.has(index)) {
+            newSelection.delete(index);
+        } else {
+            newSelection.add(index);
+        }
+        setSelectedIndices(newSelection);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIndices.size === paginatedRows.length) {
+            setSelectedIndices(new Set());
+        } else {
+            const allIndices = new Set(paginatedRows.map(r => r.__origIndex));
+            setSelectedIndices(allIndices);
+        }
+    };
+
+    const handleDeleteRow = async (rowIndex: number) => {
+        const row = tableRows[rowIndex];
+        if(!confirm(`Are you sure you want to delete AWB ${row.awbNo}?`)) return;
+
+        setLoading(true);
+        try {
+            if (row._bookingId) {
+                await axios.delete(`/api/booking-master/${row._bookingId}`);
+            }
+            
+            setTableRows(prev => prev.filter((_, i) => i !== rowIndex));
+            toast.success("Row deleted.");
+        } catch(e) {
+            toast.error("Failed to delete row.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        const indices = Array.from(selectedIndices);
+        if(!confirm(`Delete ${indices.length} selected bookings?`)) return;
+
+        setLoading(true);
+        try {
+            const rowsToDelete = indices.map(i => tableRows[i]);
+            const idsToDelete = rowsToDelete.map(r => r._bookingId).filter(Boolean);
+
+            if (idsToDelete.length > 0) {
+                 await Promise.all(idsToDelete.map(id => axios.delete(`/api/booking-master/${id}`)));
+            }
+
+            setTableRows(prev => prev.filter((_, i) => !selectedIndices.has(i)));
+            setSelectedIndices(new Set());
+            toast.success("Selected bookings deleted.");
+        } catch(e) {
+            toast.error("Failed to delete some bookings.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const recalculateClientBilling = (row: any) => {
         const frCharge = parseFloat(row.frCharge) || 0;
@@ -1105,11 +1168,22 @@ export default function SmartBookingMasterPage() {
                                     <option value="500">500</option>
                                 </select>
                             </div>
+                            {selectedIndices.size > 0 && (
+                                <button 
+                                    onClick={handleDeleteSelected}
+                                    className="flex items-center cursor-pointer gap-2 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 transition"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Delete ({selectedIndices.size})
+                                </button>
+                            )}
                         </div>
                         <div className="max-h-[300px] overflow-auto border rounded-lg">
                             <table className="min-w-full text-gray-600">
                                 <thead className="sticky top-0 z-20 bg-blue-100">
                                     <tr>
+                                        <th className="px-3 py-2 border-b w-10 cursor-pointer text-center bg-blue-100">
+                                            <input type="checkbox" onChange={toggleSelectAll} checked={selectedIndices.size > 0 && selectedIndices.size === paginatedRows.length} />
+                                        </th>
                                         {columns.map(col => (
                                             <th key={col} className="px-3 py-2 text-xs font-semibold text-blue-900 border-b">
                                                 {COLUMN_MAP[col]}
@@ -1122,6 +1196,13 @@ export default function SmartBookingMasterPage() {
                                     {/* {filteredRows.map((row) => ( */}
                                     {paginatedRows.map((row) => (
                                         <tr key={row.__origIndex} className={row._awbExists ? "bg-yellow-50" : ""}>
+                                            <td className="px-1 py-2 border-b text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedIndices.has(row.__origIndex)} 
+                                                    onChange={() => toggleSelection(row.__origIndex)} 
+                                                />
+                                            </td>
                                             {columns.map(col => (
                                                 <td key={col} className="px-1 py-2 border-b relative">
                                                     {["paymentStatus", "mode", "status", "delivered"].includes(col) ? (
@@ -1230,6 +1311,13 @@ export default function SmartBookingMasterPage() {
                                                     className="bg-blue-600 text-white px-3 cursor-pointer py-1 rounded text-xs hover:bg-blue-700"
                                                 >
                                                     {loading ? "Saving..." : "Save"}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteRow(row.__origIndex)}
+                                                    className="text-red-500 hover:text-red-700 cursor-pointer p-1"
+                                                    title="Delete Booking"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </td>
                                         </tr>
