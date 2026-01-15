@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin, UserCheck } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -88,6 +88,7 @@ export default function SmartBookingMasterPage() {
 
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
     const [isAutoMapping, setIsAutoMapping] = useState(false);
+    const [isAutoMappingCustomers, setIsAutoMappingCustomers] = useState(false);
 
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
@@ -206,6 +207,75 @@ export default function SmartBookingMasterPage() {
 
         setIsAutoMapping(false);
         toast.success(`Auto-mapping complete. Processed ${processedCount} locations.`);
+    };
+
+    const handleAutoMapCustomers = async () => {
+        const visibleRows = paginatedRows;
+
+        const rowsToMap = visibleRows.filter(r => 
+            r.customerCode && 
+            String(r.customerCode).trim() !== "" 
+        );
+
+        if (rowsToMap.length === 0) {
+            toast.info("No customer codes found on this page to map.");
+            return;
+        }
+
+        let masterData = customers;
+        if (masterData.length === 0) {
+            try {
+                const { data } = await axios.get("/api/customers");
+                masterData = data;
+                setCustomers(data);
+            } catch (e) {
+                toast.error("Failed to load customer master data.");
+                return;
+            }
+        }
+
+        setIsAutoMappingCustomers(true);
+        toast.loading(`Mapping ${rowsToMap.length} customers on this page...`);
+
+        let updatedTableRows = [...tableRows];
+        let mappedCount = 0;
+
+        rowsToMap.forEach(row => {
+            const originalIndex = row.__origIndex; 
+            const codeSearch = String(row.customerCode).trim().toLowerCase();
+            
+            const match = masterData.find((c: any) => 
+                c.customerCode.toLowerCase() === codeSearch || 
+                (c.customerName && c.customerName.toLowerCase() === codeSearch)
+            );
+            
+            if (match) {
+                const targetRow = updatedTableRows[originalIndex];
+                
+                targetRow.customerId = match.id;
+                targetRow.customerName = match.customerName;
+                targetRow.childCustomer = match.childCustomer || match.customerName;
+                targetRow.senderContactNo = match.mobile || match.phone || "";
+                targetRow.senderDetail = match.customerName || "";
+                targetRow.address = match.address || "";
+                targetRow._fuelSurchargePercent = match.fuelSurchargePercent || 0;
+                
+                targetRow._gstPercent = getGSTPercentage(match.pincode || "", match.state);
+                
+                recalculateClientBilling(targetRow);
+                
+                mappedCount++;
+            }
+        });
+        setTableRows(updatedTableRows);
+        setIsAutoMappingCustomers(false);
+        toast.dismiss();
+        
+        if (mappedCount > 0) {
+            toast.success(`Successfully mapped/updated ${mappedCount} customers.`);
+        } else {
+            toast.warning(`No matching customers found in Master.`);
+        }
     };
 
     const recalculateClientBilling = (row: any) => {
@@ -1253,6 +1323,27 @@ export default function SmartBookingMasterPage() {
                                 >
                                     {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-4 h-4" />}
                                     Save All ({tableRows.length})
+                                </button>
+                                <button 
+                                    onClick={handleAutoMapCustomers}
+                                    disabled={isAutoMappingCustomers || loading}
+                                    className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                        isAutoMappingCustomers 
+                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                        : "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                                    }`}
+                                >
+                                    {isAutoMappingCustomers ? (
+                                        <>
+                                            <div className="animate-spin h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full"/>
+                                            Mapping...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserCheck className="w-4 h-4" />
+                                            Auto-Map Customers
+                                        </>
+                                    )}
                                 </button>
                                 <button 
                                     onClick={handleAutoMapLocations}
