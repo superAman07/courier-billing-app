@@ -78,7 +78,15 @@ const parseImportedDate = (dateVal: any): string => {
     }
 
     const str = String(dateVal).trim();
+
+    // 1. Handle YYYY/MM/DD or YYYY-MM-DD
+    const yyyymmddRegex = /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/;
+    const yyyyMatch = str.match(yyyymmddRegex);
+    if (yyyyMatch) {
+         return `${yyyyMatch[1]}-${yyyyMatch[2].padStart(2, '0')}-${yyyyMatch[3].padStart(2, '0')}`;
+    }
     
+    // 2. Handle DD-MM-YYYY or DD/MM/YYYY
     const ddmmyyyyRegex = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/;
     const match = str.match(ddmmyyyyRegex);
     
@@ -92,6 +100,7 @@ const parseImportedDate = (dateVal: any): string => {
     const isoMatch = str.match(/^\d{4}-\d{2}-\d{2}/);
     if (isoMatch) return isoMatch[0];
 
+    // Fallback
     const date = new Date(str);
     if (!isNaN(date.getTime())) {
         return date.toISOString().split('T')[0];
