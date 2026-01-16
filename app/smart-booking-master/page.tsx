@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin, UserCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin, UserCheck, Calculator } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -89,6 +89,7 @@ export default function SmartBookingMasterPage() {
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
     const [isAutoMapping, setIsAutoMapping] = useState(false);
     const [isAutoMappingCustomers, setIsAutoMappingCustomers] = useState(false);
+    const [isCalculatingRates, setIsCalculatingRates] = useState(false);
 
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
@@ -276,6 +277,90 @@ export default function SmartBookingMasterPage() {
         } else {
             toast.warning(`No matching customers found in Master.`);
         }
+    };
+
+    const handleAutoCalculateRates = async () => {
+        const visibleRows = paginatedRows;
+
+        // Filter rows that are ready for calculation:
+        // Must have: Customer ID, Pincode, Charge Weight, Mode
+        const rowsToCalc = visibleRows.filter(r => 
+            r.customerId && 
+            r.pin && 
+            parseFloat(r.chargeWeight) > 0 &&
+            r.mode
+        );
+
+        if (rowsToCalc.length === 0) {
+            toast.info("No rows ready for calculation (Check missing Customers, Pincodes, or Weights).");
+            return;
+        }
+
+        setIsCalculatingRates(true);
+        toast.info(`Calculating rates for ${rowsToCalc.length} rows...`);
+
+        // Process in small batches to ensure server stability
+        const BATCH_SIZE = 5;
+        const delayedRows = [...tableRows];
+        let successCount = 0;
+        let failCount = 0;
+
+        // Helper for batches
+        for (let i = 0; i < rowsToCalc.length; i += BATCH_SIZE) {
+            const batch = rowsToCalc.slice(i, i + BATCH_SIZE);
+            
+            await Promise.all(batch.map(async (row) => {
+                const idx = row.__origIndex;
+                try {
+                    const { data } = await axios.post('/api/calculate-rate', {
+                        customerId: row.customerId,
+                        destinationPincode: row.pin,
+                        chargeWeight: row.chargeWeight,
+                        isDox: row.dsrNdxPaper === 'D',
+                        mode: row.mode,
+                        invoiceValue: row.invoiceValue,
+                        state: row.state,
+                    });
+
+                    // Update the row with fetched rates
+                    delayedRows[idx] = {
+                        ...delayedRows[idx],
+                        frCharge: data.frCharge.toFixed(2),
+                        waybillSurcharge: data.waybillSurcharge.toFixed(2),
+                        otherExp: data.otherExp.toFixed(2),
+                        serviceProvider: data.serviceProvider || delayedRows[idx].serviceProvider || "DTDC"
+                    };
+
+                    // Calculate Fuel Surcharge
+                    const frCharge = parseFloat(data.frCharge) || 0;
+                    const fuelPercent = delayedRows[idx]._fuelSurchargePercent || 0;
+                    
+                    if (frCharge > 0 && fuelPercent > 0) {
+                         delayedRows[idx].fuelSurcharge = ((frCharge * fuelPercent) / 100).toFixed(2);
+                    } else {
+                         delayedRows[idx].fuelSurcharge = "0.00";
+                    }
+
+                    // Final Totals (GST + CBV)
+                    // We call the local helper to ensure math consistency
+                    delayedRows[idx] = recalculateClientBilling(delayedRows[idx]);
+                    successCount++;
+
+                } catch (error) {
+                    console.error(`Rate calc failed for ${row.awbNo}`);
+                    failCount++;
+                }
+            }));
+
+            // Update UI after every batch so user sees progress
+            setTableRows([...delayedRows]);
+            // Small pause to breathe
+            await new Promise(res => setTimeout(res, 200));
+        }
+
+        setIsCalculatingRates(false);
+        if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
+        if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
     };
 
     const recalculateClientBilling = (row: any) => {
@@ -1342,6 +1427,27 @@ export default function SmartBookingMasterPage() {
                                         <>
                                             <UserCheck className="w-4 h-4" />
                                             Auto-Map Customers
+                                        </>
+                                    )}
+                                </button>
+                                <button 
+                                    onClick={handleAutoCalculateRates}
+                                    disabled={isCalculatingRates || loading}
+                                    className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                        isCalculatingRates 
+                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                        : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                                    }`}
+                                >
+                                    {isCalculatingRates ? (
+                                        <>
+                                            <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"/>
+                                            Calculating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Calculator className="w-4 h-4" />
+                                            Calc Rates
                                         </>
                                     )}
                                 </button>
