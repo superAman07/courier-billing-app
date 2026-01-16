@@ -68,6 +68,38 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     customerCode: ["Customer Code", "CustomerCode", "Code"],
 };
 
+const parseImportedDate = (dateVal: any): string => {
+    if (!dateVal) return "";
+    
+    if (typeof dateVal === 'number') {
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        const dt = new Date(excelEpoch.getTime() + dateVal * 86400000);
+        return dt.toISOString().split('T')[0];
+    }
+
+    const str = String(dateVal).trim();
+    
+    const ddmmyyyyRegex = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/;
+    const match = str.match(ddmmyyyyRegex);
+    
+    if (match) {
+        const day = match[1].padStart(2, '0');
+        const month = match[2].padStart(2, '0');
+        const year = match[3];
+        return `${year}-${month}-${day}`;
+    }
+
+    const isoMatch = str.match(/^\d{4}-\d{2}-\d{2}/);
+    if (isoMatch) return isoMatch[0];
+
+    const date = new Date(str);
+    if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+    }
+    
+    return "";
+};
+
 export default function SmartBookingMasterPage() {
     const [tableRows, setTableRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -671,8 +703,8 @@ export default function SmartBookingMasterPage() {
                         } else {
                             mapped[col] = rawValue;
                         }
-                    } else if (col === "bookingDate" || col === "statusDate") {
-                        mapped[col] = parseDateString(row[importKey]);
+                    } else if (col === "bookingDate" || col === "statusDate" || col === "dateOfDelivery") {
+                        mapped[col] = parseImportedDate(row[importKey]);
                     } else if (col === "location") {
                         const rawLocation = row[importKey];
                         mapped[col] = extractCityName(rawLocation);
