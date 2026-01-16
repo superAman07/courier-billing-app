@@ -1401,13 +1401,27 @@ export default function SmartBookingMasterPage() {
                                 <button onClick={handleDownload} className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors">
                                     <Download className="w-4 h-4" /> Excel
                                 </button>
+                                
                                 <button 
-                                    onClick={handleSaveAll} 
-                                    disabled={loading}
-                                    className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm text-sm font-medium transition-colors"
+                                    onClick={handleAutoMapLocations}
+                                    disabled={isAutoMapping || loading}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                        isAutoMapping 
+                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                        : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                    }`}
                                 >
-                                    {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-4 h-4" />}
-                                    Save All ({tableRows.length})
+                                    {isAutoMapping ? (
+                                        <>
+                                            <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"/>
+                                            Mapping...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MapPin className="w-4 h-4" /> {/* Import MapPin from lucide-react */}
+                                            Auto-Map Locations
+                                        </>
+                                    )}
                                 </button>
                                 <button 
                                     onClick={handleAutoMapCustomers}
@@ -1451,27 +1465,16 @@ export default function SmartBookingMasterPage() {
                                         </>
                                     )}
                                 </button>
+
                                 <button 
-                                    onClick={handleAutoMapLocations}
-                                    disabled={isAutoMapping || loading}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                                        isAutoMapping 
-                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
-                                        : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                                    }`}
+                                    onClick={handleSaveAll} 
+                                    disabled={loading}
+                                    className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm text-sm font-medium transition-colors"
                                 >
-                                    {isAutoMapping ? (
-                                        <>
-                                            <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"/>
-                                            Mapping...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <MapPin className="w-4 h-4" /> {/* Import MapPin from lucide-react */}
-                                            Auto-Map Locations
-                                        </>
-                                    )}
+                                    {loading ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Save className="w-4 h-4" />}
+                                    Save All ({tableRows.length})
                                 </button>
+                                
                             </div>
                         </div>
                     </div>
