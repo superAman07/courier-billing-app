@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Search, Upload, MessageCircle, Check } from 'lucide-react'
+import { Search, Upload, MessageCircle, Check, RefreshCw } from 'lucide-react'
 
 interface BookingData {
   type: string
@@ -25,6 +25,10 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectAll, setSelectAll] = useState(false)
+
+  const [bulkStatus, setBulkStatus] = useState('')
+  const [bulkDate, setBulkDate] = useState('')
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   useEffect(() => {
     fetchBookings()
@@ -154,6 +158,68 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('en-IN')
   }
+
+  const handleBulkStatusUpdate = async () => {
+    if (selectedRows.size === 0) {
+      toast.error('Please select at least one row')
+      return;
+    }
+    if (!bulkStatus && !bulkDate) {
+      toast.error('Please select a Status or Date to apply');
+      return;
+    }
+
+    if (!confirm(`Update ${selectedRows.size} bookings with Status: ${bulkStatus || '(No Change)'} and Date: ${bulkDate || '(No Change)'}?`)) return;
+
+    setIsBulkUpdating(true);
+    try {
+      const targets = filteredBookings.filter(b => selectedRows.has(b.id));
+      
+      // Process in batches to avoid overwhelming the server
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        const batch = targets.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(booking => {
+          const payload: any = {};
+          if (bulkStatus) payload.status = bulkStatus;
+          
+          if (bulkDate) {
+             // User selected specific date
+             payload.statusDate = new Date(bulkDate).toISOString();
+          } else if (bulkStatus) {
+             // Status changed but no date picked -> Use current time
+             payload.statusDate = new Date().toISOString();
+          }
+
+          return axios.put(`/api/update-and-send-delivery-status/${booking.type}/${booking.id}`, payload);
+        }));
+      }
+
+      // Optimistic UI Update
+      setBookings(prev => prev.map(b => {
+        if (selectedRows.has(b.id)) {
+          return {
+            ...b,
+            deliveryStatus: bulkStatus || b.deliveryStatus,
+            deliveryDate: bulkDate ? new Date(bulkDate).toISOString() : (bulkStatus ? new Date().toISOString() : b.deliveryDate)
+          };
+        }
+        return b;
+      }));
+
+      toast.success(`Successfully updated ${targets.length} bookings.`);
+      setBulkStatus('');
+      setBulkDate('');
+      setSelectedRows(new Set());
+      setSelectAll(false);
+
+    } catch (error) {
+      console.error(error);
+      toast.error('Bulk update failed. Some rows might not have updated.');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
 
   const getStatusOptions = () => [
     { value: '', label: 'Select Status' },
@@ -295,15 +361,45 @@ const UpdateDeliveryStatusPage: React.FC = () => {
           </div>
 
           <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 flex justify-between items-center">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 w-full xl:w-auto">
               <input
                 type="checkbox"
                 checked={selectAll}
                 onChange={handleSelectAll}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span className="text-white font-medium">Select All</span>
+              <span className="text-white font-medium whitespace-nowrap">Select All ({selectedRows.size} selected)</span>
             </div>
+
+            {selectedRows.size > 0 && (
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md p-2 rounded-lg border border-white/30 shadow-inner w-full xl:w-auto justify-center">
+                 <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value)}
+                    className="p-1.5 border border-white/50 bg-white/90 text-gray-800 rounded text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
+                  >
+                    {getStatusOptions().map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  
+                  <input 
+                    type="date"
+                    value={bulkDate}
+                    onChange={(e) => setBulkDate(e.target.value)}
+                    className="p-1.5 border border-white/50 bg-white/90 text-gray-800 rounded text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
+                  />
+
+                  <button
+                    onClick={handleBulkStatusUpdate}
+                    disabled={isBulkUpdating}
+                    className="px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 cursor-pointer text-blue-900 font-bold rounded shadow-md text-sm flex items-center gap-2 transition-transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isBulkUpdating ? <RefreshCw className="w-4 h-4 animate-spin"/> : <Check className="w-4 h-4"/>}
+                    Update
+                  </button>
+              </div>
+            )}
 
             <button
               onClick={handleBulkSMS}
