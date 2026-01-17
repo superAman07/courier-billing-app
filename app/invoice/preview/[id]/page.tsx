@@ -140,9 +140,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                     {booking.doxType || (booking.docType === 'D' ? 'DOX' : 'NON-DOX') || ''}
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
-                                {/* Map 'serviceType' or fallback to 'mode' */}
+                                
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
+                                    {booking.mode || booking.serviceType || ''}
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight ?? ''}</td>
                                 {showConsignmentValue && (
