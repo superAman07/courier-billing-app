@@ -120,7 +120,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             {showConsignmentValue && (
                                 <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Material Value</th>
                             )}
-                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Amt.</th>
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">FR Charge</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -147,13 +147,10 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                         {booking.consignmentValue > 49999 ? Number(booking.consignmentValue).toFixed(2) : '-'}
                                     </td>
                                 )}
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.amountCharged ?? ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{Number(booking.frCharge || 0).toFixed(2)}</td>
                             </tr>
                         ))}
-                        <tr>
-                            <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">FR Charge</td>
-                            <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{frChargeTotal.toFixed(2)}</td>
-                        </tr>
+                       
                         <tr>
                             <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{shipperCostTotal.toFixed(2)}</td>
