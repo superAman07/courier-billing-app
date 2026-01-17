@@ -20,6 +20,14 @@ const STATIC_SECTOR_MAP: Record<string, string> = {
     "mizoram": "North East",
     "nagaland": "North East",
     "arunachalpradesh": "North East",
+    "mumbai": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "hyderabad": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "chennai": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "banglore": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)", // As per image
+    "bangalore": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)", // Common spelling
+    "bengaluru": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)", // Official spelling
+    "kolkata": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "calcutta": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
 };
 
 const calculateSlabRate = (weight: number, baseRate: number, baseWeight: number, additionalRate: number, additionalWeightIncrement: number) => {
@@ -42,28 +50,43 @@ export async function POST(req: NextRequest) {
         let sectorName = "Rest of India";
         const pincodeData = await prisma.pincodeMaster.findUnique({
             where: { pincode: destinationPincode },
-            include: { state: true },
+            include: { state: true, city: true },
         });
 
-        if (pincodeData?.state?.sector) {
-            sectorName = pincodeData.state.sector;
+        let cityMatched = false;
+        if (pincodeData?.city?.name) {
+            const normalizedCity = normalize(pincodeData.city.name);
+            if (STATIC_SECTOR_MAP[normalizedCity]) {
+                sectorName = STATIC_SECTOR_MAP[normalizedCity];
+                cityMatched = true;
+            }
         }
-        else if (state) {
-            const stateRecord = await prisma.stateMaster.findFirst({
-                where: { name: { equals: state, mode: 'insensitive' } }
-            });
 
-            if (stateRecord?.sector) {
-                sectorName = stateRecord.sector;
-            } else {
-                const normalizedState = normalize(state);
-                if (STATIC_SECTOR_MAP[normalizedState]) {
-                    sectorName = STATIC_SECTOR_MAP[normalizedState];
+        // 3. Fallback to STATE Logic (Only if City didn't match a sector)
+        if (!cityMatched) {
+            if (pincodeData?.state?.sector) {
+                sectorName = pincodeData.state.sector;
+            }
+            else if (state) {
+                // Check if the passed 'state' string is actually a mapped key (could be a state or city name passed loosely)
+                const normalizedInput = normalize(state);
+                
+                if (STATIC_SECTOR_MAP[normalizedInput]) {
+                    sectorName = STATIC_SECTOR_MAP[normalizedInput];
+                } else {
+                    // DB State lookup
+                    const stateRecord = await prisma.stateMaster.findFirst({
+                        where: { name: { equals: state, mode: 'insensitive' } }
+                    });
+    
+                    if (stateRecord?.sector) {
+                        sectorName = stateRecord.sector;
+                    }
                 }
             }
         }
 
-        console.log(`Calculating rate for: ${destinationPincode} (${state}) -> Sector: ${sectorName}`);
+        console.log(`Calculating rate for: ${destinationPincode} (City: ${pincodeData?.city?.name}, State: ${pincodeData?.state?.name || state}) -> Sector: ${sectorName}`);
 
         const sectorRate = await prisma.sectorRate.findUnique({
             where: { customerId_sectorName: { customerId, sectorName } },
