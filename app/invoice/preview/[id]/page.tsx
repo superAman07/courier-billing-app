@@ -41,7 +41,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
     const companyStateCode = company?.gstNo?.substring(0, 2);
     const customerStateCode = invoice.customer?.gstNo?.substring(0, 2);
     const isIntraState = companyStateCode && customerStateCode && companyStateCode === customerStateCode;
-    const colSpanValue = showConsignmentValue ? 9 : 8;
+    const colSpanValue = showConsignmentValue ? 10 : 9;
 
     return (
         <div className="invoice-container max-w-6xl mx-auto bg-white p-8 print:p-6 print:m-0 print:shadow-none shadow-lg">
@@ -112,6 +112,8 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Booking Date</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Consignment No.</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Destination City</th>
+
+                            <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Mode</th>
                             
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">Dox/Non Dox</th>
                             <th className="border border-black px-2 py-1 text-sm font-semibold text-gray-600 text-center">No. of Pcs</th>
@@ -132,6 +134,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.city}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.serviceType || ''}</td>
                                 
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
                                     {booking.doxType || (booking.docType === 'D' ? 'DOX' : 'NON-DOX') || ''}
