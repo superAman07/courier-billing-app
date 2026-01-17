@@ -80,29 +80,86 @@ export async function POST(req: NextRequest) {
         const roundedWeight = Math.ceil(weightInKg);
 
         if (mode === 'PREMIUM') {
-            if (weightInKg <= 0.25) {
-                const rate250 = sectorRate.premiumUpto250g || 0;
-                const rate500 = sectorRate.premiumUpto500g || 0;
-                frCharge = rate250 > 0 ? rate250 : rate500;
-            } else {
-                frCharge = calculateSlabRate(weightInKg, sectorRate.premiumUpto500g || 0, 0.5, sectorRate.premiumAdd500g || 0, 0.5);
+            // if (weightInKg <= 0.25) {
+            //     const rate250 = sectorRate.premiumUpto250g || 0;
+            //     const rate500 = sectorRate.premiumUpto500g || 0;
+            //     frCharge = rate250 > 0 ? rate250 : rate500;
+            // } else {
+            //     frCharge = calculateSlabRate(weightInKg, sectorRate.premiumUpto500g || 0, 0.5, sectorRate.premiumAdd500g || 0, 0.5);
+            // }
+            if ((sectorRate.premiumAdd250g || 0) > 0) {
+                frCharge = calculateSlabRate(
+                    weightInKg, 
+                    sectorRate.premiumUpto250g || 0, // Base Rate (e.g. 125)
+                    0.25,                            // Base Weight (250g)
+                    sectorRate.premiumAdd250g || 0,  // Add Rate (e.g. 40)
+                    0.25                             // Add Weight Increment (250g)
+                );
+            } 
+            // Fallback: Check if "Add 500g" rate exists. Use 500g Slab Logic
+            else if ((sectorRate.premiumAdd500g || 0) > 0) {
+                 // Handle specific small weight case for 500g slab users who have a specific 250g price
+                 if (weightInKg <= 0.25 && (sectorRate.premiumUpto250g || 0) > 0) {
+                    frCharge = sectorRate.premiumUpto250g || 0;
+                 } else {
+                    frCharge = calculateSlabRate(
+                        weightInKg, 
+                        sectorRate.premiumUpto500g || 0, 
+                        0.5, 
+                        sectorRate.premiumAdd500g || 0, 
+                        0.5
+                    );
+                 }
+            }
+            // Fallback for flat rates or incomplete data (Use Upto 250 if tiny weight, else Upto 500)
+            else {
+                 if (weightInKg <= 0.25) frCharge = sectorRate.premiumUpto250g || 0;
+                 if (frCharge === 0) frCharge = sectorRate.premiumUpto500g || 0;
             }
         } else if (isDox) {
-            if (weightInKg <= 0.1) {
-                 const rate100 = sectorRate.doxUpto100g || 0;
-                 const rate250 = sectorRate.doxUpto250g || 0;
-                 const rate500 = sectorRate.doxUpto500g || 0;
+            // if (weightInKg <= 0.1) {
+            //      const rate100 = sectorRate.doxUpto100g || 0;
+            //      const rate250 = sectorRate.doxUpto250g || 0;
+            //      const rate500 = sectorRate.doxUpto500g || 0;
 
-                 if (rate100 > 0) frCharge = rate100;
-                 else if (rate250 > 0) frCharge = rate250;
-                 else frCharge = rate500;
-            } else if (weightInKg <= 0.25) {
-                const rate250 = sectorRate.doxUpto250g || 0;
-                const rate500 = sectorRate.doxUpto500g || 0;
+            //      if (rate100 > 0) frCharge = rate100;
+            //      else if (rate250 > 0) frCharge = rate250;
+            //      else frCharge = rate500;
+            // } else if (weightInKg <= 0.25) {
+            //     const rate250 = sectorRate.doxUpto250g || 0;
+            //     const rate500 = sectorRate.doxUpto500g || 0;
                 
-                frCharge = rate250 > 0 ? rate250 : rate500;
-            } else {
-                frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
+            //     frCharge = rate250 > 0 ? rate250 : rate500;
+            // } else {
+            //     frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
+            // }
+            if (weightInKg <= 0.1 && (sectorRate.doxUpto100g || 0) > 0) {
+                 frCharge = sectorRate.doxUpto100g || 0;
+            } 
+            // FIX: Check "Add 250g" rate availability for Dox logic priority
+            else if ((sectorRate.doxAdd250g || 0) > 0) {
+                 frCharge = calculateSlabRate(
+                    weightInKg, 
+                    sectorRate.doxUpto250g || 0, 
+                    0.25, 
+                    sectorRate.doxAdd250g || 0, 
+                    0.25
+                );
+            }
+            // Fallback to 500g logic
+            else {
+                // Handle small weights explicitly if using 500g structure
+                if (weightInKg <= 0.25 && (sectorRate.doxUpto250g || 0) > 0) {
+                    frCharge = sectorRate.doxUpto250g || 0;
+                } else {
+                    frCharge = calculateSlabRate(
+                        weightInKg, 
+                        sectorRate.doxUpto500g || 0, 
+                        0.5, 
+                        sectorRate.doxAdd500g || 0, 
+                        0.5
+                    );
+                }
             }
         } else {
             if (mode === 'SURFACE') {
