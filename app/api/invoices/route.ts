@@ -33,7 +33,7 @@ async function runWithRetries<T>(
 
 export async function POST(req: NextRequest) {
   try {
-    const { bookingIds, customerId, invoiceDate: invoiceDateStr, customerType } = await req.json();
+    const { bookingIds, customerId, invoiceDate: invoiceDateStr, customerType, companyId } = await req.json();
 
     if (
       !bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0 ||
@@ -47,14 +47,28 @@ export async function POST(req: NextRequest) {
 
     const createdInvoice = await runWithRetries(async () => {
       return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        let prefix = 'ANGS-';
+        let gstPrefix = "AGS"; 
+        let nonGstPrefix = "ANGS";
+        if (companyId) {
+            const company = await tx.registrationDetails.findUnique({ where: { id: companyId } });
+            if (company) {
+                 const name = company.companyName.trim().toLowerCase();
+                 if (name.includes("hvs")) {
+                     gstPrefix = "HVS";
+                     nonGstPrefix = "HNVS";
+                 } 
+            }
+        }
+        let finalPrefix = `${nonGstPrefix}-`; 
+
         if (customerType === 'CREDIT' && customerId) {
           const customer = await tx.customerMaster.findUnique({
             where: { id: customerId },
             select: { gstNo: true }
           });
-          if (customer?.gstNo) {
-            prefix = 'AGS-';
+          
+          if (customer?.gstNo && customer.gstNo.length > 2) {
+             finalPrefix = `${gstPrefix}-`;
           }
         }
 
@@ -72,7 +86,7 @@ export async function POST(req: NextRequest) {
         });
 
         const nextNumber = counter.lastNumber;
-        const invoiceNo = `${prefix}${String(nextNumber).padStart(5, "0")}`;
+        const invoiceNo = `${finalPrefix}${String(nextNumber).padStart(5, "0")}`;
 
         const bookings = await tx.bookingMaster.findMany({
           where: { id: { in: bookingIds } },

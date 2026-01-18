@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { X } from 'lucide-react';
 
 export default function GenerateCreditInvoice() {
   const [type, setType] = useState<'Domestic' | 'International'>('Domestic');
@@ -16,6 +17,10 @@ export default function GenerateCreditInvoice() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+
   useEffect(() => {
     axios.get('/api/customers').then(res => {
       setCustomers(
@@ -24,6 +29,11 @@ export default function GenerateCreditInvoice() {
         )
       );
     });
+
+    axios.get('/api/registration-details').then(res => {
+        setCompanies(Array.isArray(res.data) ? res.data : [res.data]);
+    });
+
     setCustomerId('');
     setBookings([]);
     setSelected([]);
@@ -81,23 +91,21 @@ export default function GenerateCreditInvoice() {
     else setSelected(bookings.map((b: any) => b.id));
   };
 
-  const handleGenerateInvoice = async () => {
-    if (!invoiceDate || selected.length === 0 || !customerId) {
-      toast.error('Select invoice date, customer, and at least one consignment');
-      return;
-    }
+  const submitInvoiceGeneration = async (selectedCompanyId?: string) => {
     setLoading(true);
     try {
       await axios.post('/api/invoices', {
         bookingIds: selected,
         customerId,
         invoiceDate,
-        customerType: 'CREDIT'
+        customerType: 'CREDIT',
+        companyId: selectedCompanyId
       });
       toast.success('Invoice generated!');
       setBookings([]);
       setSelected([]);
       fetchInvoices();
+      setIsCompanyModalOpen(false);
     } catch (error: any) {
       const backendMsg = error?.response?.data?.message;
       if (backendMsg) {
@@ -110,13 +118,67 @@ export default function GenerateCreditInvoice() {
     }
   };
 
+  const handleGenerateInvoice = async () => {
+    if (!invoiceDate || selected.length === 0 || !customerId) {
+      toast.error('Select invoice date, customer, and at least one consignment');
+      return;
+    }
+    if (companies.length > 1) {
+        setSelectedInvoiceId('GENERATING_NEW');
+        setIsCompanyModalOpen(true);
+    } else {
+        submitInvoiceGeneration(companies[0]?.id);
+    }
+  };
+
   const handleViewInvoice = (id: string) => {
-    window.open(`/invoice/preview/${id}`, '_blank');
+    if (companies.length > 1) {
+        setSelectedInvoiceId(id);
+        setIsCompanyModalOpen(true);
+    } else {
+        window.open(`/invoice/preview/${id}`, '_blank');
+    }
+  };
+
+  const openInvoiceWithCompany = (companyId: string) => {
+      if (selectedInvoiceId === 'GENERATING_NEW') {
+          submitInvoiceGeneration(companyId);
+      } else if (selectedInvoiceId) {
+          window.open(`/invoice/preview/${selectedInvoiceId}?companyId=${companyId}`, '_blank');
+          setIsCompanyModalOpen(false);
+          setSelectedInvoiceId(null);
+      }
   };
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 mt-8">
       <h2 className="text-xl font-bold mb-4 text-center bg-indigo-700 text-white py-2 rounded">GENERATE CREDIT CLIENT INVOICE</h2>
+      {isCompanyModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-96 shadow-xl relative">
+                <button 
+                    onClick={() => setIsCompanyModalOpen(false)}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 cursor-pointer"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                <h3 className="text-lg font-bold mb-4 text-gray-800">Select Billing Entity</h3>
+                <p className="text-sm text-gray-600 mb-4">Choose which company letterhead to use for this invoice.</p>
+                <div className="space-y-3">
+                    {companies.map((comp: any) => (
+                        <button
+                            key={comp.id}
+                            onClick={() => openInvoiceWithCompany(comp.id)}
+                            className="w-full text-left px-4 py-3 cursor-pointer border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors flex flex-col group"
+                        >
+                            <span className="font-semibold text-blue-900 group-hover:text-blue-700">{comp.companyName}</span>
+                            <span className="text-xs text-gray-500 mt-1">GST: {comp.gstNo}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )}
       <div className="flex gap-4 mb-4 flex-wrap">
         <div>
           <label className="block text-xs font-semibold text-gray-700">Type</label>
