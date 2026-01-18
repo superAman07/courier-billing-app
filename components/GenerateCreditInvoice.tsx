@@ -132,7 +132,29 @@ export default function GenerateCreditInvoice() {
   };
 
   const handleViewInvoice = (id: string) => {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+
+    let matchedCompanyId = null;
+
     if (companies.length > 1) {
+        const invNo = inv.invoiceNo.toUpperCase();
+
+        if (invNo.startsWith('HVS') || invNo.startsWith('HNVS')) {
+            const hvsComp = companies.find((c: any) => c.companyName.toLowerCase().includes('hvs'));
+            if (hvsComp) matchedCompanyId = hvsComp.id;
+        } 
+        else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS')) {
+            const agsComp = companies.find((c: any) => 
+                c.companyName.toLowerCase().includes('awdhoot') || 
+                c.companyName.toLowerCase().includes('awadhoot')
+            );
+            if (agsComp) matchedCompanyId = agsComp.id;
+        }
+    }
+    if (matchedCompanyId) {
+        window.open(`/invoice/preview/${id}?companyId=${matchedCompanyId}`, '_blank');
+    } else if (companies.length > 1) {
         setSelectedInvoiceId(id);
         setIsCompanyModalOpen(true);
     } else {
