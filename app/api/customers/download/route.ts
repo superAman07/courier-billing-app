@@ -8,7 +8,8 @@ export async function GET() {
             select: {
                 customerCode: true,
                 customerName: true,
-                childCustomer: true
+                childCustomer: true,
+                address: true
             },
             orderBy: {
                 customerName: 'asc'
@@ -22,7 +23,8 @@ export async function GET() {
         worksheet.columns = [
             { header: "Customer Code", key: "customerCode", width: 15 },
             { header: "Customer Name", key: "customerName", width: 40 },
-            { header: "Child Customer", key: "childCustomer", width: 40 }
+            { header: "Child Customer", key: "childCustomer", width: 40 },
+            { header: "Address", key: "address", width: 50 }
         ];
 
         // Style the header
@@ -38,7 +40,8 @@ export async function GET() {
             worksheet.addRow({
                 customerCode: customer.customerCode,
                 customerName: customer.customerName,
-                childCustomer: customer.childCustomer || customer.customerName
+                childCustomer: customer.childCustomer || customer.customerName,
+                address: customer.address|| ''
             });
         });
 
