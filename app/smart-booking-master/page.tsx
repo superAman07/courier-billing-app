@@ -1542,7 +1542,7 @@ export default function SmartBookingMasterPage() {
                                 </select>
                             </div>
                         </div>
-                        <div className="overflow-auto max-h-[65vh] relative">
+                        <div className="overflow-auto max-h-[65vh] min-h-[300px] relative">
                             <table className="min-w-full text-left border-collapse">
                                 <thead className="bg-slate-800 text-slate-200 sticky top-0 z-20 text-xs uppercase tracking-wider font-semibold shadow-md">
                                     <tr>
