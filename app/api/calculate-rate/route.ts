@@ -41,7 +41,7 @@ const calculateSlabRate = (weight: number, baseRate: number, baseWeight: number,
 
 export async function POST(req: NextRequest) {
     try {
-        const { customerId, destinationPincode, chargeWeight, isDox, mode, invoiceValue, state } = await req.json();
+        const { customerId, destinationPincode, chargeWeight, isDox, mode, invoiceValue, state, city } = await req.json();
 
         if (!customerId || !destinationPincode || !chargeWeight || !mode) {
             return NextResponse.json({ error: "Missing required fields for rate calculation." }, { status: 400 });
@@ -53,12 +53,29 @@ export async function POST(req: NextRequest) {
             include: { state: true, city: true },
         });
 
+        const resolvedCityName = pincodeData?.city?.name || city || "";
+
         let cityMatched = false;
-        if (pincodeData?.city?.name) {
-            const normalizedCity = normalize(pincodeData.city.name);
+        if (resolvedCityName) {
+            const normalizedCity = normalize(resolvedCityName);
+            
             if (STATIC_SECTOR_MAP[normalizedCity]) {
                 sectorName = STATIC_SECTOR_MAP[normalizedCity];
                 cityMatched = true;
+            }
+            else {
+                const metroKeywords = [
+                    "bangalore", "bengaluru", "banglore", 
+                    "mumbai", "bombay",
+                    "hyderabad", "secunderabad",
+                    "chennai", "madras", 
+                    "kolkata", "calcutta"
+                ];
+                
+                if (metroKeywords.some(keyword => normalizedCity.includes(keyword))) {
+                    sectorName = "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)";
+                    cityMatched = true;
+                }
             }
         }
 

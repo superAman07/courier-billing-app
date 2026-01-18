@@ -361,6 +361,7 @@ export default function SmartBookingMasterPage() {
                         mode: row.mode,
                         invoiceValue: row.invoiceValue,
                         state: row.state,
+                        city: row.location
                     });
 
                     // Update the row with fetched rates
@@ -436,6 +437,7 @@ export default function SmartBookingMasterPage() {
                 mode: row.mode,
                 invoiceValue: row.invoiceValue,
                 state: row.state,
+                city: row.location 
             });
 
             setTableRows(rows =>
