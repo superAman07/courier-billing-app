@@ -2,45 +2,46 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { PlusCircle, Edit, Trash2, Loader2, Calculator } from 'lucide-react';
+import { Plus, Edit2, Loader2, Wallet, TrendingUp, TrendingDown, Calendar, FileText } from 'lucide-react';
 
 type LedgerEntry = {
     id: string;
-    date: string; // B
-    particulars: string; // C
-    sale: number; // D
-    cashSale: number; // E
-    codReceived: number; // F
-    digitalSale: number; // G
-    salePending: number; // H
-    clientPayment: number; // I
-    expenseAmount: number; // J
-    expenseByDigital: number; // K
-    employeeAdvance: number; // L
-    bankDeposit: number; // M
-    remarks: string; // Q
+    date: string;
+    particulars: string;
+    sale: number;
+    cashSale: number;
+    codReceived: number;
+    digitalSale: number;
+    salePending: number;
+    clientPayment: number;
+    expenseAmount: number;
+    expenseByDigital: number;
+    employeeAdvance: number;
+    bankDeposit: number;
+    remarks: string;
 };
 
 // Types for Calculated Columns
 type CalculatedLedger = LedgerEntry & {
-    rowBalance: number; // N
-    clientPaymentBalance: number; // O
-    totalBalance: number; // P
+    rowBalance: number;
+    clientPaymentBalance: number;
+    totalBalance: number;
 };
 
-const initialForm = {
+// Use strings for form state to allow empty values instead of 0
+const initialForm: any = {
     date: new Date().toISOString().split('T')[0],
     particulars: '',
-    sale: 0,
-    cashSale: 0,
-    codReceived: 0,
-    digitalSale: 0,
-    salePending: 0,
-    clientPayment: 0,
-    expenseAmount: 0,
-    expenseByDigital: 0,
-    employeeAdvance: 0,
-    bankDeposit: 0,
+    sale: '',
+    cashSale: '',
+    codReceived: '',
+    digitalSale: '',
+    salePending: '',
+    clientPayment: '',
+    expenseAmount: '',
+    expenseByDigital: '',
+    employeeAdvance: '',
+    bankDeposit: '',
     remarks: '',
 };
 
@@ -67,17 +68,30 @@ export default function SaleExpensePage() {
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value, type } = e.target;
-        setForm(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
+        const { name, value } = e.target;
+        // Allow empty string or numbers
+        if (name === 'date' || name === 'particulars' || name === 'remarks') {
+            setForm((prev: any) => ({ ...prev, [name]: value }));
+        } else {
+            // For number fields, keep as string to allow empty, parse on submit
+            setForm((prev: any) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const url = editingId ? `/api/sale-expense/${editingId}` : '/api/sale-expense'; // Note: Ensure DELETE/PUT route exists too
-        const method = editingId ? 'put' : 'post'; // You might need to add PUT support in route.ts if not there
+        const url = editingId ? `/api/sale-expense/${editingId}` : '/api/sale-expense';
+        const method = editingId ? 'put' : 'post';
+
+        // Convert empty strings to 0 for submission
+        const payload = { ...form };
+        const numberFields = ['sale', 'cashSale', 'codReceived', 'digitalSale', 'salePending', 'clientPayment', 'expenseAmount', 'expenseByDigital', 'employeeAdvance', 'bankDeposit'];
+        numberFields.forEach(field => {
+            payload[field] = payload[field] === '' ? 0 : parseFloat(payload[field]);
+        });
 
         try {
-            await axios[method](url, form);
+            await axios[method](url, payload);
             toast.success(`Entry ${editingId ? 'updated' : 'saved'} successfully!`);
             setForm(initialForm);
             setEditingId(null);
@@ -87,29 +101,19 @@ export default function SaleExpensePage() {
         }
     };
 
-    // CORE CALCULATION LOGIC AS PER EXCEL FORMULAS
     const calculatedRows = useMemo(() => {
-        let runningBalanceN = 0; // Col N
-        let runningClientPayO = 0; // Col O
+        let runningBalanceN = 0;
+        let runningClientPayO = 0;
 
-        return entries.map((entry) => {
-            // Formula for Row Net Change:
-            // Input: Sale(D) + Cash Sale(E) + COD(F) 
-            // Minus: Sale Pending(H) + Exp(J) + Dig Exp(K) + Emp Adv(L) + Bank Dep(M)
-            // (Note: Digital Sale G is NOT in the formula provided by user, so excluded here)
-            
+        // Calculate in chronological order (oldest to newest)
+        const rows = entries.map((entry) => {
             const inflow = (entry.sale || 0) + (entry.cashSale || 0) + (entry.codReceived || 0);
             const outflow = (entry.salePending || 0) + (entry.expenseAmount || 0) + (entry.expenseByDigital || 0) + (entry.employeeAdvance || 0) + (entry.bankDeposit || 0);
             
             const dailyNet = inflow - outflow;
             
-            // Col N: Balance (Running)
             runningBalanceN += dailyNet;
-
-            // Col O: Client Payment Balance (Running)
             runningClientPayO += (entry.clientPayment || 0);
-
-            // Col P: Total Balance (N + O)
             const totalBalanceP = runningBalanceN + runningClientPayO;
 
             return {
@@ -118,113 +122,154 @@ export default function SaleExpensePage() {
                 clientPaymentBalance: runningClientPayO,
                 totalBalance: totalBalanceP
             };
-        }).reverse(); // Reverse for display order (Newest first) if preferred, or keep strictly ASC matches Excel
-        // Reversing here so UI shows latest at top, but calc was done in correct chronological order
+        });
+
+        // displayed as newest first
+        return rows.reverse(); 
     }, [entries]);
 
-    const inputClass = "p-2 border rounded w-full text-sm";
-    const labelClass = "text-xs font-semibold text-gray-500 mb-1 block";
+    const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none placeholder:text-gray-400";
+    const labelClass = "block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider";
+    const sectionTitle = "text-sm font-bold text-gray-800 mb-3 flex items-center gap-2 border-b pb-1";
 
     return (
-        <div className="p-4 bg-gray-50 min-h-screen">
-             <div className="bg-white p-6 rounded-lg shadow-md mb-8 max-w-[1400px] mx-auto">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <Calculator className="w-6 h-6 text-blue-600"/> 
-                    Daily Sale & Expense Ledger
-                </h1>
-
-                {/* --- DATA ENTRY FORM --- */}
-                <form onSubmit={handleSubmit} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <div className="col-span-2 md:col-span-1">
-                        <label className={labelClass}>B - Date</label>
-                        <input name="date" type="date" value={form.date} onChange={handleChange} className={inputClass} required />
+        <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
+            <div className="max-w-[1600px] mx-auto space-y-8">
+                
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
+                            <Wallet className="w-8 h-8 text-blue-600" />
+                            Financial Ledger
+                        </h1>
+                        <p className="text-gray-500 mt-1">Track daily sales, expenses, and running balances.</p>
                     </div>
-                    <div className="col-span-2 md:col-span-2">
-                        <label className={labelClass}>C - Particulars</label>
-                        <input name="particulars" placeholder="Description" value={form.particulars} onChange={handleChange} className={inputClass} required />
+                </header>
+
+                {/* --- PROFESSIONAL FORM --- */}
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div className="p-4 bg-gray-50 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                             {editingId ? <Edit2 className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}
+                             {editingId ? 'Edit Transaction' : 'New Transaction Entry'}
+                        </h2>
                     </div>
                     
-                    {/* INFLOWS */}
-                    <div><label className={labelClass}>D - Sale</label><input name="sale" type="number" value={form.sale} onChange={handleChange} className={inputClass} /></div>
-                    <div><label className={labelClass}>E - Cash Sale</label><input name="cashSale" type="number" value={form.cashSale} onChange={handleChange} className={inputClass} /></div>
-                    <div><label className={labelClass}>F - COD Rec</label><input name="codReceived" type="number" value={form.codReceived} onChange={handleChange} className={inputClass} /></div>
-                    
-                    {/* OUTFLOWS / ADJUSTMENTS */}
-                    <div><label className={labelClass}>H - Sale Pending</label><input name="salePending" type="number" value={form.salePending} onChange={handleChange} className={inputClass} /></div>
-                    
-                    {/* EXPENSES */}
-                    <div><label className={labelClass}>J - Exp Amt</label><input name="expenseAmount" type="number" value={form.expenseAmount} onChange={handleChange} className={inputClass} /></div>
-                    <div><label className={labelClass}>K - Dig. Exp</label><input name="expenseByDigital" type="number" value={form.expenseByDigital} onChange={handleChange} className={inputClass} /></div>
-                    <div><label className={labelClass}>L - Emp Adv</label><input name="employeeAdvance" type="number" value={form.employeeAdvance} onChange={handleChange} className={inputClass} /></div>
-                    <div><label className={labelClass}>M - Bank Dep</label><input name="bankDeposit" type="number" value={form.bankDeposit} onChange={handleChange} className={inputClass} /></div>
+                    <form onSubmit={handleSubmit} className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            
+                            {/* SECTION 1: BASIC INFO */}
+                            <div className="md:col-span-3 space-y-4">
+                                <div className={sectionTitle}><Calendar className="w-4 h-4 text-blue-600"/> Basic Details</div>
+                                <div>
+                                    <label className={labelClass}>Date</label>
+                                    <input name="date" type="date" value={form.date} onChange={handleChange} className={inputClass} required />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Particulars</label>
+                                    <input name="particulars" placeholder="Enter description" value={form.particulars} onChange={handleChange} className={inputClass} required />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Remarks</label>
+                                    <input name="remarks" placeholder="Optional notes" value={form.remarks} onChange={handleChange} className={inputClass} />
+                                </div>
+                            </div>
 
-                    {/* OTHER */}
-                    <div><label className={labelClass}>G - Digital Sale</label><input name="digitalSale" type="number" value={form.digitalSale} onChange={handleChange} className={inputClass} title="Not used in Balance Calc" /></div>
-                    <div><label className={labelClass}>I - Client Pay</label><input name="clientPayment" type="number" value={form.clientPayment} onChange={handleChange} className={inputClass} /></div>
-                    
-                    <div className="col-span-2"><label className={labelClass}>Q - Remarks</label><input name="remarks" value={form.remarks} onChange={handleChange} className={inputClass} /></div>
+                            {/* SECTION 2: INFLOWS */}
+                            <div className="md:col-span-4 space-y-4">
+                                <div className={sectionTitle}><TrendingUp className="w-4 h-4 text-emerald-600"/> Income & Inflows</div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className={labelClass}>Sale </label><input name="sale" type="number" placeholder="0.00" value={form.sale} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>Cash Sale</label><input name="cashSale" type="number" placeholder="0.00" value={form.cashSale} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>COD Rec.</label><input name="codReceived" type="number" placeholder="0.00" value={form.codReceived} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>Client Pay (Mon)</label><input name="clientPayment" type="number" placeholder="0.00" value={form.clientPayment} onChange={handleChange} className={inputClass} /></div>
+                                    <div className="col-span-2"><label className={labelClass}>Digital Sale (Info Only)</label><input name="digitalSale" type="number" placeholder="0.00" value={form.digitalSale} onChange={handleChange} className={inputClass} /></div>
+                                </div>
+                            </div>
 
-                    <div className="col-span-2 md:col-span-6 flex justify-end mt-2">
-                        <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm">
-                            <PlusCircle size={18} /> {editingId ? 'Update Entry' : 'Add Ledger Entry'}
-                        </button>
+                            {/* SECTION 3: OUTFLOWS */}
+                            <div className="md:col-span-5 space-y-4">
+                                <div className={sectionTitle}><TrendingDown className="w-4 h-4 text-rose-600"/> Expenses & Outflows</div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className={labelClass}>Expense Amt</label><input name="expenseAmount" type="number" placeholder="0.00" value={form.expenseAmount} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>Digital Exp</label><input name="expenseByDigital" type="number" placeholder="0.00" value={form.expenseByDigital} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>Emp. Advance</label><input name="employeeAdvance" type="number" placeholder="0.00" value={form.employeeAdvance} onChange={handleChange} className={inputClass} /></div>
+                                    <div><label className={labelClass}>Bank Deposit</label><input name="bankDeposit" type="number" placeholder="0.00" value={form.bankDeposit} onChange={handleChange} className={inputClass} /></div>
+                                    <div className="col-span-2"><label className={labelClass}>Sale Pending</label><input name="salePending" type="number" placeholder="0.00" value={form.salePending} onChange={handleChange} className={inputClass} /></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-end">
+                            <button type="submit" className="bg-blue-600 text-white cursor-pointer px-8 py-2.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-semibold shadow-md transition-all active:scale-95">
+                                {editingId ? 'Update Transaction' : 'Save Transaction'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* --- MODERN TABLE --- */}
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-800 text-gray-200 uppercase text-xs font-semibold tracking-wide">
+                                <tr>
+                                    <th className="px-4 py-4 min-w-[50px]">Sr</th>
+                                    <th className="px-4 py-4 min-w-[100px]">Date</th>
+                                    <th className="px-4 py-4 min-w-[180px]">Particulars</th>
+                                    <th className="px-4 py-4 text-right">Sale</th>
+                                    <th className="px-4 py-4 text-right">Cash Sale</th>
+                                    <th className="px-4 py-4 text-right">COD Rec</th>
+                                    <th className="px-4 py-4 text-right text-gray-400">Dig. Sale</th>
+                                    <th className="px-4 py-4 text-right">Pending</th>
+                                    <th className="px-4 py-4 text-right text-sky-400">Client Pay</th>
+                                    <th className="px-4 py-4 text-right">Expenses</th>
+                                    <th className="px-4 py-4 text-right">Dig. Exp</th>
+                                    <th className="px-4 py-4 text-right">Emp Adv</th>
+                                    <th className="px-4 py-4 text-right">Bank Dep</th>
+                                    <th className="px-4 py-4 text-right bg-blue-900/50 text-white">Balance</th>
+                                    <th className="px-4 py-4 text-right bg-indigo-900/50 text-white">CP Bal</th>
+                                    <th className="px-4 py-4 text-right bg-emerald-900/50 text-white font-bold text-sm">Total Bal</th>
+                                    <th className="px-4 py-4">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {loading ? (
+                                     <tr><td colSpan={17} className="text-center py-12 text-gray-500 flex justify-center items-center gap-2"><Loader2 className="animate-spin"/> Loading data...</td></tr>
+                                ) : calculatedRows.length === 0 ? (
+                                    <tr><td colSpan={17} className="text-center py-12 text-gray-400">No transactions recorded yet.</td></tr>
+                                ) : (
+                                    calculatedRows.map((entry, idx) => (
+                                    <tr key={entry.id} className="hover:bg-blue-50/50 transition-colors group">
+                                        <td className="px-4 py-3 text-gray-500">{calculatedRows.length - idx}</td>
+                                        <td className="px-4 py-3 font-medium text-gray-700 whitespace-nowrap">{new Date(entry.date).toLocaleDateString('en-GB')}</td>
+                                        <td className="px-4 py-3 font-medium text-gray-800">{entry.particulars}</td>
+                                        
+                                        <td className="px-4 py-3 text-right text-emerald-600">{entry.sale ? entry.sale.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-emerald-600">{entry.cashSale ? entry.cashSale.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-emerald-600">{entry.codReceived ? entry.codReceived.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-gray-400 border-l border-gray-100">{entry.digitalSale ? entry.digitalSale.toLocaleString('en-IN') : '-'}</td>
+                                        
+                                        <td className="px-4 py-3 text-right text-rose-600 border-l border-gray-100">{entry.salePending ? entry.salePending.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-blue-600 font-medium">{entry.clientPayment ? entry.clientPayment.toLocaleString('en-IN') : '-'}</td>
+                                        
+                                        <td className="px-4 py-3 text-right text-rose-600">{entry.expenseAmount ? entry.expenseAmount.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-rose-600">{entry.expenseByDigital ? entry.expenseByDigital.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-rose-600">{entry.employeeAdvance ? entry.employeeAdvance.toLocaleString('en-IN') : '-'}</td>
+                                        <td className="px-4 py-3 text-right text-rose-600">{entry.bankDeposit ? entry.bankDeposit.toLocaleString('en-IN') : '-'}</td>
+                                        
+                                        {/* Running Balances */}
+                                        <td className="px-4 py-3 text-right font-bold text-gray-700 bg-gray-50">{entry.rowBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                        <td className="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50/50">{entry.clientPaymentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                        <td className="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-50/50 border-l-2 border-emerald-200">{entry.totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                        
+                                        <td className="px-4 py-3 text-gray-500 text-xs italic">{entry.remarks}</td>
+                                    </tr>
+                                )))}
+                            </tbody>
+                        </table>
                     </div>
-                </form>
-            </div>
-
-            {/* --- EXCEL STYLE TABLE --- */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-[100%] mx-auto overflow-x-auto border border-gray-200">
-                <table className="min-w-max text-xs border-collapse">
-                    <thead className="bg-slate-800 text-white sticky top-0">
-                        <tr>
-                            <th className="p-2 border border-slate-600 font-normal">A<br/>Sr</th>
-                            <th className="p-2 border border-slate-600 font-normal min-w-[90px]">B<br/>Date</th>
-                            <th className="p-2 border border-slate-600 font-normal min-w-[150px]">C<br/>Particulars</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-green-900">D<br/>Sale</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-green-900">E<br/>Cash Sale</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-green-900">F<br/>COD Rec</th>
-                            <th className="p-2 border border-slate-600 font-normal">G<br/>Dig. Sale</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-red-900">H<br/>Sale Pend</th>
-                            <th className="p-2 border border-slate-600 font-normal">I<br/>Cli Pay</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-red-900">J<br/>Exp Amt</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-red-900">K<br/>Dig Exp</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-red-900">L<br/>Emp Adv</th>
-                            <th className="p-2 border border-slate-600 font-normal bg-red-900">M<br/>Bank Dep</th>
-                            <th className="p-2 border border-slate-600 font-bold bg-blue-900">N<br/>Balance</th>
-                            <th className="p-2 border border-slate-600 font-bold bg-blue-800">O<br/>Cli Pay Bal</th>
-                            <th className="p-2 border border-slate-600 font-bold bg-indigo-900">P<br/>Total Bal</th>
-                            <th className="p-2 border border-slate-600 font-normal">Q<br/>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                             <tr><td colSpan={17} className="text-center py-10"><Loader2 className="mx-auto animate-spin" /></td></tr>
-                        ) : calculatedRows.map((entry, idx) => (
-                            <tr key={entry.id} className="hover:bg-blue-50 transition-colors even:bg-white odd:bg-gray-50 text-gray-700">
-                                <td className="p-2 border text-center">{calculatedRows.length - idx}</td>
-                                <td className="p-2 border whitespace-nowrap">{new Date(entry.date).toLocaleDateString('en-GB')}</td>
-                                <td className="p-2 border font-medium">{entry.particulars}</td>
-                                <td className="p-2 border text-right">{entry.sale || "-"}</td>
-                                <td className="p-2 border text-right">{entry.cashSale || "-"}</td>
-                                <td className="p-2 border text-right">{entry.codReceived || "-"}</td>
-                                <td className="p-2 border text-right text-gray-400">{entry.digitalSale || "-"}</td>
-                                <td className="p-2 border text-right text-red-600">{entry.salePending || "-"}</td>
-                                <td className="p-2 border text-right text-blue-600">{entry.clientPayment || "-"}</td>
-                                <td className="p-2 border text-right text-red-600">{entry.expenseAmount || "-"}</td>
-                                <td className="p-2 border text-right text-red-600">{entry.expenseByDigital || "-"}</td>
-                                <td className="p-2 border text-right text-red-600">{entry.employeeAdvance || "-"}</td>
-                                <td className="p-2 border text-right text-red-600">{entry.bankDeposit || "-"}</td>
-                                
-                                {/* CALCULATED COLUMNS */}
-                                <td className="p-2 border text-right font-bold bg-blue-50 text-blue-900">{entry.rowBalance.toFixed(2)}</td>
-                                <td className="p-2 border text-right font-bold bg-blue-50 text-blue-800">{entry.clientPaymentBalance.toFixed(2)}</td>
-                                <td className="p-2 border text-right font-bold bg-indigo-100 text-indigo-900 border-l-2 border-indigo-300">{entry.totalBalance.toFixed(2)}</td>
-                                
-                                <td className="p-2 border text-xs">{entry.remarks}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                </div>
             </div>
         </div>
     );
