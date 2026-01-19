@@ -225,8 +225,9 @@ export default function SaleExpensePage() {
                         </div>
 
                         <div className="mt-8 flex justify-end">
-                            <button  type="submit" className="bg-blue-600 text-white cursor-pointer px-8 py-2.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-semibold shadow-md transition-all active:scale-95">
-                                {editingId ? 'Update Transaction' : 'Save Transaction'}
+                            <button  type="submit" disabled={saving} className="bg-blue-600 text-white cursor-pointer px-8 py-2.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-semibold shadow-md transition-all active:scale-95">
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Plus className="w-4 h-4"/>}    
+                            {editingId ? 'Update Transaction' : 'Save Transaction'}
                             </button>
                         </div>
                     </form>
