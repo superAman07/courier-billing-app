@@ -546,25 +546,26 @@ model InvoiceCounter {
 
 model DailyLedger {
   id          String   @id @default(cuid())
-  date        DateTime @db.Date
-  particulars String
+  date        DateTime @db.Date          // B
+  particulars String                     // C
 
-  saleAmount            Float? @default(0)
-  clientPaymentReceived Float? @default(0)
-  digitalSaleAmount     Float? @default(0)
+  sale        Float?   @default(0)       // D - Sale
+  cashSale    Float?   @default(0)       // E - Cash Sale
+  codReceived Float?   @default(0)       // F - COD Received
+  digitalSale Float?   @default(0)       // G - PAYTM / ACCOUNT / GP SALE
+  salePending Float?   @default(0)       // H - Sale Pending Balance
 
-  expenseAmount    Float? @default(0)
-  employeeAdvance  Float? @default(0)
-  expenseByDigital Float? @default(0)
-  officeAdvance    Float? @default(0)
-  depositInBank    Float? @default(0)
-  tsDeposit        Float? @default(0)
+  clientPayment Float? @default(0)       // I - Client Payment (Mon)
 
-  physicalMatch Boolean? @default(false)
-  others        String?
+  expenseAmount    Float? @default(0)    // J - Exp Amt
+  expenseByDigital Float? @default(0)    // K - Exp By GP / Paytm / Account
+  employeeAdvance  Float? @default(0)    // L - Emp Advance
+  bankDeposit      Float? @default(0)    // M - Bank Deposit
+  
+  remarks     String?                    // Q - Remarks
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model SectorRate {
