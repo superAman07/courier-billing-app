@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
                 pin: String(b.pin || ""),
             };
 
+            if (b.serviceProvider) bookingData.serviceProvider = b.serviceProvider;
+
             if (b.location) bookingData.location = b.location;
             if (b.dsrContents) bookingData.dsrContents = b.dsrContents;
             if (b.dsrNdxPaper) bookingData.dsrNdxPaper = b.dsrNdxPaper;
