@@ -28,6 +28,12 @@ const STATIC_SECTOR_MAP: Record<string, string> = {
     "bengaluru": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)", // Official spelling
     "kolkata": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
     "calcutta": "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+    "darjeeling": "Special Sector ( Darjling, Silchaar, Daman)",
+    "darjling": "Special Sector ( Darjling, Silchaar, Daman)",
+    "silchar": "Special Sector ( Darjling, Silchaar, Daman)",
+    "silchaar": "Special Sector ( Darjling, Silchaar, Daman)",
+    "daman": "Special Sector ( Darjling, Silchaar, Daman)",
+    "damananddiu": "Special Sector ( Darjling, Silchaar, Daman)",
 };
 
 const calculateSlabRate = (weight: number, baseRate: number, baseWeight: number, additionalRate: number, additionalWeightIncrement: number) => {
@@ -64,17 +70,25 @@ export async function POST(req: NextRequest) {
                 cityMatched = true;
             }
             else {
-                const metroKeywords = [
-                    "bangalore", "bengaluru", "banglore", 
-                    "mumbai", "bombay",
-                    "hyderabad", "secunderabad",
-                    "chennai", "madras", 
-                    "kolkata", "calcutta"
-                ];
+                const specialKeywords = ["darjling", "darjeeling", "silchar", "silchaar", "daman"];
                 
-                if (metroKeywords.some(keyword => normalizedCity.includes(keyword))) {
-                    sectorName = "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)";
+                if (specialKeywords.some(keyword => normalizedCity.includes(keyword))) {
+                    sectorName = "Special Sector ( Darjling, Silchaar, Daman)";
                     cityMatched = true;
+                }
+                else {
+                    const metroKeywords = [
+                        "bangalore", "bengaluru", "banglore", 
+                        "mumbai", "bombay",
+                        "hyderabad", "secunderabad",
+                        "chennai", "madras", 
+                        "kolkata", "calcutta"
+                    ];
+                    
+                    if (metroKeywords.some(keyword => normalizedCity.includes(keyword))) {
+                        sectorName = "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)";
+                        cityMatched = true;
+                    }
                 }
             }
         }
