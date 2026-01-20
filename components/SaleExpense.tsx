@@ -128,8 +128,12 @@ export default function SaleExpensePage() {
         let runningClientPayO = 0;
 
         const rows = entries.map((entry) => {
-            const inflow = (entry.sale || 0) + (entry.cashSale || 0) + (entry.codReceived || 0);
-            const outflow = (entry.salePending || 0) + (entry.expenseAmount || 0) + (entry.expenseByDigital || 0) + (entry.employeeAdvance || 0) + (entry.bankDeposit || 0);
+            const inflow = (entry.sale || 0) + (entry.codReceived || 0);
+            const outflow = (entry.salePending || 0) + 
+                          (entry.digitalSale || 0) +        
+                          (entry.expenseAmount || 0) + 
+                          (entry.employeeAdvance || 0) + 
+                          (entry.bankDeposit || 0); 
             
             const dailyNet = inflow - outflow;
             
@@ -144,8 +148,6 @@ export default function SaleExpensePage() {
                 totalBalance: totalBalanceP
             };
         });
-
-        // displayed as newest first
         return rows.reverse(); 
     }, [entries]);
 
