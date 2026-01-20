@@ -66,6 +66,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     width: ["Width", "W"],
     height: ["Height", "H"],
     customerCode: ["Customer Code", "CustomerCode", "Code"],
+    serviceProvider: ["Provider", "Service Provider", "Courier", "Service"],
 };
 
 const parseImportedDate = (dateVal: any): string => {
@@ -792,50 +793,62 @@ export default function SmartBookingMasterPage() {
             return { ...mapped, _awbExists: false };
         });
 
-        const calculatedRows = await Promise.all(mappedRows.map(async (row) => {
-            // Check if we have enough info to calculate
-            if (row.customerId && row.pin && row.chargeWeight && row.mode) {
-                try {
-                    const { data } = await axios.post('/api/calculate-rate', {
-                        customerId: row.customerId,
-                        destinationPincode: row.pin,
-                        chargeWeight: row.chargeWeight,
-                        isDox: row.dsrNdxPaper === 'D',
-                        mode: row.mode,
-                        invoiceValue: row.invoiceValue,
-                        state: row.state,
-                    });
+        // const calculatedRows = await Promise.all(mappedRows.map(async (row) => {
+        //     // Check if we have enough info to calculate
+        //     if (row.customerId && row.pin && row.chargeWeight && row.mode) {
+        //         try {
+        //             const { data } = await axios.post('/api/calculate-rate', {
+        //                 customerId: row.customerId,
+        //                 destinationPincode: row.pin,
+        //                 chargeWeight: row.chargeWeight,
+        //                 isDox: row.dsrNdxPaper === 'D',
+        //                 mode: row.mode,
+        //                 invoiceValue: row.invoiceValue,
+        //                 state: row.state,
+        //             });
 
-                    let updatedRow = {
-                        ...row,
-                        frCharge: data.frCharge.toFixed(2),
-                        waybillSurcharge: data.waybillSurcharge.toFixed(2),
-                        otherExp: data.otherExp.toFixed(2),
-                        serviceProvider: data.serviceProvider || "DTDC"
-                    };
+        //             let updatedRow = {
+        //                 ...row,
+        //                 frCharge: data.frCharge.toFixed(2),
+        //                 waybillSurcharge: data.waybillSurcharge.toFixed(2),
+        //                 otherExp: data.otherExp.toFixed(2),
+        //                 serviceProvider: data.serviceProvider || "DTDC"
+        //             };
 
-                    const frCharge = parseFloat(updatedRow.frCharge) || 0;
-                    const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
-                    updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
+        //             const frCharge = parseFloat(updatedRow.frCharge) || 0;
+        //             const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
+        //             updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
 
-                    return recalculateClientBilling(updatedRow);
-                } catch (error) {
-                    console.error(`Calculation failed for row ${row.srNo}`, error);
-                    return row; // Return original row if calculation fails
-                }
-            }
-            return row; // Return original row if missing data
-        }));
+        //             return recalculateClientBilling(updatedRow);
+        //         } catch (error) {
+        //             console.error(`Calculation failed for row ${row.srNo}`, error);
+        //             return row; // Return original row if calculation fails
+        //         }
+        //     }
+        //     return row; // Return original row if missing data
+        // }));
 
         try {
-            toast.info(`Saving ${calculatedRows.length} bookings to database...`);
-            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', calculatedRows);
+            toast.info(`Saving ${mappedRows.length} bookings to database...`);
+
+            const rowsForApi = mappedRows.map(r => ({
+                ...r,
+                pin: r.pin ? String(r.pin) : "", 
+                customerCode: r.customerCode ? String(r.customerCode) : "",
+                chargeWeight: parseFloat(r.chargeWeight) || 0,
+                actualWeight: parseFloat(r.actualWeight) || 0,
+                pcs: parseInt(r.pcs as string) || 1,
+                invoiceValue: parseFloat(r.invoiceValue) || 0
+            }));
+
+            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsForApi);
             toast.success("Imported and saved! Review the rows below.");
             
-            const rowsForDisplay = calculatedRows.map((r, i) => ({
+            const rowsForDisplay = mappedRows.map((r, i) => ({
                 ...r,
                 _awbExists: true,
-                srNo: i + 1
+                srNo: i + 1,
+                pin: r.pin ? String(r.pin) : ""
             }));
             
             setTableRows(rowsForDisplay); 
@@ -843,7 +856,7 @@ export default function SmartBookingMasterPage() {
         } catch (error: any) {
             console.error("Bulk save failed:", error);
             toast.error("Saved locally but DB sync failed. Please click Save All.");
-            setTableRows(calculatedRows);
+            setTableRows(mappedRows);
         }
 
         setLoading(false);
