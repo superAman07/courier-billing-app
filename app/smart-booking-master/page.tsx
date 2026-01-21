@@ -133,6 +133,8 @@ export default function SmartBookingMasterPage() {
     const [isAutoMappingCustomers, setIsAutoMappingCustomers] = useState(false);
     const [isCalculatingRates, setIsCalculatingRates] = useState(false);
 
+    const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
         if (newSelection.has(index)) {
@@ -830,6 +832,8 @@ export default function SmartBookingMasterPage() {
 
         try {
             toast.info(`Saving ${mappedRows.length} bookings to database...`);
+            const totalRows = mappedRows.length;
+            setImportProgress({ current: 0, total: totalRows });
 
             const rowsForApi = mappedRows.map(r => ({
                 ...r,
@@ -841,7 +845,18 @@ export default function SmartBookingMasterPage() {
                 invoiceValue: parseFloat(r.invoiceValue) || 0
             }));
 
-            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsForApi);
+            const BATCH_SIZE = 50; 
+            for (let i = 0; i < totalRows; i += BATCH_SIZE) {
+                const batch = rowsForApi.slice(i, i + BATCH_SIZE);
+                await axios.post('/api/booking-master/bulk-create', batch);
+                
+                setImportProgress(prev => ({ 
+                    ...prev, 
+                    current: Math.min(i + BATCH_SIZE, totalRows) 
+                }));
+            }
+
+            // const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsForApi);
             toast.success("Imported and saved! Review the rows below.");
             
             const rowsForDisplay = mappedRows.map((r, i) => ({
@@ -857,6 +872,9 @@ export default function SmartBookingMasterPage() {
             console.error("Bulk save failed:", error);
             toast.error("Saved locally but DB sync failed. Please click Save All.");
             setTableRows(mappedRows);
+        } finally {
+            setLoading(false);
+            setImportProgress({ current: 0, total: 0 });
         }
 
         setLoading(false);
@@ -1385,10 +1403,24 @@ export default function SmartBookingMasterPage() {
             <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
             <BookingImportPanel onData={handleImport} />
 
-            {loading && (
-                <div className="flex items-center gap-2 text-blue-600 my-4">
-                    <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                    <span>Processing import...</span>
+            {(loading || importProgress.total > 0) && (
+                <div className="flex flex-col items-center justify-center gap-2 text-blue-600 my-4 p-4 bg-blue-50 rounded-lg border border-blue-100 max-w-md mx-auto">
+                    <div className="flex items-center gap-3">
+                        <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        <span className="font-semibold text-lg">
+                            {importProgress.total > 0 
+                                ? `Importing: ${importProgress.current} / ${importProgress.total}`
+                                : "Processing file..."}
+                        </span>
+                    </div>
+                    {importProgress.total > 0 && (
+                        <div className="w-full bg-blue-200 rounded-full h-2.5 mt-2">
+                            <div 
+                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                                style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                            ></div>
+                        </div>
+                    )}
                 </div>
             )}
 

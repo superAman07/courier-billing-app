@@ -63,26 +63,49 @@ export async function POST(req: NextRequest) {
             return bookingData;
         });
 
-        let createdCount = 0;
-        let updatedCount = 0;
-
-        for (const booking of createData) {
-            const result = await prisma.bookingMaster.upsert({
-                where: { awbNo: booking.awbNo },
-                update: booking,
-                create: booking,
-            });
-            if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-                createdCount++;
-            } else {
-                updatedCount++;
+        const results = await Promise.all(createData.map(async (booking) => {
+            try {
+                const result = await prisma.bookingMaster.upsert({
+                    where: { awbNo: booking.awbNo },
+                    update: booking,
+                    create: booking,
+                });
+                // Return status for counting
+                return result.createdAt.getTime() === result.updatedAt.getTime() ? 'created' : 'updated';
+            } catch (e) {
+                console.error(`Failed to upsert ${booking.awbNo}`, e);
+                return 'error';
             }
-        }
+        }));
+
+        const createdCount = results.filter(r => r === 'created').length;
+        const updatedCount = results.filter(r => r === 'updated').length;
 
         return NextResponse.json({
-            message: `Import complete: ${createdCount} created, ${updatedCount} updated.`,
+            message: `Batch processed: ${createdCount} created, ${updatedCount} updated.`,
             count: createdCount + updatedCount,
         });
+
+        // let createdCount = 0;
+        // let updatedCount = 0;
+
+        // for (const booking of createData) {
+        //     const result = await prisma.bookingMaster.upsert({
+        //         where: { awbNo: booking.awbNo },
+        //         update: booking,
+        //         create: booking,
+        //     });
+        //     if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        //         createdCount++;
+        //     } else {
+        //         updatedCount++;
+        //     }
+        // }
+
+        // return NextResponse.json({
+        //     message: `Import complete: ${createdCount} created, ${updatedCount} updated.`,
+        //     count: createdCount + updatedCount,
+        // });
 
     } catch (error: any) {
         console.error("Error during bulk booking creation:", error);
