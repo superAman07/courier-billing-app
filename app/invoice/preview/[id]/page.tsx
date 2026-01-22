@@ -139,39 +139,44 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                         </tr>
                     </thead>
                     <tbody>
-                        {bookings.map((booking: any, index: number) => (
-                            <tr key={booking.id}>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{index + 1}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {new Date(booking.bookingDate).toLocaleDateString('en-GB')}
-                                </td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.destinationCity || booking.city || booking.location || ''}
-                                </td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.mode || booking.serviceType || ''}
-                                </td>
-                                
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.doxType || (booking.docType === 'D' ? 'DOX' : 'NON-DOX') || ''}
-                                </td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
-                                
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
-                                </td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                    {booking.invoiceWt || booking.chargeWeight || booking.weight || booking.actualWeight || ''}
-                                </td>
-                                {showConsignmentValue && (
+                        {bookings.map((booking: any, index: number) => { 
+                            const rawWeight = booking.invoiceWt || booking.chargeWeight || booking.weight || booking.actualWeight || 0;
+                            const weight = Number(rawWeight);
+
+                            return (
+                                <tr key={booking.id}>
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{index + 1}</td>
                                     <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                        {booking.consignmentValue > 49999 ? Number(booking.consignmentValue).toFixed(2) : '-'}
+                                        {new Date(booking.bookingDate).toLocaleDateString('en-GB')}
                                     </td>
-                                )}
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{Number(booking.frCharge || 0).toFixed(2)}</td>
-                            </tr>
-                        ))}
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {booking.destinationCity || booking.city || booking.location || ''}
+                                    </td>
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {booking.mode || booking.serviceType || ''}
+                                    </td>
+                                    
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {booking.doxType || (booking.docType === 'D' ? 'DOX' : 'NON-DOX') || ''}
+                                    </td>
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.numPcs ?? ''}</td>
+                                    
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
+                                    </td>
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                        {weight > 0 ? weight.toFixed(2) : '0.00'}
+                                    </td>
+                                    {showConsignmentValue && (
+                                        <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                            {booking.consignmentValue > 49999 ? Number(booking.consignmentValue).toFixed(2) : '-'}
+                                        </td>
+                                    )}
+                                    <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{Number(booking.frCharge || 0).toFixed(2)}</td>
+                                </tr>
+                            )}
+                        )}
                        
                         <tr>
                             <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Shipper Cost</td>
