@@ -146,7 +146,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                     {new Date(booking.bookingDate).toLocaleDateString('en-GB')}
                                 </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.consignmentNo}</td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.city}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                    {booking.destinationCity || booking.city || booking.location || ''}
+                                </td>
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
                                     {booking.mode || booking.serviceType || ''}
                                 </td>
@@ -159,7 +161,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                 <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
                                     {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
                                 </td>
-                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">{booking.weight ?? ''}</td>
+                                <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
+                                    {booking.invoiceWt || booking.chargeWeight || booking.weight || booking.actualWeight || ''}
+                                </td>
                                 {showConsignmentValue && (
                                     <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
                                         {booking.consignmentValue > 49999 ? Number(booking.consignmentValue).toFixed(2) : '-'}

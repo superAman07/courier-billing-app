@@ -10,6 +10,18 @@ export async function POST(req: NextRequest) {
         }
 
         const createData = bookings.map(b => {
+
+            const actualWeight = Number(b.actualWeight || 0);
+            const chargeWeight = Number(b.chargeWeight || 0);
+            let invoiceWt = Number(b.invoiceWt || 0);
+
+            // Fallback: If invoiceWt is 0, use chargeWeight or actualWeight
+            if (invoiceWt === 0) {
+                invoiceWt = Math.max(chargeWeight, actualWeight);
+            }
+
+            // 2. City Logic: Destination is required. If missing, try 'location' (City Name) or 'city'
+            const destinationCity = b.destinationCity || b.location || b.city || "";
             const bookingData: any = {
                 awbNo: String(b.awbNo),
                 bookingDate: b.bookingDate ? new Date(b.bookingDate) : new Date(),

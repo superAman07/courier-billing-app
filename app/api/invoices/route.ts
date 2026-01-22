@@ -45,6 +45,57 @@ export async function POST(req: NextRequest) {
     const invoiceDate = new Date(invoiceDateStr);
     const invoiceType = customerType === "CREDIT" ? "BookingMaster_CREDIT" : "BookingMaster_CASH";
 
+    const bookings = await prisma.bookingMaster.findMany({
+        where: { id: { in: bookingIds } },
+    });
+
+    if (bookings.length !== bookingIds.length) {
+        return NextResponse.json({ message: "Some selected bookings were not found." }, { status: 404 });
+    }
+
+    // 2. Calculate Totals & Prepare Items Array
+    let grandTotal = 0;
+    let totalTax = 0;
+
+    const invoiceBookings = bookings.map((b: BookingMaster) => {
+        const clientBillingValue = Number(b.clientBillingValue || 0);
+        const creditAmount = Number(b.creditCustomerAmount || 0);
+        const regularAmount = Number(b.regularCustomerAmount || 0);
+
+        const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
+        const taxAmount = Number(b.gst || 0);
+
+        grandTotal += finalBookingAmount;
+        totalTax += taxAmount;
+
+        return {
+        bookingId: b.id,
+        bookingType: "BookingMaster",
+        consignmentNo: b.awbNo,
+        bookingDate: b.bookingDate,
+        senderName: b.senderDetail || '',
+        receiverName: b.receiverName || '',
+        city: b.destinationCity,
+        amountCharged: finalBookingAmount,
+        taxAmount: taxAmount,
+        weight: b.invoiceWt,
+        numPcs: b.pcs,
+        frCharge: b.frCharge,
+        shipperCost: b.shipperCost,
+        waybillSurcharge: b.waybillSurcharge,
+        otherExp: b.otherExp,
+        fuelSurcharge: b.fuelSurcharge,
+        gst: b.gst,
+        consignmentValue: b.invoiceValue,
+        doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX',
+        serviceType: b.mode,
+        };
+    });
+
+    // Calculate dates
+    const periodFrom = bookings.reduce((min: Date, b: BookingMaster) => b.bookingDate < min ? b.bookingDate : min, bookings[0].bookingDate);
+    const periodTo = bookings.reduce((max: Date, b: BookingMaster) => b.bookingDate > max ? b.bookingDate : max, bookings[0].bookingDate);
+
     const createdInvoice = await runWithRetries(async () => {
       return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         let gstPrefix = "AGS"; 
@@ -88,53 +139,78 @@ export async function POST(req: NextRequest) {
         const nextNumber = counter.lastNumber;
         const invoiceNo = `${finalPrefix}${String(nextNumber).padStart(5, "0")}`;
 
-        const bookings = await tx.bookingMaster.findMany({
-          where: { id: { in: bookingIds } },
-        });
+      //   const bookings = await tx.bookingMaster.findMany({
+      //     where: { id: { in: bookingIds } },
+      //   });
 
-        if (bookings.length !== bookingIds.length) {
-          throw new Error("Some bookings were not found");
-        }
+      //   if (bookings.length !== bookingIds.length) {
+      //     throw new Error("Some bookings were not found");
+      //   }
 
-        let grandTotal = 0;
-        let totalTax = 0;
+      //   let grandTotal = 0;
+      //   let totalTax = 0;
 
-        const invoiceBookings = bookings.map((b: BookingMaster) => {
-          const clientBillingValue = Number(b.clientBillingValue || 0);
-          const creditAmount = Number(b.creditCustomerAmount || 0);
-          const regularAmount = Number(b.regularCustomerAmount || 0);
+      //   const invoiceBookings = bookings.map((b: BookingMaster) => {
+      //     const clientBillingValue = Number(b.clientBillingValue || 0);
+      //     const creditAmount = Number(b.creditCustomerAmount || 0);
+      //     const regularAmount = Number(b.regularCustomerAmount || 0);
 
-          const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
-          const taxAmount = Number(b.gst || 0);
+      //     const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
+      //     const taxAmount = Number(b.gst || 0);
 
-          grandTotal += finalBookingAmount;
-          totalTax += taxAmount;
+      //     grandTotal += finalBookingAmount;
+      //     totalTax += taxAmount;
 
-          return {
-            bookingId: b.id,
-            bookingType: "BookingMaster",
-            consignmentNo: b.awbNo,
-            bookingDate: b.bookingDate,
-            senderName: b.senderDetail || '',
-            receiverName: b.receiverName || '',
-            city: b.destinationCity,
-            amountCharged: finalBookingAmount,
-            taxAmount: taxAmount,
-            weight: b.invoiceWt,
-            numPcs: b.pcs,
-            frCharge: b.frCharge,
-            shipperCost: b.shipperCost,
-            waybillSurcharge: b.waybillSurcharge,
-            otherExp: b.otherExp,
-            fuelSurcharge: b.fuelSurcharge,
-            gst: b.gst,
-            consignmentValue: b.invoiceValue, // Maps Material Value
-            doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX', // Maps Dox/Non-Dox
-            serviceType: b.mode,
-          };
-        });
+      //     return {
+      //       bookingId: b.id,
+      //       bookingType: "BookingMaster",
+      //       consignmentNo: b.awbNo,
+      //       bookingDate: b.bookingDate,
+      //       senderName: b.senderDetail || '',
+      //       receiverName: b.receiverName || '',
+      //       city: b.destinationCity,
+      //       amountCharged: finalBookingAmount,
+      //       taxAmount: taxAmount,
+      //       weight: b.invoiceWt,
+      //       numPcs: b.pcs,
+      //       frCharge: b.frCharge,
+      //       shipperCost: b.shipperCost,
+      //       waybillSurcharge: b.waybillSurcharge,
+      //       otherExp: b.otherExp,
+      //       fuelSurcharge: b.fuelSurcharge,
+      //       gst: b.gst,
+      //       consignmentValue: b.invoiceValue, // Maps Material Value
+      //       doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX', // Maps Dox/Non-Dox
+      //       serviceType: b.mode,
+      //     };
+      //   });
 
-        const invoice = await tx.invoice.create({
+      //   const invoice = await tx.invoice.create({
+      //     data: {
+      //       invoiceNo,
+      //       type: invoiceType,
+      //       invoiceDate,
+      //       totalAmount: grandTotal - totalTax,
+      //       totalTax: totalTax,
+      //       netAmount: grandTotal,
+      //       customerId,
+      //       periodFrom: bookings.reduce((min: Date, b: BookingMaster) => b.bookingDate < min ? b.bookingDate : min, bookings[0].bookingDate),
+      //       periodTo: bookings.reduce((max: Date, b: BookingMaster) => b.bookingDate > max ? b.bookingDate : max, bookings[0].bookingDate),
+      //       bookings: {
+      //         create: invoiceBookings,
+      //       },
+      //     },
+      //     include: { bookings: true }
+      //   });
+
+      //   await tx.bookingMaster.updateMany({
+      //     where: { id: { in: bookingIds } },
+      //     data: { status: "INVOICED", statusDate: new Date() }
+      //   });
+
+      //   return invoice;
+      // }, { timeout: 15000 });
+      const invoice = await tx.invoice.create({
           data: {
             invoiceNo,
             type: invoiceType,
@@ -143,8 +219,8 @@ export async function POST(req: NextRequest) {
             totalTax: totalTax,
             netAmount: grandTotal,
             customerId,
-            periodFrom: bookings.reduce((min: Date, b: BookingMaster) => b.bookingDate < min ? b.bookingDate : min, bookings[0].bookingDate),
-            periodTo: bookings.reduce((max: Date, b: BookingMaster) => b.bookingDate > max ? b.bookingDate : max, bookings[0].bookingDate),
+            periodFrom,
+            periodTo,
             bookings: {
               create: invoiceBookings,
             },
@@ -152,13 +228,14 @@ export async function POST(req: NextRequest) {
           include: { bookings: true }
         });
 
+        // Update booking status
         await tx.bookingMaster.updateMany({
           where: { id: { in: bookingIds } },
           data: { status: "INVOICED", statusDate: new Date() }
         });
 
         return invoice;
-      }, { timeout: 15000 });
+      }, { timeout: 20000 });
     });
 
     return NextResponse.json(createdInvoice, { status: 201 });
