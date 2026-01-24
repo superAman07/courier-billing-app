@@ -17,13 +17,17 @@ export default function ModifyDeleteInvoiceCreditClient() {
     const [editDate, setEditDate] = useState('');
 
     useEffect(() => {
-        axios.get('/api/customers').then(res => {
-            setCustomers(
-                res.data.filter((c: any) =>
-                    type === 'CreditClientBooking' ? !c.isInternational : !!c.isInternational
-                )
-            );
-        });
+        const isInternational = type === 'InternationalCreditClientBooking';
+        const typeParam = isInternational ? 'International' : 'Domestic';
+
+        axios.get('/api/customers/with-invoices', { params: { type: typeParam } })
+            .then(res => {
+                setCustomers(res.data);
+            })
+            .catch(err => {
+                console.error("Failed to fetch customers", err);
+                toast.error("Could not load customer list");
+            });
         setCustomerId('');
         setInvoices([]);
     }, [type]);
