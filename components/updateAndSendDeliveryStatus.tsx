@@ -23,6 +23,7 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   const [filteredBookings, setFilteredBookings] = useState<BookingData[]>([])
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ACTIVE') 
   const [loading, setLoading] = useState(true)
   const [selectAll, setSelectAll] = useState(false)
 
@@ -35,17 +36,29 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredBookings(bookings)
-    } else {
-      const filtered = bookings.filter(booking =>
-        booking.consignmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.destination.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setFilteredBookings(filtered)
+    let filtered = bookings;
+
+    if (statusFilter === 'ACTIVE') {
+      const terminalStates = ['DELIVERED', 'RETURNED', 'INVOICED', 'CANCELLED'];
+      filtered = filtered.filter(b => !terminalStates.includes(b.deliveryStatus || ''));
+    } else if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(b => b.deliveryStatus === statusFilter);
     }
-  }, [bookings, searchTerm])
+    if (searchTerm) {
+      const lowerTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(booking =>
+        booking.consignmentNo.toLowerCase().includes(lowerTerm) ||
+        booking.customer.toLowerCase().includes(lowerTerm) ||
+        booking.destination.toLowerCase().includes(lowerTerm)
+      );
+    }
+
+    setFilteredBookings(filtered)
+    
+    setSelectedRows(new Set()); 
+    setSelectAll(false);
+
+  }, [bookings, searchTerm, statusFilter])
 
   const fetchBookings = async () => {
     try {
@@ -255,6 +268,19 @@ const UpdateDeliveryStatusPage: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-gray-700 cursor-pointer"
+            >
+              <option value="ACTIVE">⚡ Pending Only (Active)</option>
+              <option value="ALL">📂 Show All History</option>
+              <option disabled>──────────</option>
+              <option value="BOOKED">Booked</option>
+              <option value="IN_TRANSIT">In Transit</option>
+              <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+              <option value="DELIVERED">Delivered</option>
+            </select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
