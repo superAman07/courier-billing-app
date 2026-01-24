@@ -22,12 +22,15 @@ export default function GenerateCreditInvoice() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get('/api/customers').then(res => {
-      setCustomers(
-        res.data.filter((c: any) =>
-          type === 'Domestic' ? !c.isInternational : !!c.isInternational
-        )
-      );
+    setLoading(true);
+    axios.get('/api/customers/pending-invoice', {
+        params: { type } // Pass 'Domestic' or 'International'
+    }).then(res => {
+      setCustomers(res.data);
+      setLoading(false);
+    }).catch(err => {
+        console.error("Failed to load pending customers", err);
+        setLoading(false);
     });
 
     axios.get('/api/registration-details').then(res => {
