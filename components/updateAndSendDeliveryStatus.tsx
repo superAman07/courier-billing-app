@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Search, Upload, MessageCircle, Check, RefreshCw } from 'lucide-react'
+import { Search, Upload, MessageCircle, Check, RefreshCw, Edit } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface BookingData {
   type: string
@@ -30,6 +31,8 @@ const UpdateDeliveryStatusPage: React.FC = () => {
   const [bulkStatus, setBulkStatus] = useState('')
   const [bulkDate, setBulkDate] = useState('')
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
+
+  const router = useRouter()
 
   useEffect(() => {
     fetchBookings()
@@ -59,6 +62,20 @@ const UpdateDeliveryStatusPage: React.FC = () => {
     setSelectAll(false);
 
   }, [bookings, searchTerm, statusFilter])
+
+  const handleRecallToSmartBooking = () => {
+    if (selectedRows.size === 0) {
+        toast.error('Select bookings to recall for editing');
+        return;
+    }
+    
+    const idsToEdit = Array.from(selectedRows);
+    
+    sessionStorage.setItem('smartBooking_editIds', JSON.stringify(idsToEdit));
+    
+    toast.info(`Redirecting ${idsToEdit.length} bookings to Smart Editor...`);
+    router.push('/smart-booking-master?status=recall');
+  };
 
   const fetchBookings = async () => {
     try {
@@ -437,6 +454,17 @@ const UpdateDeliveryStatusPage: React.FC = () => {
             >
               <MessageCircle className="w-4 h-4" />
               <span>Send SMS ({selectedRows.size})</span>
+            </button>
+            <button
+              onClick={handleRecallToSmartBooking}
+              disabled={selectedRows.size === 0}
+              className={`px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${selectedRows.size === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                }`}
+            >
+              <Edit className="w-4 h-4" />
+              <span>Recall for Edit</span>
             </button>
           </div>
         </div>

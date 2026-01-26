@@ -1320,6 +1320,40 @@ export default function SmartBookingMasterPage() {
         }
     };
 
+    useEffect(() => {
+        const checkRecall = async () => {
+            const storedIds = sessionStorage.getItem('smartBooking_editIds');
+            if (storedIds) {
+                try {
+                    const ids = JSON.parse(storedIds);
+                    if (Array.isArray(ids) && ids.length > 0) {
+                        toast.info(`Recalling ${ids.length} bookings for correction...`);
+                        setLoading(true);
+                        
+                        // Fetch the data formatted for this table
+                        const { data } = await axios.post('/api/booking-master/get-for-edit', { ids });
+                        
+                        if (data && data.length > 0) {
+                            // Populate table
+                            setTableRows(data);
+                            toast.success("Bookings loaded! Make corrections and click 'Save All'.");
+                            
+                            // Clear storage so it doesn't happen on reload
+                            sessionStorage.removeItem('smartBooking_editIds');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Recall failed", e);
+                    toast.error("Failed to load recalled bookings");
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        
+        checkRecall();
+    }, []);
+
     const filteredRows = tableRows.filter(row => {
         if (dateFilter.start && row.bookingDate < dateFilter.start) return false;
         if (dateFilter.end && row.bookingDate > dateFilter.end) return false;
