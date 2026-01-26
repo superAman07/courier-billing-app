@@ -4,7 +4,7 @@ import axios from "axios";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { toast } from "sonner";
 import { handleDownloadForAllBookings } from "@/lib/downloadExcel";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from "lucide-react";
 import { debounce } from "lodash";
 
 const columns = [
@@ -89,6 +89,7 @@ export default function AllBookingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [filters, setFilters] = useState({
     customerName: "",
@@ -215,6 +216,7 @@ export default function AllBookingsPage() {
     }
 
     setFilteredBookings(filtered);
+    setSelectedIds(new Set());
   };
 
   const paginatedBookings = useMemo(() => {
@@ -222,6 +224,69 @@ export default function AllBookingsPage() {
     const endIndex = startIndex + pageSize;
     return filteredBookings.slice(startIndex, endIndex);
   }, [filteredBookings, currentPage, pageSize]);
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredBookings.length && filteredBookings.length > 0) {
+      setSelectedIds(new Set()); // Deselect All
+    } else {
+      // Select All Filtered Bookings (e.g. all 5 days of data selected)
+      const allIds = new Set(filteredBookings.map(b => b.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  // 3. ADD: Handle Single Row Selection
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 4. ADD: Advanced Bulk Delete
+  const handleDeleteSelected = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    // --- SMART CONFIRMATION MESSAGE ---
+    let message = `Are you sure you want to PERMANENTLY delete ${ids.length} selected bookings?`;
+
+    // Detect if Date Range is active and User selected everything
+    if (filters.startDate && filters.endDate && ids.length === filteredBookings.length) {
+        const start = new Date(filters.startDate).toLocaleDateString('en-GB');
+        const end = new Date(filters.endDate).toLocaleDateString('en-GB');
+        
+        message = `⚠️ WARNING:\n\nYou are deleting data from ${start} to ${end}.\nTotal ${ids.length} rows will be removed.\n\nThis action CANNOT be undone. Are you sure?`;
+    }
+
+    if (!confirm(message)) return;
+
+    setLoading(true);
+    try {
+      // Execute Deletes in Parallel
+      // Note: For large numbers (e.g. >100), it's better to create a distinct bulk-delete API
+      // But for <500 rows, separate requests or a small loop works reasonably well.
+      // Ideally, add a bulk-delete endpoint. For now, we loop requests:
+      await Promise.all(ids.map(id => axios.delete(`/api/booking-master/${id}`)));
+
+      toast.success(`Successfully deleted ${ids.length} bookings.`);
+      
+      // Update Local State
+      setBookings(prev => prev.filter(b => !selectedIds.has(b.id)));
+      setFilteredBookings(prev => prev.filter(b => !selectedIds.has(b.id)));
+      setSelectedIds(new Set());
+      
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      toast.error("Failed to delete some items. Please try again.");
+      fetchBookings(); // Refresh from server to be safe
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const newTotalPages = Math.ceil(filteredBookings.length / pageSize);
@@ -522,6 +587,16 @@ export default function AllBookingsPage() {
             </select>
           </div>
           <div className="flex justify-end ml-12">
+            {selectedIds.size > 0 && (
+                <button
+                    onClick={handleDeleteSelected}
+                    className="px-5 py-2 min-w-[140px] cursor-pointer bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition flex items-center justify-center gap-2 font-semibold"
+                    disabled={loading}
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Delete ({selectedIds.size})
+                </button>
+            )}
             <button
               onClick={() => {
                 toast('Downloading Excel...');
@@ -586,6 +661,15 @@ export default function AllBookingsPage() {
           <table className="min-w-full text-xs md:text-sm table-auto">
             <thead className="bg-blue-50 sticky top-0 z-10">
               <tr>
+                <th className="px-3 py-3 border-b text-center w-10">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 cursor-pointer text-blue-600 rounded focus:ring-blue-500"
+                    checked={filteredBookings.length > 0 && selectedIds.size === filteredBookings.length}
+                    onChange={handleSelectAll}
+                    title="Select All Filtered Rows"
+                  />
+                </th>
                 {columns.map(col => (
                   <th
                     key={col}
@@ -601,6 +685,14 @@ export default function AllBookingsPage() {
             <tbody>
               {paginatedBookings.map((row, idx) => (
                 <tr key={row.id || idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <td className="px-3 py-2 border-b text-center">
+                    <input 
+                        type="checkbox" 
+                        className="w-4 h-4 cursor-pointer text-blue-600 rounded focus:ring-blue-500"
+                        checked={selectedIds.has(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                    />
+                  </td>
                   {columns.map(col => {
                     if (col === "receiverName") {
                       return (
