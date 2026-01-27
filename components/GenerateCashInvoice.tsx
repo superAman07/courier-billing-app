@@ -15,6 +15,10 @@ export default function GenerateCashInvoice() {
     const [invoiceLoading, setInvoiceLoading] = useState(false);
     const [type, setType] = useState<'Domestic' | 'International'>('Domestic');
 
+    // NEW: Customer Selection State
+    const [customers, setCustomers] = useState<any[]>([]);
+    const [customerId, setCustomerId] = useState('');
+
     // NEW: Multi-Company State
     const [companies, setCompanies] = useState<any[]>([]);
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
@@ -39,6 +43,23 @@ export default function GenerateCashInvoice() {
             setCompanies(Array.isArray(res.data) ? res.data : [res.data]);
         });
     }, []);
+
+    // NEW: Fetch Customers when Type changes (similar to GenerateCreditInvoice)
+    useEffect(() => {
+        // We fetch pending invoice customers to populate the dropdown
+        axios.get('/api/customers/pending-invoice', {
+            params: { type } // 'Domestic' or 'International'
+        }).then(res => {
+            setCustomers(res.data);
+        }).catch(err => {
+            console.error("Failed to load customers", err);
+        });
+        
+        // Reset selections when type changes
+        setCustomerId('');
+        setBookings([]);
+        setSelected([]);
+    }, [type]);
 
     // UPDATED: View Invoice with Smart Company Detection
     const handleViewInvoice = (id: string) => {
@@ -92,15 +113,28 @@ export default function GenerateCashInvoice() {
         }
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/booking-master/for-invoice', {
-                params: {
-                    fromDate,
-                    toDate,
-                    customerType: 'REGULAR,WALK-IN',
-                    status: 'BOOKED,DELIVERED',
-                    type
-                }
-            });
+            // Determine params based on whether a customer is selected
+            const params: any = {
+                fromDate,
+                toDate,
+                status: 'BOOKED,DELIVERED',
+                type
+            };
+
+            if (customerId) {
+                // Case A: Specific Customer Selected
+                // We want ALL their bookings (Credit/Regular/etc) so we pass a broad customerType list
+                // or just rely on customerId filtering if the API handles it (which it does).
+                // Passing 'CREDIT,REGULAR,WALK-IN' ensures we catch everything.
+                params.customerId = customerId;
+                params.customerType = 'CREDIT,REGULAR,WALK-IN';
+            } else {
+                // Case B: No Customer (Standard Cash Invoice Mode)
+                // Filter for generic types
+                params.customerType = 'REGULAR,WALK-IN';
+            }
+
+            const { data } = await axios.get('/api/booking-master/for-invoice', { params });
             setBookings(data);
             setSelected([]);
         } finally {
@@ -124,7 +158,10 @@ export default function GenerateCashInvoice() {
             await axios.post('/api/invoices', {
                 bookingIds: selected,
                 invoiceDate,
-                customerType: 'CASH', // Maps to BookingMaster_CASH
+                // Crucial: We send 'CASH' to generate a Cash Invoice Number (e.g. ANGS...), 
+                // but we also send 'customerId' so it's linked to the user.
+                customerType: 'CASH', 
+                customerId: customerId || undefined,
                 companyId: selectedCompanyId
             });
             toast.success('Invoice generated!');
@@ -202,6 +239,24 @@ export default function GenerateCashInvoice() {
                         <option value="International">International (Cash)</option>
                     </select>
                 </div>
+
+                {/* NEW: Customer Selection (Optional) */}
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700">Customer (Optional)</label>
+                    <select
+                        value={customerId}
+                        onChange={e => setCustomerId(e.target.value)}
+                        className="border p-2 rounded text-gray-600 min-w-[150px]"
+                    >
+                        <option value="">-- All / Walk-in --</option>
+                        {customers.map((c: any) => (
+                            <option key={c.id} value={c.id}>
+                                {c.customerCode} - {c.customerName}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div>
                     <label className="block text-xs font-semibold text-gray-700">Invoice Date</label>
                     <input type="date" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} className="border p-2 rounded text-gray-600" />
@@ -218,6 +273,7 @@ export default function GenerateCashInvoice() {
                     Show Consignments
                 </button>
             </div>
+            
             <table className="w-full border mb-2">
                 <thead>
                     <tr className="bg-gray-100 text-xs">
@@ -248,7 +304,7 @@ export default function GenerateCashInvoice() {
                                 </td>
                                 <td className='text-gray-600 text-center'>{b.bookingDate?.slice(0, 10)}</td>
                                 <td className='text-gray-600 text-center'>{b.awbNo}</td>
-                                <td className='text-gray-600 text-center'>{b.customer?.customerName || b.receiverName}</td>
+                                <td className='text-gray-600 text-center'>{b.customer?.customerName || b.receiverName || 'Walk-in'}</td>
                                 <td className='text-gray-600 text-center'>{b.clientBillingValue}</td>
                             </tr>
                         ))
@@ -308,10 +364,12 @@ export default function GenerateCashInvoice() {
     );
 }
 
+
 // 'use client';
 // import { useEffect, useState } from 'react';
 // import axios from 'axios';
 // import { toast } from 'sonner';
+// import { X } from 'lucide-react'; // Make sure to install lucide-react if missing
 
 // export default function GenerateCashInvoice() {
 //     const [invoiceDate, setInvoiceDate] = useState('');
@@ -323,6 +381,11 @@ export default function GenerateCashInvoice() {
 //     const [invoices, setInvoices] = useState<any[]>([]);
 //     const [invoiceLoading, setInvoiceLoading] = useState(false);
 //     const [type, setType] = useState<'Domestic' | 'International'>('Domestic');
+
+//     // NEW: Multi-Company State
+//     const [companies, setCompanies] = useState<any[]>([]);
+//     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+//     const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
 //     const fetchInvoices = async () => {
 //         setInvoiceLoading(true);
@@ -338,10 +401,55 @@ export default function GenerateCashInvoice() {
 
 //     useEffect(() => {
 //         fetchInvoices();
+//         // Fetch Company Details for Header Selection
+//         axios.get('/api/registration-details').then(res => {
+//             setCompanies(Array.isArray(res.data) ? res.data : [res.data]);
+//         });
 //     }, []);
 
+//     // UPDATED: View Invoice with Smart Company Detection
 //     const handleViewInvoice = (id: string) => {
-//         window.open(`/invoice/preview/${id}`, '_blank');
+//         const inv = invoices.find(i => i.id === id);
+//         if (!inv) return;
+    
+//         let matchedCompanyId = null;
+    
+//         if (companies.length > 1) {
+//             const invNo = inv.invoiceNo.toUpperCase();
+    
+//             if (invNo.startsWith('HVS') || invNo.startsWith('HNVS')) {
+//                 const hvsComp = companies.find((c: any) => c.companyName.toLowerCase().includes('hvs'));
+//                 if (hvsComp) matchedCompanyId = hvsComp.id;
+//             } 
+//             else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS')) {
+//                 const agsComp = companies.find((c: any) => 
+//                     c.companyName.toLowerCase().includes('awdhoot') || 
+//                     c.companyName.toLowerCase().includes('awadhoot')
+//                 );
+//                 if (agsComp) matchedCompanyId = agsComp.id;
+//             }
+//         }
+        
+//         if (matchedCompanyId) {
+//             window.open(`/invoice/preview/${id}?companyId=${matchedCompanyId}`, '_blank');
+//         } else if (companies.length > 1) {
+//             // If we can't auto-detect, ask user
+//             setSelectedInvoiceId(id);
+//             setIsCompanyModalOpen(true);
+//         } else {
+//             window.open(`/invoice/preview/${id}`, '_blank');
+//         }
+//     };
+
+//     // NEW: Open Invoice Helper
+//     const openInvoiceWithCompany = (companyId: string) => {
+//         if (selectedInvoiceId === 'GENERATING_NEW') {
+//             submitInvoiceGeneration(companyId);
+//         } else if (selectedInvoiceId) {
+//             window.open(`/invoice/preview/${selectedInvoiceId}?companyId=${companyId}`, '_blank');
+//             setIsCompanyModalOpen(false);
+//             setSelectedInvoiceId(null);
+//         }
 //     };
 
 //     const fetchBookings = async () => {
@@ -376,22 +484,21 @@ export default function GenerateCashInvoice() {
 //         else setSelected(bookings.map((b: any) => b.id));
 //     };
 
-//     const handleGenerateInvoice = async () => {
-//         if (!invoiceDate || selected.length === 0) {
-//             toast.error('Select invoice date and at least one consignment');
-//             return;
-//         }
+//     // UPDATED: Submit Logic
+//     const submitInvoiceGeneration = async (selectedCompanyId?: string) => {
 //         setLoading(true);
 //         try {
 //             await axios.post('/api/invoices', {
 //                 bookingIds: selected,
 //                 invoiceDate,
-//                 customerType: 'CASH'
+//                 customerType: 'CASH', // Maps to BookingMaster_CASH
+//                 companyId: selectedCompanyId
 //             });
 //             toast.success('Invoice generated!');
 //             setBookings([]);
 //             setSelected([]);
 //             fetchInvoices();
+//             setIsCompanyModalOpen(false);
 //         } catch (error: any) {
 //             const backendMsg = error?.response?.data?.message;
 //             if (backendMsg) {
@@ -404,9 +511,52 @@ export default function GenerateCashInvoice() {
 //         }
 //     };
 
+//     // UPDATED: Trigger Logic
+//     const handleGenerateInvoice = async () => {
+//         if (!invoiceDate || selected.length === 0) {
+//             toast.error('Select invoice date and at least one consignment');
+//             return;
+//         }
+//         if (companies.length > 1) {
+//             setSelectedInvoiceId('GENERATING_NEW');
+//             setIsCompanyModalOpen(true);
+//         } else {
+//             submitInvoiceGeneration(companies[0]?.id);
+//         }
+//     };
+
 //     return (
 //         <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 mt-8">
 //             <h2 className="text-xl font-bold mb-4 text-center bg-red-700 text-white py-2 rounded">GENERATE CASH INVOICE</h2>
+            
+//             {/* NEW: Company Selection Modal */}
+//             {isCompanyModalOpen && (
+//                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+//                     <div className="bg-white rounded-lg p-6 w-96 shadow-xl relative">
+//                         <button 
+//                             onClick={() => setIsCompanyModalOpen(false)}
+//                             className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 cursor-pointer"
+//                         >
+//                             <X className="w-5 h-5" />
+//                         </button>
+//                         <h3 className="text-lg font-bold mb-4 text-gray-800">Select Billing Entity</h3>
+//                         <p className="text-sm text-gray-600 mb-4">Choose which company letterhead to use.</p>
+//                         <div className="space-y-3">
+//                             {companies.map((comp: any) => (
+//                                 <button
+//                                     key={comp.id}
+//                                     onClick={() => openInvoiceWithCompany(comp.id)}
+//                                     className="w-full text-left px-4 py-3 cursor-pointer border rounded-lg hover:bg-red-50 hover:border-red-500 transition-colors flex flex-col group"
+//                                 >
+//                                     <span className="font-semibold text-red-900 group-hover:text-red-700">{comp.companyName}</span>
+//                                     <span className="text-xs text-gray-500 mt-1">GST: {comp.gstNo}</span>
+//                                 </button>
+//                             ))}
+//                         </div>
+//                     </div>
+//                 </div>
+//             )}
+
 //             <div className="flex gap-4 mb-4 flex-wrap items-end">
 //                 <div>
 //                     <label className="block text-xs font-semibold text-gray-700">Type</label>

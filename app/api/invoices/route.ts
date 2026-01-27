@@ -116,7 +116,8 @@ export async function POST(req: NextRequest) {
         }
         let finalPrefix = nonGstPrefix;
         let startNumber = nonGstInfo.start;
-        if (customerType === 'CREDIT' && customerId) {
+        // if (customerType === 'CREDIT' && customerId) {
+        if (customerId) {
           const customer = await tx.customerMaster.findUnique({
             where: { id: customerId },
             select: { gstNo: true }
