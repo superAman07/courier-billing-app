@@ -11,7 +11,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!invoice) {
       return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
     }
-    return NextResponse.json(invoice);
+    let enrichedBookings = invoice.bookings;
+    if (invoice.bookings.length > 0 && invoice.bookings[0].bookingType === 'BookingMaster') {
+        const bookingIds = invoice.bookings.map(b => b.bookingId);
+        
+        const originalBookings = await prisma.bookingMaster.findMany({
+            where: { id: { in: bookingIds } }
+        });
+        const originalMap = new Map(originalBookings.map(b => [b.id, b]));
+        enrichedBookings = invoice.bookings.map(booking => {
+            const original = originalMap.get(booking.bookingId);
+            if (original) {
+                return {
+                    ...original, 
+                    ...booking
+                };
+            }
+            return booking;
+        });
+    }
+    return NextResponse.json({ ...invoice, bookings: enrichedBookings });
   } catch (error) {
     return NextResponse.json({ message: "Error fetching invoice" }, { status: 500 });
   }
