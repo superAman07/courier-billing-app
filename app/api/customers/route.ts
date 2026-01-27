@@ -48,15 +48,23 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
+    const hasInvoices = searchParams.get('hasInvoices') === 'true';
 
     try {
+        const whereClause: any = {};
+        if (query) {
+            whereClause.OR = [
+                { customerName: { contains: query, mode: 'insensitive' } },
+                { customerCode: { contains: query, mode: 'insensitive' } },
+            ];
+        }
+        if (hasInvoices) {
+            whereClause.invoices = {
+                some: {} 
+            };
+        }
         const customers = await prisma.customerMaster.findMany({
-            where: query ? {
-                OR: [
-                    { customerName: { contains: query, mode: 'insensitive' } },
-                    { customerCode: { contains: query, mode: 'insensitive' } },
-                ]
-            } : {},
+            where: whereClause,
             take: query ? 10 : undefined,
             orderBy: {
                 customerName: 'asc'

@@ -89,7 +89,7 @@ export default function CustomerPaymentsPage() {
     const [selectedInvoiceForDetails, setSelectedInvoiceForDetails] = useState<Invoice | null>(null);
 
     useEffect(() => {
-        axios.get('/api/customers')
+        axios.get('/api/customers?hasInvoices=true')
             .then(res => setCustomers(res.data))
             .catch(() => toast.error('Failed to load customers.'))
             .finally(() => setLoading(prev => ({ ...prev, customers: false })));
