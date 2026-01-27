@@ -39,6 +39,7 @@ const navLinks = {
         { href: '/update-and-send-delivery-status', label: 'Update Delivery Status / Send SMS' },
     ],
     Billings: [
+        { href: '/all-invoices', label: 'All Invoices' },
         { href: '/generate-cash-invoice', label: 'Generate Invoice (Cash)' },
         { href: '/modify-delete-cash-invoice', label: 'Modify / Delete Invoice (Cash)' },
         { href: '/generate-credit-client-invoice', label: 'Generate Invoice (Credit)' },
