@@ -63,18 +63,35 @@ const UpdateDeliveryStatusPage: React.FC = () => {
 
   }, [bookings, searchTerm, statusFilter])
 
-  const handleRecallToSmartBooking = () => {
+  const handleRecallToSmartBooking = async () => {
     if (selectedRows.size === 0) {
         toast.error('Select bookings to recall for editing');
         return;
     }
     
-    const idsToEdit = Array.from(selectedRows);
-    
-    sessionStorage.setItem('smartBooking_editIds', JSON.stringify(idsToEdit));
-    
-    toast.info(`Redirecting ${idsToEdit.length} bookings to Smart Editor...`);
-    router.push('/smart-booking-master?status=recall');
+    if(!confirm(`Are you sure you want to RECALL ${selectedRows.size} bookings significantly? This will move them back to Smart Booking Master for all users.`)) return;
+    setLoading(true);
+    try {
+        const bookingsToRecall = filteredBookings.filter(b => selectedRows.has(b.id));
+        
+        // Update status to 'RECALLED' in Database
+        await Promise.all(bookingsToRecall.map(b => 
+            axios.put(`/api/update-and-send-delivery-status/${b.type}/${b.id}`, {
+                status: 'RECALLED',
+                statusDate: new Date().toISOString()
+            })
+        ));
+        toast.success(`Moved ${bookingsToRecall.length} bookings to Smart Master!`);
+        
+        // Redirect to Smart Master (it will checking DB now, no param needed)
+        router.push('/smart-booking-master');
+        
+    } catch (error) {
+        console.error(error);
+        toast.error("Failed to recall bookings.");
+    } finally {
+        setLoading(false);
+    }
   };
 
   const fetchBookings = async () => {

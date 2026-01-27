@@ -1218,6 +1218,9 @@ export default function SmartBookingMasterPage() {
             serviceProvider: row.serviceProvider || "DTDC",
             pendingDaysNotDelivered: currentPendingDays 
         };
+        if (cleanRow.status === 'RECALLED') {
+            cleanRow.status = 'BOOKED';
+        }
         delete cleanRow._awbExists;
         delete cleanRow._bookingId;
         delete cleanRow.__origIndex;
@@ -1281,6 +1284,10 @@ export default function SmartBookingMasterPage() {
                 cleanRow.serviceProvider = cleanRow.serviceProvider || "DTDC";
                 cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
                 
+                if (cleanRow.status === 'RECALLED') {
+                    cleanRow.status = 'BOOKED';
+                }
+
                 // Remove internal flags
                 delete cleanRow._awbExists;
                 delete cleanRow._bookingId;

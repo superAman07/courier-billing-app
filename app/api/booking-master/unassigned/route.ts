@@ -8,7 +8,8 @@ export async function GET() {
                 OR: [
                     { customerId: null },           
                     { clientBillingValue: 0 },      
-                    { clientBillingValue: null } 
+                    { clientBillingValue: null },
+                    { status: 'RECALLED' }
                 ]
             },
             include: {
