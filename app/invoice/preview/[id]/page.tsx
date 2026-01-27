@@ -36,7 +36,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
         );
     }
  
-    const bookings = invoice.bookings || [];
+    const bookings = (invoice.bookings || []).sort((a: any, b: any) => 
+        new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime()
+    );
     const showConsignmentValue = bookings.some((b: any) => Number(b.consignmentValue) > 49999);
     // const subtotal = bookings.reduce((sum: number, b: any) => sum + Number(b.amountCharged), 0);
     const frChargeTotal = bookings.reduce((s: number, b: any) => s + Number(b.frCharge || 0), 0);
@@ -166,7 +168,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                         {booking.serviceType || booking.bookingType === 'BookingMaster' ? 'DOMESTIC' : ''}
                                     </td>
                                     <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
-                                        {weight > 0 ? weight.toFixed(2) : '0.00'}
+                                        {weight > 0 ? weight.toFixed(3) : '0.000'}
                                     </td>
                                     {showConsignmentValue && (
                                         <td className="border border-black px-2 py-1 text-gray-600 text-center text-sm">
