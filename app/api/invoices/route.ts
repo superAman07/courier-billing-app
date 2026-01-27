@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
     const invoiceType = customerType === "CREDIT" ? "BookingMaster_CREDIT" : "BookingMaster_CASH";
 
     const bookings = await prisma.bookingMaster.findMany({
-        where: { id: { in: bookingIds } },
+      where: { id: { in: bookingIds } },
     });
 
     if (bookings.length !== bookingIds.length) {
-        return NextResponse.json({ message: "Some selected bookings were not found." }, { status: 404 });
+      return NextResponse.json({ message: "Some selected bookings were not found." }, { status: 404 });
     }
 
     // 2. Calculate Totals & Prepare Items Array
@@ -58,17 +58,17 @@ export async function POST(req: NextRequest) {
     let totalTax = 0;
 
     const invoiceBookings = bookings.map((b: BookingMaster) => {
-        const clientBillingValue = Number(b.clientBillingValue || 0);
-        const creditAmount = Number(b.creditCustomerAmount || 0);
-        const regularAmount = Number(b.regularCustomerAmount || 0);
+      const clientBillingValue = Number(b.clientBillingValue || 0);
+      const creditAmount = Number(b.creditCustomerAmount || 0);
+      const regularAmount = Number(b.regularCustomerAmount || 0);
 
-        const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
-        const taxAmount = Number(b.gst || 0);
+      const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
+      const taxAmount = Number(b.gst || 0);
 
-        grandTotal += finalBookingAmount;
-        totalTax += taxAmount;
+      grandTotal += finalBookingAmount;
+      totalTax += taxAmount;
 
-        return {
+      return {
         bookingId: b.id,
         bookingType: "BookingMaster",
         consignmentNo: b.awbNo,
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         consignmentValue: b.invoiceValue,
         doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX',
         serviceType: b.mode,
-        };
+      };
     });
 
     // Calculate dates
@@ -98,119 +98,97 @@ export async function POST(req: NextRequest) {
 
     const createdInvoice = await runWithRetries(async () => {
       return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        let gstPrefix = "AGS"; 
-        let nonGstPrefix = "ANGS";
+        let gstPrefix = "AGS25-26/";
+        let gstInfo = { start: 1355 };
+        let nonGstPrefix = "ANGS26-";
+        let nonGstInfo = { start: 1 };
         if (companyId) {
-            const company = await tx.registrationDetails.findUnique({ where: { id: companyId } });
-            if (company) {
-                 const name = company.companyName.trim().toLowerCase();
-                 if (name.includes("hvs")) {
-                     gstPrefix = "HVS";
-                     nonGstPrefix = "HNVS";
-                 } 
+          const company = await tx.registrationDetails.findUnique({ where: { id: companyId } });
+          if (company) {
+            const name = company.companyName.trim().toLowerCase();
+            if (name.includes("hvs")) {
+              gstPrefix = "HVS 25-26/";
+              gstInfo = { start: 124 };
+              nonGstPrefix = "HNVS25-26-";
+              nonGstInfo = { start: 1 };
             }
+          }
         }
-        let finalPrefix = `${nonGstPrefix}-`; 
-
+        let finalPrefix = nonGstPrefix;
+        let startNumber = nonGstInfo.start;
         if (customerType === 'CREDIT' && customerId) {
           const customer = await tx.customerMaster.findUnique({
             where: { id: customerId },
             select: { gstNo: true }
           });
-          
+
           if (customer?.gstNo && customer.gstNo.length > 2) {
-             finalPrefix = `${gstPrefix}-`;
+            finalPrefix = gstPrefix;
+            startNumber = gstInfo.start;
           }
         }
 
-        const lastInvoice = await tx.invoice.findFirst({
-          where: { type: invoiceType },
-          orderBy: { createdAt: "desc" },
+        const existingInvoices = await tx.invoice.findMany({
+          where: {
+            invoiceNo: {
+              startsWith: finalPrefix
+            }
+          },
           select: { invoiceNo: true }
         });
-        const maxExistingNumber = parseInvoiceNumericPart(lastInvoice?.invoiceNo) || 0;
+        // 2. Extract numeric parts
+        const existingNumbers = existingInvoices
+          .map(inv => parseInvoiceNumericPart(inv.invoiceNo))
+          .filter(n => !isNaN(n) && n > 0)
+          .sort((a, b) => a - b);
 
-        const counter = await tx.invoiceCounter.upsert({
-          where: { type: invoiceType },
-          create: { type: invoiceType, lastNumber: maxExistingNumber + 1 },
-          update: { lastNumber: { increment: 1 } }
-        });
+        let nextNumber = startNumber;
+        // 3. Find the first gap
+        // We look for a number `i` starting from `startNumber`. 
+        // If `i` is not in our sorted array, that's our gap.
+        // Optimization: We can just walk the array.
 
-        const nextNumber = counter.lastNumber;
-        const invoiceNo = `${finalPrefix}${String(nextNumber).padStart(5, "0")}`;
+        if (existingNumbers.length > 0) {
+          // Find gap
+          // existingNumbers is sorted e.g. [124, 125, 127] (126 is missing)
 
-      //   const bookings = await tx.bookingMaster.findMany({
-      //     where: { id: { in: bookingIds } },
-      //   });
+          // First, filter out any numbers smaller than our startNumber (just in case DB has old garbage)
+          const standardNumbers = existingNumbers.filter(n => n >= startNumber);
 
-      //   if (bookings.length !== bookingIds.length) {
-      //     throw new Error("Some bookings were not found");
-      //   }
+          // Check if startNumber itself is taken
+          if (standardNumbers.length === 0) {
+            nextNumber = startNumber;
+          } else {
+            // Check sequentially
+            let current = startNumber;
+            let foundGap = false;
 
-      //   let grandTotal = 0;
-      //   let totalTax = 0;
+            for (const num of standardNumbers) {
+              if (num === current) {
+                current++;
+              } else if (num > current) {
+                // We found a gap! `current` is missing.
+                foundGap = true;
+                nextNumber = current;
+                break;
+              }
+            }
 
-      //   const invoiceBookings = bookings.map((b: BookingMaster) => {
-      //     const clientBillingValue = Number(b.clientBillingValue || 0);
-      //     const creditAmount = Number(b.creditCustomerAmount || 0);
-      //     const regularAmount = Number(b.regularCustomerAmount || 0);
+            // If no gap found in the middle, use the next number after the max
+            if (!foundGap) {
+              nextNumber = current;
+            }
+          }
+        }
+        // --- C. Format the new Invoice Number ---
+        // For AGS/HVS formats (e.g. 1355) we don't necessarily pad with zeros based on your example "1355" vs "001355".
+        // Using `String(nextNumber)` preserves it as "1355". If you need "01355", uses .padStart().
+        // Based on user request "AGS25-26/1355", it seems no padding or minimal padding is fine. 
+        // I will just append the number as is to match your example.
 
-      //     const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
-      //     const taxAmount = Number(b.gst || 0);
-
-      //     grandTotal += finalBookingAmount;
-      //     totalTax += taxAmount;
-
-      //     return {
-      //       bookingId: b.id,
-      //       bookingType: "BookingMaster",
-      //       consignmentNo: b.awbNo,
-      //       bookingDate: b.bookingDate,
-      //       senderName: b.senderDetail || '',
-      //       receiverName: b.receiverName || '',
-      //       city: b.destinationCity,
-      //       amountCharged: finalBookingAmount,
-      //       taxAmount: taxAmount,
-      //       weight: b.invoiceWt,
-      //       numPcs: b.pcs,
-      //       frCharge: b.frCharge,
-      //       shipperCost: b.shipperCost,
-      //       waybillSurcharge: b.waybillSurcharge,
-      //       otherExp: b.otherExp,
-      //       fuelSurcharge: b.fuelSurcharge,
-      //       gst: b.gst,
-      //       consignmentValue: b.invoiceValue, // Maps Material Value
-      //       doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX', // Maps Dox/Non-Dox
-      //       serviceType: b.mode,
-      //     };
-      //   });
-
-      //   const invoice = await tx.invoice.create({
-      //     data: {
-      //       invoiceNo,
-      //       type: invoiceType,
-      //       invoiceDate,
-      //       totalAmount: grandTotal - totalTax,
-      //       totalTax: totalTax,
-      //       netAmount: grandTotal,
-      //       customerId,
-      //       periodFrom: bookings.reduce((min: Date, b: BookingMaster) => b.bookingDate < min ? b.bookingDate : min, bookings[0].bookingDate),
-      //       periodTo: bookings.reduce((max: Date, b: BookingMaster) => b.bookingDate > max ? b.bookingDate : max, bookings[0].bookingDate),
-      //       bookings: {
-      //         create: invoiceBookings,
-      //       },
-      //     },
-      //     include: { bookings: true }
-      //   });
-
-      //   await tx.bookingMaster.updateMany({
-      //     where: { id: { in: bookingIds } },
-      //     data: { status: "INVOICED", statusDate: new Date() }
-      //   });
-
-      //   return invoice;
-      // }, { timeout: 15000 });
-      const invoice = await tx.invoice.create({
+        const invoiceNo = `${finalPrefix}${nextNumber}`;
+        // --- D. Create Invoice ---
+        const invoice = await tx.invoice.create({
           data: {
             invoiceNo,
             type: invoiceType,
@@ -227,17 +205,14 @@ export async function POST(req: NextRequest) {
           },
           include: { bookings: true }
         });
-
         // Update booking status
         await tx.bookingMaster.updateMany({
           where: { id: { in: bookingIds } },
           data: { status: "INVOICED", statusDate: new Date() }
         });
-
         return invoice;
       }, { timeout: 20000 });
     });
-
     return NextResponse.json(createdInvoice, { status: 201 });
   } catch (error: any) {
     console.error("Invoice generation error:", error);
