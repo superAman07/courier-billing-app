@@ -294,9 +294,13 @@ const UpdateDeliveryStatusPage: React.FC = () => {
               <option value="ALL">📂 Show All History</option>
               <option disabled>──────────</option>
               <option value="BOOKED">Booked</option>
+              <option value="PICKED_UP">Picked Up</option>
               <option value="IN_TRANSIT">In Transit</option>
               <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+              <option value="FAILED_ATTEMPT">Failed Attempt</option>
               <option value="DELIVERED">Delivered</option>
+              <option value="RETURNED">Returned</option>
+              <option value="INVOICED">Invoiced</option>
             </select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
