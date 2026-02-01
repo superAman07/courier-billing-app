@@ -102,7 +102,7 @@ function AllInvoicesContent() {
           String(c.companyName).toLowerCase().includes('hvs')
         );
         if (hvsComp) matchedCompanyId = hvsComp.id;
-      } else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS')) {
+      } else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS') || /^\d+$/.test(invNo)) {
         const agsComp = companies.find((c: any) => {
           const name = String(c.companyName).toLowerCase();
           return name.includes('awdhoot') || name.includes('awadhoot');
@@ -112,7 +112,11 @@ function AllInvoicesContent() {
     }
 
     if (matchedCompanyId) {
-      window.open(`/invoice/preview/${id}?companyId=${matchedCompanyId}`, '_blank');
+      if (/^\d+$/.test(String(inv.invoiceNo))) {
+         window.open(`/invoice/cash-preview/${id}`, '_blank');
+      } else {
+         window.open(`/invoice/preview/${id}?companyId=${matchedCompanyId}`, '_blank');
+      }
     } else if (companies.length > 1) {
       setSelectedInvoiceId(id);
       setIsCompanyModalOpen(true);
