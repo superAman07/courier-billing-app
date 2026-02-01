@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { parseDateString } from "@/lib/convertDateInJSFormat";
-
 export default function ModifyCashInvoice() {
-  const [type, setType] = useState<'CashBooking' | 'InternationalCashBooking'>('CashBooking');
+  // UPDATED: Default to 'BookingMaster_CASH' to match the new generator
+  const [type, setType] = useState<'BookingMaster_CASH' | 'InternationalCashBooking'>('BookingMaster_CASH');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('');
@@ -13,7 +13,6 @@ export default function ModifyCashInvoice() {
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState('');
-
   const fetchInvoices = async () => {
     setLoading(true);
     try {
@@ -27,17 +26,14 @@ export default function ModifyCashInvoice() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchInvoices();
     // eslint-disable-next-line
   }, [type]);
-
   const handleEdit = (inv: any) => {
     setEditId(inv.id);
     setEditDate(inv.invoiceDate?.slice(0, 10) || '');
   };
-
   const handleEditSave = async (id: string) => {
     try {
       await axios.put(`/api/invoices/${id}`, { invoiceDate: editDate });
@@ -48,7 +44,6 @@ export default function ModifyCashInvoice() {
       toast.error("Failed to update invoice.");
     }
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this invoice?")) return;
     try {
@@ -59,11 +54,10 @@ export default function ModifyCashInvoice() {
       toast.error("Failed to delete invoice.");
     }
   };
-
+  // UPDATED: Point to new Cash Preview
   const handlePrint = (id: string) => {
-    window.open(`/invoice/preview/${id}`, '_blank');
+    window.open(`/invoice/cash-preview/${id}`, '_blank');
   };
-
   return (
     <div className="max-w-4xl mx-auto bg-white rounded shadow p-6 mt-8">
       <h2 className="text-xl font-bold mb-4 text-center text-red-700">MODIFY CASH INVOICE</h2>
@@ -75,7 +69,8 @@ export default function ModifyCashInvoice() {
             onChange={e => setType(e.target.value as any)}
             className="border p-2 rounded text-gray-600"
           >
-            <option value="CashBooking">Domestic (Cash Booking)</option>
+            {/* UPDATED: Value matches what API expects */}
+            <option value="BookingMaster_CASH">Domestic (Cash Booking)</option>
             <option value="InternationalCashBooking">International (Cash Booking)</option>
           </select>
         </div>
