@@ -85,7 +85,7 @@ export default function GenerateCashInvoice() {
         }
         
         if (matchedCompanyId) {
-            window.open(`/invoice/preview/${id}?companyId=${matchedCompanyId}`, '_blank');
+            window.open(`/invoice/cash-preview/${id}`, '_blank');
         } else if (companies.length > 1) {
             // If we can't auto-detect, ask user
             setSelectedInvoiceId(id);
@@ -100,7 +100,7 @@ export default function GenerateCashInvoice() {
         if (selectedInvoiceId === 'GENERATING_NEW') {
             submitInvoiceGeneration(companyId);
         } else if (selectedInvoiceId) {
-            window.open(`/invoice/preview/${selectedInvoiceId}?companyId=${companyId}`, '_blank');
+            window.open(`/invoice/cash-preview/${selectedInvoiceId}`, '_blank');
             setIsCompanyModalOpen(false);
             setSelectedInvoiceId(null);
         }
@@ -187,12 +187,16 @@ export default function GenerateCashInvoice() {
             toast.error('Select invoice date and at least one consignment');
             return;
         }
-        if (companies.length > 1) {
-            setSelectedInvoiceId('GENERATING_NEW');
-            setIsCompanyModalOpen(true);
-        } else {
-            submitInvoiceGeneration(companies[0]?.id);
-        }
+        // NEW LOGIC: Always default to 'Awdhoot' (or similar) for Cash Invoices
+        // Search for a company with 'awdhoot' or 'awadhoot' in the name
+        const awdhootComp = companies.find((c: any) => 
+            c.companyName.toLowerCase().includes('awdhoot') || 
+            c.companyName.toLowerCase().includes('awadhoot')
+        );
+        // Use Awdhoot if found, otherwise fall back to the first company available
+        const defaultCompanyId = awdhootComp ? awdhootComp.id : companies[0]?.id;
+        // Skip the modal and directly submit
+        submitInvoiceGeneration(defaultCompanyId);
     };
 
     return (
