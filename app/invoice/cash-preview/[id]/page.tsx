@@ -94,18 +94,6 @@ export default function CashInvoicePreview({ params }: { params: Promise<{ id: s
                                 {exactTotal}
                             </td>
                         </tr>
-                        {Math.abs(roundOff) > 0.001 && (
-                             <tr>
-                                <td colSpan={5} className="text-right text-xs text-gray-500">Round Off</td>
-                                <td className="text-right text-xs text-gray-500 border-l border-black pl-1">{roundOff}</td>
-                            </tr>
-                        )}
-                         <tr>
-                            <td colSpan={5} className="py-2 text-right font-bold border-t border-black">Grand Total</td>
-                            <td className="py-2 text-right font-bold border-l border-black border-t border-black pl-1">
-                                {finalTotal}
-                            </td>
-                        </tr>
                     </tfoot>
                 </table>
             </div>
