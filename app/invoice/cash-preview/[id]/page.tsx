@@ -89,7 +89,7 @@ export default function CashInvoicePreview({ params }: { params: Promise<{ id: s
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colSpan={5} className="py-2 text-right font-bold">Total</td>
+                            <td colSpan={5} className="py-2 text-left font-bold">Total</td>
                             <td className="py-2 text-right font-bold border-l border-black pl-1">
                                 {exactTotal}
                             </td>
