@@ -17,14 +17,14 @@ export default function CashInvoicePreview({ params }: { params: Promise<{ id: s
     const bookings = (invoice.bookings || []).sort((a: any, b: any) => 
         new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime()
     );
-    const exactTotal = invoice.bookings?.reduce((acc: number, b: any) => acc + (b.clientBillingValue || 0), 0) || 0;
-    const finalTotal = Math.round(exactTotal);
-    const roundOff = finalTotal - exactTotal;
+    const exactTotal = invoice.bookings?.reduce((acc: number, b: any) => acc + Math.round(b.clientBillingValue || 0), 0) || 0;
+    const finalTotal = exactTotal;
+    const roundOff = 0;
     return (
         <div className="max-w-4xl mx-auto bg-white p-8 text-gray-700 print:p-0 font-sans text-sm">
             {/* Header */}
             <div className="text-center mb-6">
-                <h1 className="text-xl font-bold">DTDC Courier</h1>
+                <h1 className="text-xl font-bold">AGS Courier</h1>
                 <div className="text-xs text-gray-700 space-y-1">
                     <p>Shop No.: 570/326, VIP Road, Sainik Nagar,</p>
                     <p>Lucknow - 226002 - Uttar Pradesh</p>
@@ -81,7 +81,7 @@ export default function CashInvoicePreview({ params }: { params: Promise<{ id: s
                                     <td className="py-1 text-right">{Number(weight).toFixed(3)}</td>
                                     {/* FIXED: Show exact decimal amount so math works out */}
                                     <td className="py-1 text-right font-bold ml-1 border-l border-black pl-1">
-                                        {(item.clientBillingValue || 0).toFixed(2)}
+                                        {Math.round(item.clientBillingValue || 0)}
                                     </td>
                                 </tr>
                              );
@@ -91,13 +91,13 @@ export default function CashInvoicePreview({ params }: { params: Promise<{ id: s
                         <tr>
                             <td colSpan={5} className="py-2 text-right font-bold">Total</td>
                             <td className="py-2 text-right font-bold border-l border-black pl-1">
-                                {exactTotal.toFixed(2)}
+                                {exactTotal}
                             </td>
                         </tr>
                         {Math.abs(roundOff) > 0.001 && (
                              <tr>
                                 <td colSpan={5} className="text-right text-xs text-gray-500">Round Off</td>
-                                <td className="text-right text-xs text-gray-500 border-l border-black pl-1">{roundOff.toFixed(2)}</td>
+                                <td className="text-right text-xs text-gray-500 border-l border-black pl-1">{roundOff}</td>
                             </tr>
                         )}
                          <tr>

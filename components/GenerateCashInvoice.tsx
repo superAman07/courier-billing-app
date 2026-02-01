@@ -75,7 +75,8 @@ export default function GenerateCashInvoice() {
                 const hvsComp = companies.find((c: any) => c.companyName.toLowerCase().includes('hvs'));
                 if (hvsComp) matchedCompanyId = hvsComp.id;
             } 
-            else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS')) {
+            // UPDATED: Check for 'AGS', 'ANGS', OR simple numeric strings (like '0001')
+            else if (invNo.startsWith('AGS') || invNo.startsWith('ANGS') || /^\d+$/.test(invNo)) {
                 const agsComp = companies.find((c: any) => 
                     c.companyName.toLowerCase().includes('awdhoot') || 
                     c.companyName.toLowerCase().includes('awadhoot')
