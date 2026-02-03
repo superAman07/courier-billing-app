@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Calendar, Save, UserCheck, Clock, AlertTriangle, DollarSign, FileText, Loader2, Search } from 'lucide-react';
+import { generateMonthlyAttendanceExcel } from '@/lib/excelGenerator';
 
 interface AttendanceRecord {
     employeeId: string;
@@ -51,6 +52,13 @@ export default function EmployeeAttendancePage() {
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
     const [globalRatePerKm, setGlobalRatePerKm] = useState(0);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
+    const [reportYear, setReportYear] = useState(new Date().getFullYear());
+    const [downloading, setDownloading] = useState(false);
+    const [analysisData, setAnalysisData] = useState<any[]>([]);
+    const [viewAnalysisOpen, setViewAnalysisOpen] = useState(false);
+    const [analysisLoading, setAnalysisLoading] = useState(false);
 
     useEffect(() => {
         axios.get('/api/employee-settings')
@@ -75,6 +83,47 @@ export default function EmployeeAttendancePage() {
         }
     };
 
+        const fetchAnalysisData = async () => {
+        setAnalysisLoading(true);
+        try {
+            const { data } = await axios.get('/api/employee-attendance/monthly', {
+                params: { month: reportMonth, year: reportYear }
+            });
+            
+            // Process data for analysis
+            const processed = data.map((emp: any) => {
+                let present = 0, absent = 0, halfDay = 0, totalHrs = 0;
+                let otHrs = 0, lateMins = 0, fine = 0, advance = 0, travelAmt = 0;
+
+                emp.attendance.forEach((att: any) => {
+                    if (att.status === 'Present') present++;
+                    else if (att.status === 'Absent') absent++;
+                    else if (att.status === 'HalfDay') halfDay++;
+                    
+                    totalHrs += Number(att.totalHours || 0);
+                    otHrs += Number(att.overtimeHours || 0);
+                    lateMins += Number(att.lateByMinutes || 0);
+                    fine += Number(att.fineAmount || 0);
+                    advance += Number(att.advanceAmount || 0);
+                    travelAmt += Number(att.travelAmount || 0);
+                });
+
+                return {
+                    ...emp,
+                    stats: { present, absent, halfDay, totalHrs, otHrs, lateMins, fine, advance, travelAmt }
+                };
+            });
+
+            setAnalysisData(processed);
+            setViewAnalysisOpen(true);
+            setReportModalOpen(false); // Close the small modal
+        } catch (error) {
+            toast.error('Failed to load analysis');
+        } finally {
+            setAnalysisLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (attendanceDate) {
             fetchAttendance(attendanceDate);
@@ -89,6 +138,22 @@ export default function EmployeeAttendancePage() {
             att.employeeCode.toLowerCase().includes(lowercasedSearch)
         );
     }, [attendanceData, search]);
+
+    const handleDownloadReport = async () => {
+        setDownloading(true);
+        try {
+            const { data } = await axios.get('/api/employee-attendance/monthly', {
+                params: { month: reportMonth, year: reportYear }
+            });
+            await generateMonthlyAttendanceExcel(data, reportMonth, reportYear);
+            setReportModalOpen(false);
+            toast.success('Report downloaded!');
+        } catch (error) {
+            toast.error('Failed to download report');
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     const handleAttendanceChange = (employeeId: string, field: keyof AttendanceRecord, value: any) => {
         setAttendanceData(prevData =>
@@ -211,6 +276,15 @@ export default function EmployeeAttendancePage() {
                                                focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                 />
                             </div>
+
+                            <button
+                                onClick={() => setReportModalOpen(true)}
+                                className="inline-flex items-center cursor-pointer gap-2 px-4 md:px-5 py-2 rounded-md font-medium
+                                           bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            >
+                                <FileText className="w-5 h-5" /> 
+                                <span className="hidden md:inline">Monthly Report</span>
+                            </button>
 
                             <button
                                 onClick={handleSave}
@@ -417,6 +491,118 @@ export default function EmployeeAttendancePage() {
                     </table>
                 </div>
             </div>
+            {reportModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 text-gray-700">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-80">
+                        <h3 className="text-lg font-bold mb-4">Download Monthly Report</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Month</label>
+                                <select 
+                                    value={reportMonth} 
+                                    onChange={(e) => setReportMonth(parseInt(e.target.value))}
+                                    className="w-full border p-2 rounded"
+                                >
+                                    {Array.from({length: 12}, (_, i) => (
+                                        <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', {month:'long'})}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Year</label>
+                                <input 
+                                    type="number" 
+                                    value={reportYear} 
+                                    onChange={(e) => setReportYear(parseInt(e.target.value))}
+                                    className="w-full border p-2 rounded"
+                                />
+                            </div>
+                            <div className="flex gap-2 justify-end mt-4">
+                                <button onClick={() => setReportModalOpen(false)} className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded cursor-pointer">Cancel</button>
+                                
+                                {/* NEW BUTTON */}
+                                <button 
+                                    onClick={fetchAnalysisData} 
+                                    disabled={downloading || analysisLoading}
+                                    className="px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 cursor-pointer disabled:bg-teal-400"
+                                >
+                                    {analysisLoading ? 'Loading...' : 'View Analysis'}
+                                </button>
+
+                                <button 
+                                    onClick={handleDownloadReport} 
+                                    disabled={downloading}
+                                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer disabled:bg-blue-400"
+                                >
+                                    {downloading ? 'Downloading...' : 'Download Excel'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {viewAnalysisOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                            <h2 className="text-xl font-bold text-gray-800">
+                                Monthly Analysis: {new Date(0, reportMonth - 1).toLocaleString('default', { month: 'long' })} {reportYear}
+                            </h2>
+                            <button onClick={() => setViewAnalysisOpen(false)} className="text-gray-500 hover:text-gray-700"><span className="text-2xl">&times;</span></button>
+                        </div>
+                        
+                        <div className="p-4 overflow-auto flex-1">
+                            <table className="min-w-full text-sm text-left text-gray-600">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                    <tr>
+                                        <th className="px-4 py-3 rounded-tl-lg">Employee</th>
+                                        <th className="px-4 py-3 text-center">Present</th>
+                                        <th className="px-4 py-3 text-center">Absent</th>
+                                        <th className="px-4 py-3 text-center">Half Day</th>
+                                        <th className="px-4 py-3 text-center">Total Hrs</th>
+                                        <th className="px-4 py-3 text-center text-blue-600">OT Hrs</th>
+                                        <th className="px-4 py-3 text-center text-red-600">Late (Min)</th>
+                                        <th className="px-4 py-3 text-right">Travel Amt</th>
+                                        <th className="px-4 py-3 text-right text-red-600">Fine</th>
+                                        <th className="px-4 py-3 text-right text-orange-600 rounded-tr-lg">Advance</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {analysisData.map((emp) => (
+                                        <tr key={emp.id} className="hover:bg-gray-50 border-b">
+                                            <td className="px-4 py-3 font-medium text-gray-900">
+                                                {emp.employeeName}
+                                                <div className="text-xs text-gray-500">{emp.employeeCode}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center font-bold text-green-600">{emp.stats.present}</td>
+                                            <td className="px-4 py-3 text-center font-bold text-red-500">{emp.stats.absent}</td>
+                                            <td className="px-4 py-3 text-center">{emp.stats.halfDay}</td>
+                                            <td className="px-4 py-3 text-center">{formatDecimalHoursToHHMM(emp.stats.totalHrs)}</td>
+                                            <td className="px-4 py-3 text-center font-bold text-blue-600">{formatDecimalHoursToHHMM(emp.stats.otHrs)}</td>
+                                            <td className="px-4 py-3 text-center text-red-600">{emp.stats.lateMins}</td>
+                                            <td className="px-4 py-3 text-right">₹{emp.stats.travelAmt}</td>
+                                            <td className="px-4 py-3 text-right text-red-600">₹{emp.stats.fine}</td>
+                                            <td className="px-4 py-3 text-right text-orange-600">₹{emp.stats.advance}</td>
+                                        </tr>
+                                    ))}
+                                    {analysisData.length === 0 && (
+                                        <tr><td colSpan={10} className="text-center py-8 text-gray-400">No data found for this month</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div className="p-4 border-t bg-gray-50 rounded-b-lg flex justify-end">
+                            <button 
+                                onClick={() => setViewAnalysisOpen(false)}
+                                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

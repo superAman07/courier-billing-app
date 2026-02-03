@@ -412,3 +412,126 @@ export const generateCreditInvoiceExcel = async (invoice: any, company: any) => 
     anchor.click();
     window.URL.revokeObjectURL(url);
 };
+
+export const generateMonthlyAttendanceExcel = async (data: any[], month: number, year: number) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Monthly Attendance');
+    
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+
+    // --- Header ---
+    worksheet.mergeCells('A1:J1');
+    worksheet.getCell('A1').value = `Monthly Attendance Report - ${monthName} ${year}`;
+    worksheet.getCell('A1').font = { bold: true, size: 16 };
+    worksheet.getCell('A1').alignment = centerAlign;
+
+    // --- Columns Setup ---
+    // Fixed Columns: Name, Code
+    // Dynamic Columns: 1 to 31
+    // Summary Columns: Total Present, Absent, Late, Overtime, Travel Amt, Fine, Advance
+    
+    const headerRow = worksheet.addRow(['Code', 'Employee Name']);
+    
+    // Add Day Columns
+    for (let i = 1; i <= daysInMonth; i++) {
+        headerRow.getCell(i + 2).value = i;
+    }
+
+    // Add Summary Headers
+    const summaryStartCol = daysInMonth + 3;
+    const summaryHeaders = ['Present', 'Absent', 'Total Hrs', 'OT Hrs', 'Late (Min)', 'Travel Amount', 'Fine', 'Advance'];
+    summaryHeaders.forEach((h, idx) => {
+        headerRow.getCell(summaryStartCol + idx).value = h;
+    });
+
+    // Style Header
+    headerRow.eachCell(cell => {
+        cell.font = boldFont;
+        cell.border = borderStyle;
+        cell.alignment = centerAlign;
+        if (typeof cell.value === 'number') {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFEEEEEE' }
+            };
+        }
+    });
+
+    // --- Data Rows ---
+    data.forEach(emp => {
+        const rowData = [emp.employeeCode, emp.employeeName];
+        
+        let presentCount = 0;
+        let absentCount = 0;
+        let totalHrs = 0;
+        let otHrs = 0;
+        let lateMins = 0;
+        let travelAmt = 0;
+        let fineAmt = 0;
+        let advanceAmt = 0;
+
+        // Fill Days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            // Find record for this date (ignoring time component match issues)
+            const record = emp.attendance.find((a: any) => new Date(a.date).getDate() === i);
+            
+            let statusChar = '-';
+            if (record) {
+                if (record.status === 'Present') { statusChar = 'P'; presentCount++; }
+                else if (record.status === 'Absent') { statusChar = 'A'; absentCount++; }
+                else if (record.status === 'HalfDay') { statusChar = 'HD'; presentCount += 0.5; }
+                else if (record.status === 'Leave') { statusChar = 'L'; }
+                else if (record.status === 'Holiday') { statusChar = 'H'; }
+                
+                totalHrs += Number(record.totalHours || 0);
+                otHrs += Number(record.overtimeHours || 0);
+                lateMins += Number(record.lateByMinutes || 0);
+                travelAmt += Number(record.travelAmount || 0);
+                fineAmt += Number(record.fineAmount || 0);
+                advanceAmt += Number(record.advanceAmount || 0);
+            }
+            rowData.push(statusChar);
+        }
+
+        // Add Summary Data
+        rowData.push(presentCount);
+        rowData.push(absentCount);
+        rowData.push(totalHrs.toFixed(2));
+        rowData.push(otHrs.toFixed(2));
+        rowData.push(lateMins);
+        rowData.push(travelAmt.toFixed(2));
+        rowData.push(fineAmt.toFixed(2));
+        rowData.push(advanceAmt.toFixed(2));
+
+        const row = worksheet.addRow(rowData);
+        
+        // Style Data Row
+        row.eachCell((cell, colNum) => {
+            cell.border = borderStyle;
+            cell.alignment = centerAlign;
+            
+            // Color Code Status
+            if (colNum > 2 && colNum <= daysInMonth + 2) {
+                if (cell.value === 'A') cell.font = { color: { argb: 'FFFF0000' }, bold: true };
+                if (cell.value === 'P') cell.font = { color: { argb: 'FF008000' } };
+            }
+        });
+    });
+
+    // Auto fit
+    worksheet.getColumn(1).width = 10; // Code
+    worksheet.getColumn(2).width = 20; // Name
+    for(let i=1; i<=daysInMonth; i++) worksheet.getColumn(i+2).width = 4; // Days
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Attendance_${monthName}_${year}.xlsx`;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+};
