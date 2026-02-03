@@ -20,6 +20,8 @@ export default function GenerateCreditInvoice() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -38,6 +40,7 @@ export default function GenerateCreditInvoice() {
     });
 
     setCustomerId('');
+    setCustomerSearch('');
     setBookings([]);
     setSelected([]);
   }, [type]);
@@ -216,20 +219,57 @@ export default function GenerateCreditInvoice() {
             <option value="International">International (Credit Client)</option>
           </select>
         </div>
-        <div>
+        <div className="relative">
           <label className="block text-xs font-semibold text-gray-700">Customer</label>
-          <select
-            value={customerId}
-            onChange={e => setCustomerId(e.target.value)}
-            className="border p-2 rounded text-gray-600 min-w-[180px]"
-          >
-            <option value="">Select Customer</option>
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.customerCode} - {c.customerName}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              className="border p-2 rounded text-gray-600 min-w-[200px] w-full"
+              placeholder="Search Customer..."
+              value={customerSearch}
+              onChange={(e) => {
+                setCustomerSearch(e.target.value);
+                setIsDropdownOpen(true);
+                setCustomerId(''); // Clear selection on type
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              // Optional: Close on blur with delay to allow click
+               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            
+            {/* Dropdown List */}
+            {isDropdownOpen && (
+              <div className="absolute z-20 mt-1 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
+                {customers
+                  .filter(c => 
+                    c.customerName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                    (c.customerCode && c.customerCode.toLowerCase().includes(customerSearch.toLowerCase()))
+                  )
+                  .map(c => (
+                    <div
+                      key={c.id}
+                      className="p-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b last:border-b-0"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setCustomerId(c.id);
+                        setCustomerSearch(`${c.customerCode} - ${c.customerName}`);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <span className="font-bold">{c.customerCode}</span> - {c.customerName}
+                    </div>
+                  ))
+                }
+                {customers.length > 0 && customers.filter(c => 
+                    c.customerName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                    (c.customerCode && c.customerCode.toLowerCase().includes(customerSearch.toLowerCase()))
+                  ).length === 0 && (
+                    <div className="p-2 text-gray-500 text-sm">No customers found</div>
+                  )
+                }
+              </div>
+            )}
+          </div>
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-700">Invoice Date</label>

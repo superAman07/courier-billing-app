@@ -2,6 +2,7 @@
 import { use, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
+import { generateCreditInvoiceExcel } from '@/lib/excelGenerator';
 
 export default function InvoicePreview({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -251,12 +252,18 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </div>
             </div>
  
-            <div className="flex justify-center mt-8 print:hidden">
+            <div className="flex justify-center gap-4 mt-8 print:hidden">
                 <button
                     onClick={() => window.print()}
                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer rounded-lg font-medium"
                 >
                     Print Invoice
+                </button>
+                <button
+                    onClick={() => generateCreditInvoiceExcel(invoice, company)}
+                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white cursor-pointer rounded-lg font-medium"
+                >
+                    Export to Excel
                 </button>
             </div>
         </div>
