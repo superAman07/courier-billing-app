@@ -202,7 +202,23 @@ async function main() {
         const sector = STATE_TO_SECTOR[stateName] || DEFAULT_SECTOR;
 
         // Create a code from first 2 chars (handle duplicates)
-        let code = stateName.substring(0, 2).toUpperCase();
+        const STATE_CODES: Record<string, string> = {
+            "ANDHRA PRADESH": "AP", "ARUNACHAL PRADESH": "AR", "ASSAM": "AS",
+            "BIHAR": "BR", "CHHATTISGARH": "CG", "GOA": "GA", "GUJARAT": "GJ",
+            "HARYANA": "HR", "HIMACHAL PRADESH": "HP", "JHARKHAND": "JH",
+            "KARNATAKA": "KA", "KERALA": "KL", "MADHYA PRADESH": "MP",
+            "MAHARASHTRA": "MH", "MANIPUR": "MN", "MEGHALAYA": "ML",
+            "MIZORAM": "MZ", "NAGALAND": "NL", "ODISHA": "OD",
+            "PUNJAB": "PB", "RAJASTHAN": "RJ", "SIKKIM": "SK",
+            "TAMIL NADU": "TN", "TELANGANA": "TS", "TRIPURA": "TR",
+            "UTTAR PRADESH": "UP", "UTTARAKHAND": "UK", "WEST BENGAL": "WB",
+            "DELHI": "DL", "JAMMU AND KASHMIR": "JK", "LADAKH": "LA",
+            "CHANDIGARH": "CH", "PUDUCHERRY": "PY", "LAKSHADWEEP": "LD",
+            "ANDAMAN AND NICOBAR ISLANDS": "AN",
+            "DADRA AND NAGAR HAVELI AND DAMAN AND DIU": "DD",
+            "DADRA AND NAGAR HAVELI": "DN", "DAMAN AND DIU": "DD",
+        };
+        let code = STATE_CODES[stateName] || stateName.substring(0, 2).toUpperCase();
 
         // Check if code already exists for a different state
         const existing = await prisma.stateMaster.findUnique({ where: { code } });

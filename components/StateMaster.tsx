@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const SECTORS = [
-    "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
-    "North (Haryana / Punjaab / Rajasthaan)",
-    "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
-    "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)",
-];
+// const SECTORS = [
+//     "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
+//     "North (Haryana / Punjaab / Rajasthaan)",
+//     "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+//     "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)",
+// ];
 
 type StateForm = {
   id?: string;
@@ -27,13 +27,15 @@ export default function StateMaster() {
   const [form, setForm] = useState<StateForm>(initialForm);
   const [states, setStates] = useState<any[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
+  const [sectors, setSectors] = useState<string[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [zoneFilter, setZoneFilter] = useState('ALL');
-
+  
   useEffect(() => {
     axios.get('/api/state-master').then(res => setStates(res.data));
     axios.get('/api/zone-master').then(res => setZones(res.data));
+    axios.get('/api/sector-master').then(res => setSectors(res.data.map((s: any) => s.name)));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -110,7 +112,7 @@ export default function StateMaster() {
           </select>
           <select name="sector" value={form.sector} onChange={handleChange} className="p-2 border cursor-pointer rounded text-gray-500 border-gray-300">
             <option value="">-- Select Sector --</option>
-            {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+            {sectors.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <label className="flex items-center space-x-2">
             <input type="checkbox" name="active" checked={form.active} onChange={handleChange} className="text-gray-600 cursor-pointer" />

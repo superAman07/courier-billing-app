@@ -32,12 +32,12 @@ type SectorRate = {
     premiumAdd500g?: number;
 };
 
-const SECTORS = [
-    "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
-    "North (Haryana / Punjaab / Rajasthaan)",
-    "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
-    "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)"
-];
+// const SECTORS = [
+//     "Local", "UP", "UK", "Delhi", "Bihaar / Jharkhand",
+//     "North (Haryana / Punjaab / Rajasthaan)",
+//     "Metro ( Mumbai, Hyderabad, Chennai, Banglore, Kolkata)",
+//     "Rest of India", "North East", "Special Sector ( Darjling, Silchaar, Daman)"
+// ];
 
 const initialFormState: Omit<SectorRate, 'sectorName'> = {
     serviceProvider: "DTDC"
@@ -50,6 +50,7 @@ export default function NewRateMasterForm() {
     const [rates, setRates] = useState<SectorRate[]>([]);
     const [formData, setFormData] = useState<Omit<SectorRate, 'sectorName'>>(initialFormState);
     const [isLoading, setIsLoading] = useState(false);
+    const [sectors, setSectors] = useState<string[]>([]);
 
     const [copyModal, setCopyModal] = useState<{ open: boolean; sourceSector: string }>({ open: false, sourceSector: '' });
     const [targetSectors, setTargetSectors] = useState<Set<string>>(new Set());
@@ -58,15 +59,19 @@ export default function NewRateMasterForm() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     useEffect(() => {
-        const fetchAllCustomers = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await axios.get('/api/customers');
-                setCustomers(response.data);
+                const [custRes, sectorRes] = await Promise.all([
+                    axios.get('/api/customers'),
+                    axios.get('/api/sector-master'),
+                ]);
+                setCustomers(custRes.data);
+                setSectors(sectorRes.data.map((s: any) => s.name));
             } catch (error) {
-                toast.error("Failed to load customers list.");
+                toast.error("Failed to load initial data.");
             }
         };
-        fetchAllCustomers();
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -267,7 +272,7 @@ export default function NewRateMasterForm() {
                         <label htmlFor="sectorSelect" className="block text-base font-medium text-gray-800 mb-2">2. Select Sector</label>
                         <select id="sectorSelect" onChange={e => setSelectedSector(e.target.value)} value={selectedSector} className={`${inputStyle} text-base cursor-pointer`} disabled={!selectedCustomer}>
                             <option value="">-- Select a Sector --</option>
-                            {SECTORS.map(sector => (
+                            {sectors.map(sector => (
                                 <option key={sector} value={sector}>{sector}</option>
                             ))}
                         </select>
@@ -401,7 +406,7 @@ export default function NewRateMasterForm() {
                         <div className="p-6">
                             <p className="mb-4 text-gray-700 font-medium">Select target sectors to apply these rates to:</p>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto mb-6">
-                                {SECTORS.filter(s => s !== copyModal.sourceSector).map(sector => (
+                                {sectors.filter(s => s !== copyModal.sourceSector).map(sector => (
                                     <label key={sector} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                                         <input 
                                             type="checkbox" 

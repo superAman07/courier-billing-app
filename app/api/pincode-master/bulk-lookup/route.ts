@@ -18,12 +18,13 @@ export async function POST(req: NextRequest) {
         });
 
         // Build a map: pincode → { city, cityCode, state }
-        const map: Record<string, { city: string; cityCode: string; state: string }> = {};
+        const map: Record<string, { city: string; cityCode: string; state: string; stateCode: string }> = {};
         for (const r of results) {
             map[r.pincode] = {
                 city: r.city?.name || "",
                 cityCode: r.city?.code || "",
                 state: r.state?.name || "",
+                stateCode: r.state?.code || "",
             };
         }
 

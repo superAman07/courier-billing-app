@@ -111,7 +111,7 @@ export default function AllBookingsPage() {
       const match = pinMap[pincode];
 
       if (match) {
-        const cityCode = match.cityCode || match.city.substring(0, 3).toUpperCase();
+        const cityCode = match.stateCode || match.state.substring(0, 2).toUpperCase();
         setEditForm(prev => ({
           ...prev,
           location: match.city,

@@ -120,7 +120,6 @@ export default function SmartBookingMasterPage() {
     const [cityNameToCodeMap, setCityNameToCodeMap] = useState<Record<string, string>>({});
     const [cityCodeToNameMap, setCityCodeToNameMap] = useState<Record<string, string>>({});
     const [taxMaster, setTaxMaster] = useState<any[]>([]);
-    const [pincodeMaster, setPincodeMaster] = useState<any[]>([]);
     const [companyState, setCompanyState] = useState<string>("delhi");
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -221,7 +220,7 @@ export default function SmartBookingMasterPage() {
         const uniquePins = [...new Set(missingLocationIndices.map(item => item.pin))];
         
         // Single bulk lookup from our local DB
-        let pinMap: Record<string, { city: string; cityCode: string; state: string }> = {};
+        let pinMap: Record<string, { city: string; cityCode: string; state: string, stateCode: string }> = {};
         try {
             const { data } = await axios.post('/api/pincode-master/bulk-lookup', { pincodes: uniquePins });
             pinMap = data;
@@ -234,7 +233,7 @@ export default function SmartBookingMasterPage() {
             const match = pinMap[item.pin];
             if (match) {
                 updatedRows[item.idx].location = match.city;
-                updatedRows[item.idx].destinationCity = match.cityCode || match.city.substring(0, 3).toUpperCase();
+                updatedRows[item.idx].destinationCity = match.stateCode || match.state.substring(0, 2).toUpperCase();
                 updatedRows[item.idx].state = match.state;
                 processedCount++;
             }
@@ -467,7 +466,7 @@ export default function SmartBookingMasterPage() {
             const match = pinMap[pincode];
 
             if (match) {
-                const cityCode = match.cityCode || match.city.substring(0, 3).toUpperCase();
+                const cityCode = match.stateCode || match.state.substring(0, 2).toUpperCase();
 
                 setTableRows(rows => {
                     const newRows = rows.map((row, i) => {
@@ -939,19 +938,8 @@ export default function SmartBookingMasterPage() {
             }
         };
 
-        const fetchPincodeMaster = async () => {
-            try {
-                const { data } = await axios.get("/api/pincode-master");
-                setPincodeMaster(data);
-                console.log("Pincode Master loaded:", data);
-            } catch (error) {
-                console.error("Failed to fetch pincode master:", error);
-            }
-        };
-
         fetchCities();
         fetchTaxMaster();
-        fetchPincodeMaster();
     }, []);
 
     const getCityCode = (cityName: string): string => {
