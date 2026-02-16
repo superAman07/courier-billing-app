@@ -155,7 +155,7 @@ export default function SmartBookingMasterPage() {
 
     const handleDeleteRow = async (rowIndex: number) => {
         const row = tableRows[rowIndex];
-        if(!confirm(`Are you sure you want to delete AWB ${row.awbNo}?`)) return;
+        if (!confirm(`Are you sure you want to delete AWB ${row.awbNo}?`)) return;
 
         setLoading(true);
         try {
@@ -209,9 +209,6 @@ export default function SmartBookingMasterPage() {
         toast.info(`Starting auto-map for ${missingLocationIndices.length} rows...`);
 
         const BATCH_SIZE = 5;
-        const DELAY_MS = 1000;
-
-        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
         let updatedRows = [...tableRows];
         let processedCount = 0;
@@ -245,7 +242,7 @@ export default function SmartBookingMasterPage() {
     };
 
     const handleAutoMapCustomers = async () => {
-        const visibleRows = paginatedRows;
+        const visibleRows = filteredRows;
 
         const rowsToMap = visibleRows.filter(r => 
             r.customerCode && 
@@ -313,89 +310,154 @@ export default function SmartBookingMasterPage() {
         }
     };
 
-    const handleAutoCalculateRates = async () => {
-        const visibleRows = paginatedRows;
+    // const handleAutoCalculateRates = async () => {
+    //     const visibleRows = paginatedRows;
 
-        // Filter rows that are ready for calculation:
-        // Must have: Customer ID, Pincode, Charge Weight, Mode
+    //     // Filter rows that are ready for calculation:
+    //     // Must have: Customer ID, Pincode, Charge Weight, Mode
+    //     const rowsToCalc = visibleRows.filter(r => 
+    //         r.customerId && 
+    //         r.pin && 
+    //         parseFloat(r.chargeWeight) > 0 &&
+    //         r.mode
+    //     );
+
+    //     if (rowsToCalc.length === 0) {
+    //         toast.info("No rows ready for calculation (Check missing Customers, Pincodes, or Weights).");
+    //         return;
+    //     }
+
+    //     setIsCalculatingRates(true);
+    //     toast.info(`Calculating rates for ${rowsToCalc.length} rows...`);
+
+    //     // Process in small batches to ensure server stability
+    //     const BATCH_SIZE = 5;
+    //     const delayedRows = [...tableRows];
+    //     let successCount = 0;
+    //     let failCount = 0;
+
+    //     // Helper for batches
+    //     for (let i = 0; i < rowsToCalc.length; i += BATCH_SIZE) {
+    //         const batch = rowsToCalc.slice(i, i + BATCH_SIZE);
+            
+    //         await Promise.all(batch.map(async (row) => {
+    //             const idx = row.__origIndex;
+    //             try {
+    //                 const { data } = await axios.post('/api/calculate-rate', {
+    //                     customerId: row.customerId,
+    //                     destinationPincode: row.pin,
+    //                     chargeWeight: row.chargeWeight,
+    //                     isDox: row.dsrNdxPaper === 'D',
+    //                     mode: row.mode,
+    //                     invoiceValue: row.invoiceValue,
+    //                     state: row.state,
+    //                     city: row.location
+    //                 });
+
+    //                 // Update the row with fetched rates
+    //                 delayedRows[idx] = {
+    //                     ...delayedRows[idx],
+    //                     frCharge: data.frCharge.toFixed(2),
+    //                     waybillSurcharge: data.waybillSurcharge.toFixed(2),
+    //                     otherExp: data.otherExp.toFixed(2),
+    //                     serviceProvider: data.serviceProvider || delayedRows[idx].serviceProvider || "DTDC"
+    //                 };
+
+    //                 // Calculate Fuel Surcharge
+    //                 const frCharge = parseFloat(data.frCharge) || 0;
+    //                 const fuelPercent = delayedRows[idx]._fuelSurchargePercent || 0;
+                    
+    //                 if (frCharge > 0 && fuelPercent > 0) {
+    //                      delayedRows[idx].fuelSurcharge = ((frCharge * fuelPercent) / 100).toFixed(2);
+    //                 } else {
+    //                      delayedRows[idx].fuelSurcharge = "0.00";
+    //                 }
+
+    //                 // Final Totals (GST + CBV)
+    //                 // We call the local helper to ensure math consistency
+    //                 delayedRows[idx] = recalculateClientBilling(delayedRows[idx]);
+    //                 successCount++;
+
+    //             } catch (error) {
+    //                 console.error(`Rate calc failed for ${row.awbNo}`);
+    //                 failCount++;
+    //             }
+    //         }));
+
+    //         // Update UI after every batch so user sees progress
+    //         setTableRows([...delayedRows]);
+    //         // Small pause to breathe
+    //         await new Promise(res => setTimeout(res, 200));
+    //     }
+
+    //     setIsCalculatingRates(false);
+    //     if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
+    //     if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
+    // };
+        const handleAutoCalculateRates = async () => {
+        const visibleRows = paginatedRows;
         const rowsToCalc = visibleRows.filter(r => 
-            r.customerId && 
-            r.pin && 
-            parseFloat(r.chargeWeight) > 0 &&
-            r.mode
+            r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
         );
 
         if (rowsToCalc.length === 0) {
-            toast.info("No rows ready for calculation (Check missing Customers, Pincodes, or Weights).");
+            toast.info("No rows ready for calculation.");
             return;
         }
 
         setIsCalculatingRates(true);
         toast.info(`Calculating rates for ${rowsToCalc.length} rows...`);
 
-        // Process in small batches to ensure server stability
-        const BATCH_SIZE = 5;
-        const delayedRows = [...tableRows];
-        let successCount = 0;
-        let failCount = 0;
-
-        // Helper for batches
-        for (let i = 0; i < rowsToCalc.length; i += BATCH_SIZE) {
-            const batch = rowsToCalc.slice(i, i + BATCH_SIZE);
-            
-            await Promise.all(batch.map(async (row) => {
-                const idx = row.__origIndex;
-                try {
-                    const { data } = await axios.post('/api/calculate-rate', {
-                        customerId: row.customerId,
-                        destinationPincode: row.pin,
-                        chargeWeight: row.chargeWeight,
-                        isDox: row.dsrNdxPaper === 'D',
-                        mode: row.mode,
-                        invoiceValue: row.invoiceValue,
-                        state: row.state,
-                        city: row.location
-                    });
-
-                    // Update the row with fetched rates
-                    delayedRows[idx] = {
-                        ...delayedRows[idx],
-                        frCharge: data.frCharge.toFixed(2),
-                        waybillSurcharge: data.waybillSurcharge.toFixed(2),
-                        otherExp: data.otherExp.toFixed(2),
-                        serviceProvider: data.serviceProvider || delayedRows[idx].serviceProvider || "DTDC"
-                    };
-
-                    // Calculate Fuel Surcharge
-                    const frCharge = parseFloat(data.frCharge) || 0;
-                    const fuelPercent = delayedRows[idx]._fuelSurchargePercent || 0;
-                    
-                    if (frCharge > 0 && fuelPercent > 0) {
-                         delayedRows[idx].fuelSurcharge = ((frCharge * fuelPercent) / 100).toFixed(2);
-                    } else {
-                         delayedRows[idx].fuelSurcharge = "0.00";
-                    }
-
-                    // Final Totals (GST + CBV)
-                    // We call the local helper to ensure math consistency
-                    delayedRows[idx] = recalculateClientBilling(delayedRows[idx]);
-                    successCount++;
-
-                } catch (error) {
-                    console.error(`Rate calc failed for ${row.awbNo}`);
-                    failCount++;
-                }
+        try {
+            const items = rowsToCalc.map(row => ({
+                customerId: row.customerId,
+                destinationPincode: row.pin,
+                chargeWeight: row.chargeWeight,
+                isDox: row.dsrNdxPaper === 'D',
+                mode: row.mode,
+                invoiceValue: row.invoiceValue,
+                state: row.state,
+                city: row.location
             }));
 
-            // Update UI after every batch so user sees progress
-            setTableRows([...delayedRows]);
-            // Small pause to breathe
-            await new Promise(res => setTimeout(res, 200));
+            const { data } = await axios.post('/api/calculate-rate/batch', { items });
+            
+            const updatedRows = [...tableRows];
+            let successCount = 0, failCount = 0;
+
+            for (const result of data.results) {
+                const origRow = rowsToCalc[result.index];
+                const idx = origRow.__origIndex;
+                
+                if (result.success) {
+                    updatedRows[idx] = {
+                        ...updatedRows[idx],
+                        frCharge: result.frCharge.toFixed(2),
+                        waybillSurcharge: result.waybillSurcharge.toFixed(2),
+                        otherExp: result.otherExp.toFixed(2),
+                        serviceProvider: result.serviceProvider || updatedRows[idx].serviceProvider || "DTDC"
+                    };
+
+                    const frCharge = parseFloat(result.frCharge) || 0;
+                    const fuelPercent = updatedRows[idx]._fuelSurchargePercent || 0;
+                    updatedRows[idx].fuelSurcharge = frCharge > 0 && fuelPercent > 0
+                        ? ((frCharge * fuelPercent) / 100).toFixed(2) : "0.00";
+
+                    updatedRows[idx] = recalculateClientBilling(updatedRows[idx]);
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            }
+
+            setTableRows(updatedRows);
+            if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
+            if (failCount > 0) toast.warning(`${failCount} rows failed.`);
+        } catch (error) {
+            toast.error("Batch rate calculation failed.");
         }
 
         setIsCalculatingRates(false);
-        if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
-        if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
     };
 
     const recalculateClientBilling = (row: any) => {
@@ -1335,16 +1397,20 @@ export default function SmartBookingMasterPage() {
         checkRecall();
     }, []);
 
-    const filteredRows = tableRows.filter(row => {
-        if (dateFilter.start && row.bookingDate < dateFilter.start) return false;
-        if (dateFilter.end && row.bookingDate > dateFilter.end) return false;
+    const filteredRows = useMemo(() => {
+        const rowsWithIndex = tableRows.map((row, i) => ({ ...row, __origIndex: i }));
+        
+        return rowsWithIndex.filter(row => {
+            if (dateFilter.start && row.bookingDate < dateFilter.start) return false;
+            if (dateFilter.end && row.bookingDate > dateFilter.end) return false;
+            if (!search) return true;
+            const s = search.toLowerCase();
+            return Object.values(row).some(val =>
+                val && val.toString().toLowerCase().includes(s)
+            );
+        });
+    }, [tableRows, dateFilter.start, dateFilter.end, search]);
 
-        if (!search) return true;
-        const s = search.toLowerCase();
-        return Object.values(row).some(val =>
-            val && val.toString().toLowerCase().includes(s)
-        );
-    }).map((row, idx) => ({ ...row, __origIndex: tableRows.indexOf(row) }));
 
     const OPTIONS = {
         paymentStatus: ["PAID", "UNPAID", "PARTIAL"],
@@ -1510,8 +1576,8 @@ export default function SmartBookingMasterPage() {
                                     disabled={isAutoMapping || loading}
                                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
                                         isAutoMapping 
-                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
-                                        : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                    ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                    : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
                                     }`}
                                 >
                                     {isAutoMapping ? (
@@ -1531,8 +1597,8 @@ export default function SmartBookingMasterPage() {
                                     disabled={isAutoMappingCustomers || loading}
                                     className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
                                         isAutoMappingCustomers 
-                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
-                                        : "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                                    ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                    : "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
                                     }`}
                                 >
                                     {isAutoMappingCustomers ? (
@@ -1552,8 +1618,8 @@ export default function SmartBookingMasterPage() {
                                     disabled={isCalculatingRates || loading}
                                     className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
                                         isCalculatingRates 
-                                        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
-                                        : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                                    ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
+                                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                                     }`}
                                 >
                                     {isCalculatingRates ? (
@@ -1592,13 +1658,17 @@ export default function SmartBookingMasterPage() {
                                 <select
                                     id="pageSize"
                                     value={pageSize}
-                                    onChange={e => setPageSize(Number(e.target.value))}
+                                    onChange={e => {
+                                        setPageSize(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
                                     className="text-sm border border-gray-300 text-blue-600 cursor-pointer rounded p-1"
                                 >
                                     <option value="50">50</option>
                                     <option value="100">100</option>
                                     <option value="200">200</option>
                                     <option value="500">500</option>
+                                    <option value="100000">All</option>
                                 </select>
                             </div>
                         </div>
@@ -1771,60 +1841,87 @@ export default function SmartBookingMasterPage() {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="mt-4 flex items-center justify-center">
-                            <div className="text-sm text-gray-600">
-                                Page {currentPage} of {totalPages}
-                            </div>
+                        <div className="mt-4 flex items-center justify-between px-4">
+                            {/* Rows per page selector */}
                             <div className="flex items-center gap-2">
-                                <button
-                                    onClick={goToFirstPage}
-                                    disabled={currentPage === 1}
-                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
-                                    title="First Page"
+                                <span className="text-sm text-gray-600">Rows per page:</span>
+                                <select 
+                                    value={pageSize >= (filteredRows.length || 10000) ? "ALL" : pageSize}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "ALL") {
+                                            setPageSize(filteredRows.length > 0 ? filteredRows.length : 10000);
+                                        } else {
+                                            setPageSize(Number(val));
+                                        }
+                                        setCurrentPage(1);
+                                    }}
+                                    className="p-1 text-sm border border-gray-300 rounded text-gray-700 bg-white focus:outline-none focus:border-blue-500 hover:border-blue-400 transition-colors cursor-pointer"
                                 >
-                                    <ChevronsLeft className="w-4 h-4 cursor-pointer" />
-                                </button>
-                                <button
-                                    onClick={goToPrevPage}
-                                    disabled={currentPage === 1}
-                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
-                                    title="Previous Page"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                    <option value="ALL">All ({filteredRows.length})</option>
+                                </select>
+                            </div>
 
-                                <div className="flex items-center gap-1">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max={totalPages}
-                                        value={currentPage}
-                                        onChange={(e) => {
-                                            const page = parseInt(e.target.value);
-                                            if (!isNaN(page)) goToPage(page);
-                                        }}
-                                        className="w-12 p-1 text-gray-600 text-center border rounded text-sm"
-                                    />
-                                    <span className="text-gray-600">/</span>
-                                    <span className="text-gray-600">{totalPages}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="text-sm text-gray-600 font-medium">
+                                    Page {currentPage} of {totalPages}
                                 </div>
+                                
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={goToFirstPage}
+                                        disabled={currentPage === 1}
+                                        className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                        title="First Page"
+                                    >
+                                        <ChevronsLeft className="w-4 h-4 cursor-pointer" />
+                                    </button>
+                                    <button
+                                        onClick={goToPrevPage}
+                                        disabled={currentPage === 1}
+                                        className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                        title="Previous Page"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
 
-                                <button
-                                    onClick={goToNextPage}
-                                    disabled={currentPage === totalPages}
-                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
-                                    title="Next Page"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={goToLastPage}
-                                    disabled={currentPage === totalPages}
-                                    className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
-                                    title="Last Page"
-                                >
-                                    <ChevronsRight className="w-4 h-4" />
-                                </button>
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={totalPages}
+                                            value={currentPage}
+                                            onChange={(e) => {
+                                                const page = parseInt(e.target.value);
+                                                if (!isNaN(page)) goToPage(page);
+                                            }}
+                                            className="w-12 p-1 text-gray-600 text-center border rounded text-sm"
+                                        />
+                                        <span className="text-gray-600">/</span>
+                                        <span className="text-gray-600">{totalPages}</span>
+                                    </div>
+
+                                    <button
+                                        onClick={goToNextPage}
+                                        disabled={currentPage === totalPages}
+                                        className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                        title="Next Page"
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={goToLastPage}
+                                        disabled={currentPage === totalPages}
+                                        className="p-1 rounded border text-gray-600 disabled:text-gray-400 disabled:border-gray-200 hover:bg-gray-100 disabled:hover:bg-transparent"
+                                        title="Last Page"
+                                    >
+                                        <ChevronsRight className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
