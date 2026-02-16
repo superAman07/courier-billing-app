@@ -9,22 +9,29 @@ import { toast } from 'sonner';
 
 const navLinks = {
     Masters: [
-        { href: '/customer', label: 'Customer Master' },
-        { href: '/all-customers', label: 'All Customers' },
-        // { href: '/rate-master', label: 'Rate Master' },
-        // { href: '/copy-rates', label: 'Copy Rate' },
-        { href: '/rate-template', label: 'Customer Rate Template' },
-        { href: '/tax-master', label: 'Tax Master' },
-        { href: '/country-master', label: 'Country Master' },
+        // — Location Masters —
+        { href: '', label: '— Location —', isHeader: true },
         { href: '/zone-master', label: 'Zone Master' },
+        { href: '/sector-master', label: 'Sector Master' },
         { href: '/state-master', label: 'State Master' },
         { href: '/city-master', label: 'City Master' },
         { href: '/pincode-master', label: 'Pincode Master' },
-        { href: '/invoice-settings', label: 'Invoice Configuration' },
-        { href: '/registration-details', label: 'Modify Registration Details' },
+        { href: '/country-master', label: 'Country Master' },
+        // — Customer & Rates —
+        { href: '', label: '— Customer & Rates —', isHeader: true },
+        { href: '/customer', label: 'Customer Master' },
+        { href: '/all-customers', label: 'All Customers' },
+        { href: '/rate-template', label: 'Customer Rate Template' },
+        { href: '/tax-master', label: 'Tax Master' },
         { href: '/book-rate-master', label: 'Book Rate Master' },
+        // — Configuration —
+        { href: '', label: '— Configuration —', isHeader: true },
+        { href: '/invoice-settings', label: 'Invoice Configuration' },
+        { href: '/registration-details', label: 'Registration Details' },
         { href: '/employee-master', label: 'Employee Master' },
         { href: '/create-user', label: 'Create User' },
+        // — Communications —
+        { href: '', label: '— Communications —', isHeader: true },
         { href: '/sms-api-settings', label: 'SMS API Settings' },
         { href: '/sms-templates', label: 'SMS Templates' },
     ],
@@ -198,17 +205,24 @@ export default function Header() {
                                     <h3 className="text-sm font-bold uppercase text-blue-200 tracking-wider">{title}</h3>
                                 </div>
                                 <div className="space-y-1">
-                                    {links.map((link, index) => (
-                                        <Link 
-                                            key={link.href} 
-                                            href={link.href} 
-                                            className="flex items-center gap-3 pl-8 pr-4 py-3 rounded-xl text-sm font-medium hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:translate-x-2 hover:shadow-lg border border-transparent hover:border-white/20"
-                                            style={{ animationDelay: `${index * 100}ms` }}
-                                        >
-                                            <div className="w-2 h-2 bg-gradient-to-r from-blue-300 to-indigo-400 rounded-full opacity-60"></div>
-                                            {link.label}
-                                        </Link>
-                                    ))}
+                                    {links.map((link:any, index:any) =>
+                                        link.isHeader ? (
+                                            <div key={link.label} className="px-4 pt-3 pb-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300/70">{link.label.replace(/—/g, '').trim()}</span>
+                                                <div className="border-b border-white/10 mt-1"></div>
+                                            </div>
+                                        ) : (
+                                            <Link 
+                                                key={link.href} 
+                                                href={link.href} 
+                                                className="flex items-center gap-3 pl-8 pr-4 py-3 rounded-xl text-sm font-medium hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:translate-x-2 hover:shadow-lg border border-transparent hover:border-white/20"
+                                                style={{ animationDelay: `${index * 100}ms` }}
+                                            >
+                                                <div className="w-2 h-2 bg-gradient-to-r from-blue-300 to-indigo-400 rounded-full opacity-60"></div>
+                                                {link.label}
+                                            </Link>
+                                        )
+                                    )}
                                 </div>
                             </div>
                         ))}
