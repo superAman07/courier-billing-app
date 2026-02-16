@@ -147,7 +147,7 @@ export default function Header() {
                     <div className="hidden md:flex items-center space-x-2">
                         <Link 
                             href="/" 
-className="flex items-center gap-2 px-3 py-1.5 text-sm text-white/90 font-medium hover:bg-white/10 hover:text-white rounded-lg transition-all duration-200"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-white/90 font-medium hover:bg-white/10 hover:text-white rounded-lg transition-all duration-200"
                         >
                             <LayoutDashboard className="w-4 h-4" />
                             Home
