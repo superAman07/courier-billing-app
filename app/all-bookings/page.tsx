@@ -106,29 +106,25 @@ export default function AllBookingsPage() {
   const debouncedPincodeLookup = debounce(async (pincode: string) => {
     if (pincode.length !== 6) return;
 
-    toast.info(`Searching for pincode: ${pincode}...`);
     try {
-      const { data } = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
+      const { data: pinMap } = await axios.post('/api/pincode-master/bulk-lookup', { pincodes: [pincode] });
+      const match = pinMap[pincode];
 
-      if (data && data[0].Status === 'Success') {
-        const postOffice = data[0].PostOffice[0];
-        const cityName = postOffice.District;
-        // Assuming a similar getCityCode helper exists or can be created
-        const cityCode = cityName.substring(0, 3).toUpperCase();
-
+      if (match) {
+        const cityCode = match.cityCode || match.city.substring(0, 3).toUpperCase();
         setEditForm(prev => ({
           ...prev,
-          location: cityName,
+          location: match.city,
           destinationCity: cityCode
         }));
-        toast.success(`Location found: ${cityName}`);
+        toast.success(`Location found: ${match.city}`);
       } else {
         toast.warning(`No location found for pincode: ${pincode}`);
       }
     } catch (error) {
-      toast.error("Pincode API request failed.");
+      toast.error("Pincode lookup failed.");
     }
-  }, 800);
+  }, 300);
 
   useEffect(() => {
     fetchBookings();

@@ -217,38 +217,29 @@ export default function SmartBookingMasterPage() {
         let updatedRows = [...tableRows];
         let processedCount = 0;
 
-        for (let i = 0; i < missingLocationIndices.length; i += BATCH_SIZE) {
-            const batch = missingLocationIndices.slice(i, i + BATCH_SIZE);
-            
-            await Promise.all(batch.map(async (item) => {
-                try {
-                    const localPin = pincodeMaster.find(p => p.pincode === item.pin);
-                    
-                    if (localPin && localPin.city) {
-                        updatedRows[item.idx].location = localPin.city.name;
-                        updatedRows[item.idx].destinationCity = localPin.city.code;
-                        updatedRows[item.idx].state = localPin.state?.name;
-                    } else {
-                        const { data } = await axios.get(`https://api.postalpincode.in/pincode/${item.pin}`);
-                        if (data && data[0].Status === 'Success') {
-                            const postOffice = data[0].PostOffice[0];
-                            const cityName = postOffice.District; 
-                            const stateName = postOffice.State;
-                            const cityCode = getCityCode(cityName);
-                            
-                            updatedRows[item.idx].location = cityName;
-                            updatedRows[item.idx].destinationCity = cityCode || cityName.substring(0, 3).toUpperCase();
-                            updatedRows[item.idx].state = stateName;
-                        }
-                    }
-                    processedCount++;
-                } catch (e) {
-                    console.warn(`Failed to map pin ${item.pin}`);
-                }
-            }));
-            setTableRows([...updatedRows]);
-            await delay(DELAY_MS);
+                // Collect all unique pincodes that need lookup
+        const uniquePins = [...new Set(missingLocationIndices.map(item => item.pin))];
+        
+        // Single bulk lookup from our local DB
+        let pinMap: Record<string, { city: string; cityCode: string; state: string }> = {};
+        try {
+            const { data } = await axios.post('/api/pincode-master/bulk-lookup', { pincodes: uniquePins });
+            pinMap = data;
+        } catch (e) {
+            console.warn("Bulk lookup failed, will skip mapping");
         }
+
+        // Apply results instantly — no batching or delays needed!
+        missingLocationIndices.forEach(item => {
+            const match = pinMap[item.pin];
+            if (match) {
+                updatedRows[item.idx].location = match.city;
+                updatedRows[item.idx].destinationCity = match.cityCode || match.city.substring(0, 3).toUpperCase();
+                updatedRows[item.idx].state = match.state;
+                processedCount++;
+            }
+        });
+        setTableRows([...updatedRows]);
 
         setIsAutoMapping(false);
         toast.success(`Auto-mapping complete. Processed ${processedCount} locations.`);
@@ -468,27 +459,22 @@ export default function SmartBookingMasterPage() {
         }
     }, 800);
 
-    const debouncedPincodeLookup = debounce(async (idx: number, pincode: string) => {
+        const debouncedPincodeLookup = debounce(async (idx: number, pincode: string) => {
         if (pincode.length !== 6) return;
 
-        toast.info(`Searching for pincode: ${pincode}...`);
         try {
-            const { data } = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
+            const { data: pinMap } = await axios.post('/api/pincode-master/bulk-lookup', { pincodes: [pincode] });
+            const match = pinMap[pincode];
 
-            if (data && data[0].Status === 'Success') {
-                const postOffice = data[0].PostOffice[0];
-                const cityName = postOffice.District;
-                const stateName = postOffice.State;
-                const cityCode = getCityCode(cityName);
+            if (match) {
+                const cityCode = match.cityCode || match.city.substring(0, 3).toUpperCase();
 
                 setTableRows(rows => {
                     const newRows = rows.map((row, i) => {
                         if (i !== idx) return row;
-                        // Save state to the row
-                        return { ...row, location: cityName, destinationCity: cityCode, state: stateName };
+                        return { ...row, location: match.city, destinationCity: cityCode, state: match.state };
                     });
                     
-                    // Trigger rate calculation immediately with the new state
                     const updatedRow = newRows[idx];
                     if (updatedRow.customerId && updatedRow.chargeWeight) {
                         debouncedRateCalculation(idx, updatedRow);
@@ -496,15 +482,15 @@ export default function SmartBookingMasterPage() {
                     
                     return newRows;
                 });
-                toast.success(`Location found: ${cityName}, ${stateName}`);
+                toast.success(`Location found: ${match.city}, ${match.state}`);
             } else {
                 toast.warning(`No location found for pincode: ${pincode}`);
             }
         } catch (error) {
-            toast.error("Pincode API request failed.");
+            toast.error("Pincode lookup failed.");
             console.error("Pincode lookup error:", error);
         }
-    }, 800);
+    }, 300);
 
     const fetchUnassignedBookings = async () => {
         setLoading(true);
