@@ -11,10 +11,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const showHeader = !noHeaderRoutes.includes(pathname);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       {showHeader && <Header />}
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
       <Footer/>
-    </>
+    </div>
   );
 }
