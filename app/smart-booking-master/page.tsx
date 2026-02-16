@@ -240,7 +240,6 @@ export default function SmartBookingMasterPage() {
         setIsAutoMapping(false);
         toast.success(`Auto-mapping complete. Processed ${processedCount} locations.`);
     };
-
     const handleAutoMapCustomers = async () => {
         const visibleRows = filteredRows;
 
@@ -267,7 +266,7 @@ export default function SmartBookingMasterPage() {
         }
 
         setIsAutoMappingCustomers(true);
-        toast.loading(`Mapping ${rowsToMap.length} customers on this page...`);
+        toast.loading(`Mapping ${rowsToMap.length} customers... (${tableRows.length - rowsToMap.length} already mapped)`);
 
         let updatedTableRows = [...tableRows];
         let mappedCount = 0;
@@ -394,7 +393,7 @@ export default function SmartBookingMasterPage() {
     //     if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
     //     if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
     // };
-        const handleAutoCalculateRates = async () => {
+    const handleAutoCalculateRates = async () => {
         const visibleRows = paginatedRows;
         const rowsToCalc = visibleRows.filter(r => 
             r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
@@ -1306,62 +1305,106 @@ export default function SmartBookingMasterPage() {
     };
 
     const handleSaveAll = async () => {
-        if (tableRows.length === 0) return;
-        
+        // Filter out rows that have a valid Client Billing Value
+        const validRows = tableRows.filter(row => 
+            row.clientBillingValue && 
+            parseFloat(row.clientBillingValue.toString()) > 0
+        );
+
+        if (validRows.length === 0) {
+            toast.warning("No rows have a valid Client Billing Value to save.");
+            return;
+        }
+
+        // Calculate how many will be skipped
+        const skippedCount = tableRows.length - validRows.length;
+
         setLoading(true);
         try {
-            // Filter out rows that are already saved (if you want) or just save everything
-            // For now, let's save everything currently in the table
+            // Send only valid rows to the API
+            const { data } = await axios.post("/api/bookings/bulk-create", { items: validRows });
             
-            // Prepare data: remove UI-only flags
-            const rowsToSave = tableRows.map(row => {
-                const cleanRow = { ...row };
-                // Ensure defaults
-                cleanRow.serviceProvider = cleanRow.serviceProvider || "DTDC";
-                cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
+            // If successful, remove the saved rows from the table
+            if (data.success) {
+                // Keep only the rows that were NOT valid (skipped)
+                const remainingRows = tableRows.filter(row => 
+                    !row.clientBillingValue || 
+                    parseFloat(row.clientBillingValue.toString()) <= 0
+                );
                 
-                if (cleanRow.status === 'RECALLED') {
-                    cleanRow.status = 'BOOKED';
+                setTableRows(remainingRows);
+                
+                // Show a detailed message
+                if (skippedCount > 0) {
+                    toast.success(`Saved ${validRows.length} bookings. ${skippedCount} rows remaining (missing Client Billing Value).`);
+                } else {
+                    toast.success(`All ${validRows.length} bookings saved successfully!`);
                 }
-
-                // Remove internal flags
-                delete cleanRow._awbExists;
-                delete cleanRow._bookingId;
-                delete cleanRow.__origIndex;
-                delete cleanRow.customerName;
-                delete cleanRow._fuelSurchargePercent;
-                delete cleanRow._gstPercent;
-
-                // Fix dates
-                cleanRow.bookingDate = new Date(cleanRow.bookingDate);
-                cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
-                cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
-                cleanRow.todayDate = cleanRow.todayDate ? new Date(cleanRow.todayDate) : new Date();
-
-                // Ensure numbers
-                ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
-                "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
-                "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
-                "pendingDaysNotDelivered", "length", "width", "height"].forEach(field => {
-                     if (cleanRow[field]) cleanRow[field] = Number(cleanRow[field]);
-                });
-                
-                return cleanRow;
-            });
-
-            const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsToSave);
-            toast.success(createResult.message || "All bookings saved successfully!");
-            
-            // Refresh to get IDs and confirm saved state
-            await fetchUnassignedBookings();
-
-        } catch (error: any) {
-            console.error("Bulk save failed:", error);
-            toast.error(error.response?.data?.error || "Failed to save bookings.");
+            }
+        } catch (error) {
+            console.error("Bulk save error:", error);
+            toast.error("Failed to save bookings.");
         } finally {
             setLoading(false);
         }
     };
+    // const handleSaveAll = async () => {
+    //     if (tableRows.length === 0) return;
+        
+    //     setLoading(true);
+    //     try {
+    //         // Filter out rows that are already saved (if you want) or just save everything
+    //         // For now, let's save everything currently in the table
+            
+    //         // Prepare data: remove UI-only flags
+    //         const rowsToSave = tableRows.map(row => {
+    //             const cleanRow = { ...row };
+    //             // Ensure defaults
+    //             cleanRow.serviceProvider = cleanRow.serviceProvider || "DTDC";
+    //             cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
+                
+    //             if (cleanRow.status === 'RECALLED') {
+    //                 cleanRow.status = 'BOOKED';
+    //             }
+
+    //             // Remove internal flags
+    //             delete cleanRow._awbExists;
+    //             delete cleanRow._bookingId;
+    //             delete cleanRow.__origIndex;
+    //             delete cleanRow.customerName;
+    //             delete cleanRow._fuelSurchargePercent;
+    //             delete cleanRow._gstPercent;
+
+    //             // Fix dates
+    //             cleanRow.bookingDate = new Date(cleanRow.bookingDate);
+    //             cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
+    //             cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
+    //             cleanRow.todayDate = cleanRow.todayDate ? new Date(cleanRow.todayDate) : new Date();
+
+    //             // Ensure numbers
+    //             ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
+    //             "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
+    //             "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+    //             "pendingDaysNotDelivered", "length", "width", "height"].forEach(field => {
+    //                  if (cleanRow[field]) cleanRow[field] = Number(cleanRow[field]);
+    //             });
+                
+    //             return cleanRow;
+    //         });
+
+    //         const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsToSave);
+    //         toast.success(createResult.message || "All bookings saved successfully!");
+            
+    //         // Refresh to get IDs and confirm saved state
+    //         await fetchUnassignedBookings();
+
+    //     } catch (error: any) {
+    //         console.error("Bulk save failed:", error);
+    //         toast.error(error.response?.data?.error || "Failed to save bookings.");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     useEffect(() => {
         const checkRecall = async () => {
