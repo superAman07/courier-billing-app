@@ -1316,34 +1316,83 @@ export default function SmartBookingMasterPage() {
             return;
         }
 
-        // Calculate how many will be skipped
         const skippedCount = tableRows.length - validRows.length;
-
         setLoading(true);
+
         try {
-            // Send only valid rows to the API
-            const { data } = await axios.post("/api/bookings/bulk-create", { items: validRows });
+            // Prepare and clean data
+            const rowsToSave = validRows.map(row => {
+                const cleanRow = { ...row };
+                
+                cleanRow.serviceProvider = cleanRow.serviceProvider || "DTDC";
+                cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
+                
+                if (cleanRow.status === 'RECALLED') cleanRow.status = 'BOOKED';
+
+                // Remove internal flags
+                delete cleanRow._awbExists;
+                delete cleanRow._bookingId;
+                delete cleanRow.__origIndex;
+                delete cleanRow.customerName;
+                delete cleanRow._fuelSurchargePercent;
+                delete cleanRow._gstPercent;
+
+                // Fix dates
+                cleanRow.bookingDate = new Date(cleanRow.bookingDate);
+                cleanRow.statusDate = cleanRow.statusDate ? new Date(cleanRow.statusDate) : null;
+                cleanRow.dateOfDelivery = cleanRow.dateOfDelivery ? new Date(cleanRow.dateOfDelivery) : null;
+                cleanRow.todayDate = cleanRow.todayDate ? new Date(cleanRow.todayDate) : new Date();
+
+                // Ensure numbers
+                ["pcs", "invoiceValue", "actualWeight", "chargeWeight", "frCharge", "fuelSurcharge",
+                "shipperCost", "waybillSurcharge", "otherExp", "gst", "valumetric", "invoiceWt",
+                "clientBillingValue", "creditCustomerAmount", "regularCustomerAmount",
+                "pendingDaysNotDelivered", "length", "width", "height"].forEach(field => {
+                     if (cleanRow[field]) cleanRow[field] = Number(cleanRow[field]);
+                });
+                
+                return cleanRow;
+            });
+
+            // --- THE BATCHING LOGIC FIX ---
+            const BATCH_SIZE = 200; // Send 200 rows at a time
+            let totalSaved = 0;
+
+            const totalBatches = Math.ceil(rowsToSave.length / BATCH_SIZE);
             
-            // If successful, remove the saved rows from the table
-            if (data.success) {
-                // Keep only the rows that were NOT valid (skipped)
-                const remainingRows = tableRows.filter(row => 
-                    !row.clientBillingValue || 
-                    parseFloat(row.clientBillingValue.toString()) <= 0
-                );
+            for (let i = 0; i < rowsToSave.length; i += BATCH_SIZE) {
+                const batch = rowsToSave.slice(i, i + BATCH_SIZE);
+                const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
                 
-                setTableRows(remainingRows);
+                toast.loading(`Saving batch ${currentBatchNum} of ${totalBatches}... (${totalSaved}/${rowsToSave.length})`, { id: 'save-batch' });
                 
-                // Show a detailed message
-                if (skippedCount > 0) {
-                    toast.success(`Saved ${validRows.length} bookings. ${skippedCount} rows remaining (missing Client Billing Value).`);
-                } else {
-                    toast.success(`All ${validRows.length} bookings saved successfully!`);
-                }
+                // Await each batch individually so the server doesn't get flooded
+                await axios.post('/api/booking-master/bulk-create', batch);
+                totalSaved += batch.length;
             }
-        } catch (error) {
-            console.error("Bulk save error:", error);
-            toast.error("Failed to save bookings.");
+            
+            toast.dismiss('save-batch'); // Remove the loading toast
+
+            // Keep only the rows that were NOT valid (skipped)
+            const remainingRows = tableRows.filter(row => 
+                !row.clientBillingValue || 
+                parseFloat(row.clientBillingValue.toString()) <= 0
+            );
+            
+            setTableRows(remainingRows);
+            
+            if (skippedCount > 0) {
+                toast.success(`Successfully saved ${totalSaved} bookings. ${skippedCount} rows remaining.`);
+            } else {
+                toast.success(`Successfully saved all ${totalSaved} bookings!`);
+            }
+            
+            await fetchUnassignedBookings();
+
+        } catch (error: any) {
+            console.error("Bulk save failed:", error);
+            toast.dismiss('save-batch');
+            toast.error(error.response?.data?.error || "Failed to save bookings. Check console for details.");
         } finally {
             setLoading(false);
         }
