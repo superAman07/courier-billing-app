@@ -266,7 +266,7 @@ export default function SmartBookingMasterPage() {
         }
 
         setIsAutoMappingCustomers(true);
-        toast.loading(`Mapping ${rowsToMap.length} customers... (${tableRows.length - rowsToMap.length} already mapped)`);
+        toast.loading(`Mapping ${rowsToMap.length} customers... (${tableRows.length - rowsToMap.length} already mapped)`, { id: 'map-customers' });
 
         let updatedTableRows = [...tableRows];
         let mappedCount = 0;
@@ -300,7 +300,7 @@ export default function SmartBookingMasterPage() {
         });
         setTableRows(updatedTableRows);
         setIsAutoMappingCustomers(false);
-        toast.dismiss();
+        toast.dismiss('map-customers');
         
         if (mappedCount > 0) {
             toast.success(`Successfully mapped/updated ${mappedCount} customers.`);
@@ -393,8 +393,9 @@ export default function SmartBookingMasterPage() {
     //     if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
     //     if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
     // };
-    const handleAutoCalculateRates = async () => {
-        const visibleRows = paginatedRows;
+        const handleAutoCalculateRates = async () => {
+        const visibleRows = filteredRows;
+        
         const rowsToCalc = visibleRows.filter(r => 
             r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
         );
@@ -405,9 +406,9 @@ export default function SmartBookingMasterPage() {
         }
 
         setIsCalculatingRates(true);
-        toast.info(`Calculating rates for ${rowsToCalc.length} rows...`);
 
         try {
+            // 1. Prepare all items for calculation
             const items = rowsToCalc.map(row => ({
                 customerId: row.customerId,
                 destinationPincode: row.pin,
@@ -419,44 +420,68 @@ export default function SmartBookingMasterPage() {
                 city: row.location
             }));
 
-            const { data } = await axios.post('/api/calculate-rate/batch', { items });
+            let updatedRows = [...tableRows];
+            let successCount = 0;
+            let failCount = 0;
             
-            const updatedRows = [...tableRows];
-            let successCount = 0, failCount = 0;
+            // 2. BATCHING LOGIC (Send 50 rows at a time to prevent DB crash)
+            const BATCH_SIZE = 50; 
+            const totalBatches = Math.ceil(items.length / BATCH_SIZE);
 
-            for (const result of data.results) {
-                const origRow = rowsToCalc[result.index];
-                const idx = origRow.__origIndex;
+            for (let i = 0; i < items.length; i += BATCH_SIZE) {
+                const batchItems = items.slice(i, i + BATCH_SIZE);
+                const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
                 
-                if (result.success) {
-                    updatedRows[idx] = {
-                        ...updatedRows[idx],
-                        frCharge: result.frCharge.toFixed(2),
-                        waybillSurcharge: result.waybillSurcharge.toFixed(2),
-                        otherExp: result.otherExp.toFixed(2),
-                        serviceProvider: result.serviceProvider || updatedRows[idx].serviceProvider || "DTDC"
-                    };
+                toast.loading(`Calculating rates: Batch ${currentBatchNum} of ${totalBatches}... (${successCount + failCount}/${items.length})`, { id: 'calc-rates' });
 
-                    const frCharge = parseFloat(result.frCharge) || 0;
-                    const fuelPercent = updatedRows[idx]._fuelSurchargePercent || 0;
-                    updatedRows[idx].fuelSurcharge = frCharge > 0 && fuelPercent > 0
-                        ? ((frCharge * fuelPercent) / 100).toFixed(2) : "0.00";
+                // Call the API with just this batch of 50
+                const { data } = await axios.post('/api/calculate-rate/batch', { items: batchItems });
+                
+                // Process results
+                for (const result of data.results) {
+                    // result.index is relative to the batch (0 to 49)
+                    // We add 'i' to get the true index in the 'rowsToCalc' array
+                    const origRow = rowsToCalc[i + result.index];
+                    const idx = origRow.__origIndex;
+                    
+                    if (result.success) {
+                        updatedRows[idx] = {
+                            ...updatedRows[idx],
+                            frCharge: result.frCharge.toFixed(2),
+                            waybillSurcharge: result.waybillSurcharge.toFixed(2),
+                            otherExp: result.otherExp.toFixed(2),
+                            serviceProvider: result.serviceProvider || updatedRows[idx].serviceProvider || "DTDC"
+                        };
 
-                    updatedRows[idx] = recalculateClientBilling(updatedRows[idx]);
-                    successCount++;
-                } else {
-                    failCount++;
+                        const frCharge = parseFloat(result.frCharge) || 0;
+                        const fuelPercent = updatedRows[idx]._fuelSurchargePercent || 0;
+                        updatedRows[idx].fuelSurcharge = (frCharge > 0 && fuelPercent > 0)
+                            ? ((frCharge * fuelPercent) / 100).toFixed(2)
+                            : "0.00";
+
+                        updatedRows[idx] = recalculateClientBilling(updatedRows[idx]);
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
                 }
+                
+                // Fast UI update after every batch
+                setTableRows([...updatedRows]);
             }
+            
+            toast.dismiss('calc-rates');
 
-            setTableRows(updatedRows);
             if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
-            if (failCount > 0) toast.warning(`${failCount} rows failed.`);
-        } catch (error) {
-            toast.error("Batch rate calculation failed.");
-        }
+            if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
 
-        setIsCalculatingRates(false);
+        } catch (error) {
+            console.error("Batch rate error:", error);
+            toast.dismiss('calc-rates');
+            toast.error("Failed to calculate rates.");
+        } finally {
+            setIsCalculatingRates(false);
+        }
     };
 
     const recalculateClientBilling = (row: any) => {
@@ -1666,7 +1691,7 @@ export default function SmartBookingMasterPage() {
                                 <button 
                                     onClick={handleAutoMapLocations}
                                     disabled={isAutoMapping || loading}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                    className={`flex items-center gap-2 px-3 cursor-pointer py-2 rounded-lg text-sm font-medium transition-colors border ${
                                         isAutoMapping 
                                     ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" 
                                     : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"

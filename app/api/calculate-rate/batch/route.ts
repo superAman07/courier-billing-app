@@ -86,7 +86,7 @@ function calculateSingleRate(sectorRate: any, weightInKg: number, isDox: boolean
     }
 
     let waybillSurcharge = 0;
-    const value = parseFloat(invoiceValue.toString()) || 0;
+    const value = Number(invoiceValue) || 0;
     if (sectorRate.serviceProvider === 'DTDC' && value > 49999) {
         waybillSurcharge = value * 0.002;
     }
