@@ -60,7 +60,7 @@ const IMPORT_ALIASES: Record<string, string[]> = {
     invoiceValue: ["Invoice value", "Material Value"],
     status: ["STATUS", "Status"],
     statusDate: ["Status Date"],
-    dsrNdxPaper: ["Dox / Non Dox"],
+    dsrNdxPaper: ["Dox / Non Dox", "D / N", "Doc Type", "Dox/Non-Dox"],
     dsrContents: ["DSR_CONTENTS", "Content"],
     length: ["Length", "L"],
     width: ["Width", "W"],
@@ -778,15 +778,15 @@ export default function SmartBookingMasterPage() {
                         const rawMode = row[importKey]?.toString().toUpperCase();
                         mapped[col] = MODE_MAP[rawMode] || rawMode;
                     } else if (col === "dsrNdxPaper") {
-                        const rawValue = row[importKey]?.toString().toUpperCase();
+                        const rawValue = row[importKey]?.toString().trim().toUpperCase() || "";
                         if (rawValue === 'D' || rawValue === 'N') {
                             mapped[col] = rawValue;
-                        } else if (rawValue === 'DOCUMENT') {
+                        } else if (rawValue === 'DOCUMENT' || rawValue === 'DOX' || rawValue === 'DOC') {
                             mapped[col] = 'D';
-                        } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX') {
+                        } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX' || rawValue === 'NON-DOX' || rawValue === 'NDOX') {
                             mapped[col] = 'N';
                         } else {
-                            mapped[col] = rawValue;
+                            mapped[col] = rawValue || 'N';
                         }
                     } else if (col === "bookingDate" || col === "statusDate" || col === "dateOfDelivery") {
                         mapped[col] = parseImportedDate(row[importKey]);
@@ -802,6 +802,10 @@ export default function SmartBookingMasterPage() {
                 }
             });
             mapped.customerType = "CREDIT";
+
+            if (!mapped.dsrNdxPaper) {
+                mapped.dsrNdxPaper = "N";
+            }
 
             if (mapped.location) {
                 const cityCode = getCityCode(mapped.location);
@@ -1093,7 +1097,13 @@ export default function SmartBookingMasterPage() {
             return;
         }
         try {
-            const { data } = await axios.get(`/api/customers?query=${searchTerm}`);
+            const { data } = await axios.get(`/api/customers?query=${encodeURIComponent(searchTerm)}`);
+
+            if (!Array.isArray(data)) {
+                console.error("Customers API returned non-array data:", data);
+                setCustomerSuggestions(prev => ({ ...prev, [idx]: [] }));
+                return;
+            }
 
             const exactMatch = data.find(
                 (c: any) => c.customerCode?.toLowerCase() === searchTerm.trim().toLowerCase()
