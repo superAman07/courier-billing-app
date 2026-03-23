@@ -841,6 +841,13 @@ export default function SmartBookingMasterPage() {
                     updatedRow.invoiceWt = Math.max(actualWeight, parseFloat(updatedRow.chargeWeight) || 0).toFixed(2);
                 } else {
                     updatedRow.valumetric = "0.00";
+                    // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
+                    const actualWeight = parseFloat(updatedRow.actualWeight) || 0;
+                    const importedChargeWeight = parseFloat(updatedRow.chargeWeight) || 0;
+                    if (importedChargeWeight > 0 || actualWeight > 0) {
+                        updatedRow.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
+                        updatedRow.invoiceWt = updatedRow.chargeWeight;
+                    }
                 }
                 return updatedRow;
             }
@@ -865,10 +872,74 @@ export default function SmartBookingMasterPage() {
                 mapped.invoiceWt = Math.max(actualWeight, parseFloat(mapped.chargeWeight) || 0).toFixed(2);
             } else {
                 mapped.valumetric = "0.00";
+                // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
+                const actualWeight = parseFloat(mapped.actualWeight) || 0;
+                const importedChargeWeight = parseFloat(mapped.chargeWeight) || 0;
+                if (importedChargeWeight > 0 || actualWeight > 0) {
+                    mapped.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
+                    mapped.invoiceWt = mapped.chargeWeight;
+                }
             }
 
             return { ...mapped, _awbExists: false };
         });
+
+        // --- Batched Auto-Calculate Rates during Import ---
+        let calculatedRows = [...mappedRows];
+        const rowsToCalc = mappedRows.filter(r => 
+            r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
+        );
+
+        if (rowsToCalc.length > 0) {
+            try {
+                toast.info(`Auto-calculating rates for ${rowsToCalc.length} rows...`);
+                // 1. Prepare items
+                const items = rowsToCalc.map(row => ({
+                    customerId: row.customerId,
+                    destinationPincode: row.pin,
+                    chargeWeight: row.chargeWeight,
+                    isDox: row.dsrNdxPaper === 'D',
+                    mode: row.mode,
+                    invoiceValue: row.invoiceValue,
+                    state: row.state,
+                    city: row.location
+                }));
+
+                // 2. Batch Calculation (50 at a time)
+                const BATCH_SIZE = 50;
+                for (let i = 0; i < items.length; i += BATCH_SIZE) {
+                    const batchItems = items.slice(i, i + BATCH_SIZE);
+                    const { data } = await axios.post('/api/calculate-rate/batch', { items: batchItems });
+                    
+                    for (const result of data.results) {
+                        const origRow = rowsToCalc[i + result.index];
+                        const idx = calculatedRows.findIndex(r => r.srNo === origRow.srNo);
+                        
+                        if (idx !== -1 && result.success) {
+                            calculatedRows[idx] = {
+                                ...calculatedRows[idx],
+                                frCharge: result.frCharge.toFixed(2),
+                                waybillSurcharge: result.waybillSurcharge.toFixed(2),
+                                otherExp: result.otherExp.toFixed(2),
+                                serviceProvider: result.serviceProvider || calculatedRows[idx].serviceProvider || "DTDC"
+                            };
+
+                            const frCharge = parseFloat(result.frCharge) || 0;
+                            const fuelPercent = calculatedRows[idx]._fuelSurchargePercent || 0;
+                            calculatedRows[idx].fuelSurcharge = (frCharge > 0 && fuelPercent > 0)
+                                ? ((frCharge * fuelPercent) / 100).toFixed(2)
+                                : "0.00";
+
+                            calculatedRows[idx] = recalculateClientBilling(calculatedRows[idx]);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Auto-calculate during import failed:", error);
+                toast.error("Auto-calculation failed, saving without rates.");
+            }
+        }
+        // --- End Batched Auto-Calculate ---
 
         // const calculatedRows = await Promise.all(mappedRows.map(async (row) => {
         //     // Check if we have enough info to calculate
