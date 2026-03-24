@@ -31,46 +31,96 @@ export async function POST(req: NextRequest) {
                 pin: String(b.pin || ""),
             };
 
-            if (b.serviceProvider) bookingData.serviceProvider = b.serviceProvider;
+                        if (b.serviceProvider) bookingData.serviceProvider = b.serviceProvider;
 
             if (b.location) bookingData.location = b.location;
             if (b.dsrContents) bookingData.dsrContents = b.dsrContents;
             if (b.dsrNdxPaper) bookingData.dsrNdxPaper = b.dsrNdxPaper;
-            if (b.invoiceValue) bookingData.invoiceValue = Number(b.invoiceValue);
-            if (b.actualWeight) bookingData.actualWeight = Number(b.actualWeight);
-            if (b.chargeWeight) bookingData.chargeWeight = Number(b.chargeWeight);
-            if (b.frCharge) bookingData.frCharge = Number(b.frCharge);
-            if (b.length) bookingData.length = Number(b.length);
-            if (b.width) bookingData.width = Number(b.width);
-            if (b.height) bookingData.height = Number(b.height);
-            if (b.valumetric) bookingData.valumetric = Number(b.valumetric);
-            if (b.invoiceWt) bookingData.invoiceWt = Number(b.invoiceWt);
-            if (b.clientBillingValue) bookingData.clientBillingValue = Number(b.clientBillingValue);
-            if (b.creditCustomerAmount) bookingData.creditCustomerAmount = Number(b.creditCustomerAmount);
-            if (b.regularCustomerAmount) bookingData.regularCustomerAmount = Number(b.regularCustomerAmount);
-            if (b.fuelSurcharge) bookingData.fuelSurcharge = Number(b.fuelSurcharge);
-            if (b.shipperCost) bookingData.shipperCost = Number(b.shipperCost);
-            if (b.waybillSurcharge) bookingData.waybillSurcharge = Number(b.waybillSurcharge);
-            if (b.otherExp) bookingData.otherExp = Number(b.otherExp);
-            if (b.gst) bookingData.gst = Number(b.gst);
-            if (b.customerType) bookingData.customerType = b.customerType;
-            if (b.senderDetail) bookingData.senderDetail = b.senderDetail;
-            if (b.paymentStatus) bookingData.paymentStatus = b.paymentStatus;
-            if (b.senderContactNo) bookingData.senderContactNo = b.senderContactNo;
-            if (b.address) bookingData.address = b.address;
-            if (b.adhaarNo) bookingData.adhaarNo = b.adhaarNo;
+            
+            if (b.invoiceValue !== undefined && b.invoiceValue !== "") bookingData.invoiceValue = Number(b.invoiceValue);
+            
+            // FIX: Directly assign the successfully calculated weights!
+            bookingData.actualWeight = actualWeight;
+            bookingData.chargeWeight = chargeWeight;
+            bookingData.invoiceWt = invoiceWt;
+
+            if (b.frCharge !== undefined && b.frCharge !== "") bookingData.frCharge = Number(b.frCharge);
+            if (b.length !== undefined && b.length !== "") bookingData.length = Number(b.length);
+            if (b.width !== undefined && b.width !== "") bookingData.width = Number(b.width);
+            if (b.height !== undefined && b.height !== "") bookingData.height = Number(b.height);
+            if (b.valumetric !== undefined && b.valumetric !== "") bookingData.valumetric = Number(b.valumetric);
+            
+            if (b.clientBillingValue !== undefined && b.clientBillingValue !== "") bookingData.clientBillingValue = Number(b.clientBillingValue);
+            if (b.creditCustomerAmount !== undefined && b.creditCustomerAmount !== "") bookingData.creditCustomerAmount = Number(b.creditCustomerAmount);
+            if (b.regularCustomerAmount !== undefined && b.regularCustomerAmount !== "") bookingData.regularCustomerAmount = Number(b.regularCustomerAmount);
+            if (b.fuelSurcharge !== undefined && b.fuelSurcharge !== "") bookingData.fuelSurcharge = Number(b.fuelSurcharge);
+            if (b.shipperCost !== undefined && b.shipperCost !== "") bookingData.shipperCost = Number(b.shipperCost);
+            if (b.waybillSurcharge !== undefined && b.waybillSurcharge !== "") bookingData.waybillSurcharge = Number(b.waybillSurcharge);
+            if (b.otherExp !== undefined && b.otherExp !== "") bookingData.otherExp = Number(b.otherExp);
+            if (b.gst !== undefined && b.gst !== "") bookingData.gst = Number(b.gst);
+            
+            if (b.customerType) bookingData.customerType = String(b.customerType);
+            if (b.senderDetail) bookingData.senderDetail = String(b.senderDetail);
+            if (b.paymentStatus) bookingData.paymentStatus = String(b.paymentStatus);
+            if (b.senderContactNo) bookingData.senderContactNo = String(b.senderContactNo);
+            if (b.address) bookingData.address = String(b.address);
+            if (b.adhaarNo) bookingData.adhaarNo = String(b.adhaarNo);
             if (b.customerAttendBy) bookingData.customerAttendBy = String(b.customerAttendBy);
-            if (b.status) bookingData.status = b.status;
+            if (b.status) bookingData.status = String(b.status);
+            
             if (b.statusDate) bookingData.statusDate = new Date(b.statusDate);
-            if (b.pendingDaysNotDelivered) bookingData.pendingDaysNotDelivered = Number(b.pendingDaysNotDelivered);
+            if (b.pendingDaysNotDelivered !== undefined && b.pendingDaysNotDelivered !== "") bookingData.pendingDaysNotDelivered = Number(b.pendingDaysNotDelivered);
+            
             if (b.receiverName) bookingData.receiverName = String(b.receiverName);
             if (b.receiverContactNo) bookingData.receiverContactNo = String(b.receiverContactNo);
             if (b.ref) bookingData.ref = String(b.ref);
-            if (b.delivered) bookingData.delivered = b.delivered;
+            if (b.delivered) bookingData.delivered = String(b.delivered);
+            
             if (b.dateOfDelivery) bookingData.dateOfDelivery = new Date(b.dateOfDelivery);
             if (b.todayDate) bookingData.todayDate = new Date(b.todayDate);
             if (b.customerCode) bookingData.customerCode = String(b.customerCode);
-            if (b.customerId) bookingData.customerId = b.customerId;
+            if (b.customerId) bookingData.customerId = String(b.customerId);
+            
+            // if (b.serviceProvider) bookingData.serviceProvider = b.serviceProvider;
+
+            // if (b.location) bookingData.location = b.location;
+            // if (b.dsrContents) bookingData.dsrContents = b.dsrContents;
+            // if (b.dsrNdxPaper) bookingData.dsrNdxPaper = b.dsrNdxPaper;
+            // if (b.invoiceValue) bookingData.invoiceValue = Number(b.invoiceValue);
+            // if (b.actualWeight) bookingData.actualWeight = Number(b.actualWeight);
+            // if (b.chargeWeight) bookingData.chargeWeight = Number(b.chargeWeight);
+            // if (b.frCharge) bookingData.frCharge = Number(b.frCharge);
+            // if (b.length) bookingData.length = Number(b.length);
+            // if (b.width) bookingData.width = Number(b.width);
+            // if (b.height) bookingData.height = Number(b.height);
+            // if (b.valumetric) bookingData.valumetric = Number(b.valumetric);
+            // if (b.invoiceWt) bookingData.invoiceWt = Number(b.invoiceWt);
+            // if (b.clientBillingValue) bookingData.clientBillingValue = Number(b.clientBillingValue);
+            // if (b.creditCustomerAmount) bookingData.creditCustomerAmount = Number(b.creditCustomerAmount);
+            // if (b.regularCustomerAmount) bookingData.regularCustomerAmount = Number(b.regularCustomerAmount);
+            // if (b.fuelSurcharge) bookingData.fuelSurcharge = Number(b.fuelSurcharge);
+            // if (b.shipperCost) bookingData.shipperCost = Number(b.shipperCost);
+            // if (b.waybillSurcharge) bookingData.waybillSurcharge = Number(b.waybillSurcharge);
+            // if (b.otherExp) bookingData.otherExp = Number(b.otherExp);
+            // if (b.gst) bookingData.gst = Number(b.gst);
+            // if (b.customerType) bookingData.customerType = b.customerType;
+            // if (b.senderDetail) bookingData.senderDetail = b.senderDetail;
+            // if (b.paymentStatus) bookingData.paymentStatus = b.paymentStatus;
+            // if (b.senderContactNo) bookingData.senderContactNo = b.senderContactNo;
+            // if (b.address) bookingData.address = b.address;
+            // if (b.adhaarNo) bookingData.adhaarNo = b.adhaarNo;
+            // if (b.customerAttendBy) bookingData.customerAttendBy = String(b.customerAttendBy);
+            // if (b.status) bookingData.status = b.status;
+            // if (b.statusDate) bookingData.statusDate = new Date(b.statusDate);
+            // if (b.pendingDaysNotDelivered) bookingData.pendingDaysNotDelivered = Number(b.pendingDaysNotDelivered);
+            // if (b.receiverName) bookingData.receiverName = String(b.receiverName);
+            // if (b.receiverContactNo) bookingData.receiverContactNo = String(b.receiverContactNo);
+            // if (b.ref) bookingData.ref = String(b.ref);
+            // if (b.delivered) bookingData.delivered = b.delivered;
+            // if (b.dateOfDelivery) bookingData.dateOfDelivery = new Date(b.dateOfDelivery);
+            // if (b.todayDate) bookingData.todayDate = new Date(b.todayDate);
+            // if (b.customerCode) bookingData.customerCode = String(b.customerCode);
+            // if (b.customerId) bookingData.customerId = b.customerId;
 
             return bookingData;
         });
