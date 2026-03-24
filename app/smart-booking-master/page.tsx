@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/convertDateInJSFormat";
 import { handleDownload } from "@/lib/downloadExcel";
 import UploadStatusExcelButton from "@/components/UploadStatusExcelButton";
 import { debounce } from 'lodash';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin, UserCheck, Calculator } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown, Download, Plus, Users, Save, Trash2, Calendar, Filter, X, MapPin, UserCheck, Calculator, AlertTriangle, Info } from 'lucide-react';
 
 const columns = [
     "srNo", "bookingDate", "awbNo", "serviceProvider", "location", "destinationCity", "mode", "pcs", "pin",
@@ -133,6 +133,8 @@ export default function SmartBookingMasterPage() {
     const [isCalculatingRates, setIsCalculatingRates] = useState(false);
 
     const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+    const [showCBVDiagnostics, setShowCBVDiagnostics] = useState(false);
+    const [hasCalcRatesRun, setHasCalcRatesRun] = useState(false);
 
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
@@ -471,6 +473,7 @@ export default function SmartBookingMasterPage() {
             }
             
             toast.dismiss('calc-rates');
+            setHasCalcRatesRun(true);
 
             if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
             if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
@@ -1613,6 +1616,80 @@ export default function SmartBookingMasterPage() {
         });
     }, [tableRows, dateFilter.start, dateFilter.end, search]);
 
+    // CBV Diagnostics: Analyze rows with zero billing value and determine exact reasons
+    const cbvDiagnostics = useMemo(() => {
+        const issues: { reason: string; solution: string; rows: { srNo: number; awbNo: string; customerName: string }[] }[] = [];
+
+        const noCustomer: typeof issues[0]['rows'] = [];
+        const noChargeWeight: typeof issues[0]['rows'] = [];
+        const noPincode: typeof issues[0]['rows'] = [];
+        const noMode: typeof issues[0]['rows'] = [];
+        const noFrCharge: typeof issues[0]['rows'] = [];
+
+        tableRows.forEach(row => {
+            const cbv = parseFloat(row.clientBillingValue) || 0;
+            if (cbv > 0) return; // This row is fine
+
+            const rowInfo = {
+                srNo: row.srNo || 0,
+                awbNo: row.awbNo || '—',
+                customerName: row.customerName || row.senderDetail || '—',
+            };
+
+            // Check in priority order
+            if (!row.customerId) {
+                noCustomer.push(rowInfo);
+            } else if (!row.chargeWeight || parseFloat(row.chargeWeight) <= 0) {
+                noChargeWeight.push(rowInfo);
+            } else if (!row.pin || row.pin.length < 6) {
+                noPincode.push(rowInfo);
+            } else if (!row.mode) {
+                noMode.push(rowInfo);
+            } else if (!row.frCharge || parseFloat(row.frCharge) <= 0) {
+                noFrCharge.push(rowInfo);
+            }
+        });
+
+        if (noCustomer.length > 0) {
+            issues.push({
+                reason: 'No customer selected',
+                solution: 'Select a customer for these rows, or click "Auto-Map Customers" if customer code is available.',
+                rows: noCustomer,
+            });
+        }
+        if (noChargeWeight.length > 0) {
+            issues.push({
+                reason: 'Charge weight is 0 or empty',
+                solution: 'Enter the charge weight in the imported file or update it manually in the table.',
+                rows: noChargeWeight,
+            });
+        }
+        if (noPincode.length > 0) {
+            issues.push({
+                reason: 'Pincode is missing or invalid',
+                solution: 'Enter a valid 6-digit pincode, or click "Auto-Map Locations" if destination is available.',
+                rows: noPincode,
+            });
+        }
+        if (noMode.length > 0) {
+            issues.push({
+                reason: 'Shipping mode is not set',
+                solution: 'Select a mode (AIR, SURFACE, EXPRESS, etc.) for these rows.',
+                rows: noMode,
+            });
+        }
+        if (noFrCharge.length > 0) {
+            issues.push({
+                reason: 'FR Charge is ₹0 — Rate not calculated',
+                solution: 'Click "Calc Rates" button to auto-calculate, OR add FR Charge in the import file, OR update the customer\'s rate in Customer Master.',
+                rows: noFrCharge,
+            });
+        }
+
+        const totalAffected = issues.reduce((sum, i) => sum + i.rows.length, 0);
+        return { issues, totalAffected };
+    }, [tableRows]);
+
 
     const OPTIONS = {
         paymentStatus: ["PAID", "UNPAID", "PARTIAL"],
@@ -1849,6 +1926,105 @@ export default function SmartBookingMasterPage() {
                             </div>
                         </div>
                     </div>
+                    {/* CBV Diagnostics Banner */}
+                    {hasCalcRatesRun && cbvDiagnostics.totalAffected > 0 && (
+                        <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mt-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center w-8 h-8 bg-amber-100 rounded-full flex-shrink-0">
+                                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-amber-800">
+                                        {cbvDiagnostics.totalAffected} booking{cbvDiagnostics.totalAffected > 1 ? 's' : ''} have ₹0 billing value — These will not be saved
+                                    </p>
+                                    <p className="text-xs text-amber-600 mt-0.5">
+                                        Click "View Details" to see exact reasons and solutions for each booking
+                                    </p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowCBVDiagnostics(true)}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer flex-shrink-0"
+                            >
+                                <Info className="w-4 h-4" />
+                                View Details
+                            </button>
+                        </div>
+                    )}
+
+                    {/* CBV Diagnostics Modal */}
+                    {showCBVDiagnostics && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowCBVDiagnostics(false)}>
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                                {/* Modal Header */}
+                                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                            <AlertTriangle className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white">Billing Value Issues</h2>
+                                            <p className="text-amber-100 text-sm">{cbvDiagnostics.totalAffected} booking{cbvDiagnostics.totalAffected > 1 ? 's' : ''} need attention</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowCBVDiagnostics(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Modal Body */}
+                                <div className="p-5 overflow-y-auto max-h-[60vh] space-y-4">
+                                    {cbvDiagnostics.issues.map((issue, idx) => (
+                                        <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden">
+                                            {/* Issue Header */}
+                                            <div className="bg-red-50 px-4 py-3 border-b border-red-100">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-red-700 text-sm">❌ {issue.reason}</span>
+                                                    <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">{issue.rows.length} row{issue.rows.length > 1 ? 's' : ''}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Affected Rows */}
+                                            <div className="px-4 py-2 bg-white">
+                                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                                    {issue.rows.slice(0, 10).map((row, rIdx) => (
+                                                        <div key={rIdx} className="flex items-center gap-2 text-xs text-gray-600 py-0.5">
+                                                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0"></span>
+                                                            <span>Row #{row.srNo}</span>
+                                                            <span className="text-gray-400">•</span>
+                                                            <span className="font-medium text-gray-800">AWB: {row.awbNo}</span>
+                                                            <span className="text-gray-400">•</span>
+                                                            <span className="text-gray-500">{row.customerName}</span>
+                                                        </div>
+                                                    ))}
+                                                    {issue.rows.length > 10 && (
+                                                        <p className="text-xs text-gray-400 pl-4 py-1">... and {issue.rows.length - 10} more</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Solution */}
+                                            <div className="px-4 py-2.5 bg-blue-50 border-t border-blue-100">
+                                                <p className="text-xs text-blue-700">
+                                                    <span className="font-semibold">💡 Solution: </span>{issue.solution}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Modal Footer */}
+                                <div className="border-t border-gray-200 px-5 py-3 bg-gray-50 flex justify-end">
+                                    <button 
+                                        onClick={() => setShowCBVDiagnostics(false)} 
+                                        className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                                    >
+                                        Got it
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mt-8 overflow-x-auto">
                         <div className="flex justify-between items-center mb-4">
