@@ -1362,6 +1362,9 @@ export default function SmartBookingMasterPage() {
         if (cleanRow.status === 'RECALLED') {
             cleanRow.status = 'BOOKED';
         }
+        if (!cleanRow.status) {
+            cleanRow.status = 'BOOKED';
+        }
         delete cleanRow._awbExists;
         delete cleanRow._bookingId;
         delete cleanRow.__origIndex;
@@ -1434,6 +1437,7 @@ export default function SmartBookingMasterPage() {
                 cleanRow.pendingDaysNotDelivered = calculatePendingDays(cleanRow.bookingDate, cleanRow.status);
                 
                 if (cleanRow.status === 'RECALLED') cleanRow.status = 'BOOKED';
+                if (!cleanRow.status) cleanRow.status = 'BOOKED';
 
                 // Remove internal flags
                 delete cleanRow._awbExists;

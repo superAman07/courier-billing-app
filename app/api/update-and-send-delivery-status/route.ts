@@ -37,6 +37,7 @@ export async function GET() {
         deliveryStatus: b.status ?? "",
         deliveryDate: b.statusDate,
         mobile: b.customer?.mobile ?? "",
+        clientBillingValue: b.clientBillingValue ?? 0,
       })),
       ...cashBookings.map(b => ({
         type: "CashBooking",

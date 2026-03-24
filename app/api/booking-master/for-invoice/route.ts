@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
                 gte: new Date(fromDate),
                 lte: toDateObj,
             },
+            clientBillingValue: { gt: 0 },
         };
 
         

@@ -17,6 +17,7 @@ interface BookingData {
   smsSent?: boolean
   smsDate?: string 
   mobile?: string
+  clientBillingValue?: number
 }
 
 const UpdateDeliveryStatusPage: React.FC = () => {
@@ -40,6 +41,10 @@ const UpdateDeliveryStatusPage: React.FC = () => {
 
   useEffect(() => {
     let filtered = bookings;
+
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(b => (b.clientBillingValue ?? 0) > 0);
+    }
 
     if (statusFilter === 'ACTIVE') {
       const terminalStates = ['DELIVERED', 'RETURNED', 'INVOICED', 'CANCELLED'];
