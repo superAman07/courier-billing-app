@@ -49,6 +49,7 @@ export default function SaleExpensePage() {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [saving, setSaving ] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState<string>('All');
 
     const fetchEntries = async () => {
         setLoading(true);
@@ -118,6 +119,32 @@ export default function SaleExpensePage() {
         }
     };
 
+    const handleDeleteMonth = async () => {
+        if (selectedMonth === 'All') return;
+        
+        const rowsToDelete = displayedRows;
+        if (rowsToDelete.length === 0) return;
+
+        const monthName = new Date(`${selectedMonth}-01`).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        if (!confirm(`⚠️ ARE YOU SURE? \n\nThis will permanently delete ALL ${rowsToDelete.length} transactions for ${monthName}.\nThis will alter all future running balances.\n\nType 'OK' to proceed.`)) return;
+
+        try {
+            setLoading(true);
+            // Delete all entries in the selected month
+            await Promise.all(rowsToDelete.map(row => axios.delete(`/api/sale-expense/${row.id}`)));
+            
+            toast.success(`Successfully deleted all ${rowsToDelete.length} transactions for ${monthName}.`);
+            setSelectedMonth('All');
+            fetchEntries();
+        } catch {
+            toast.error("Failed to delete some entries.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     const handleCancelEdit = () => {
         setForm(initialForm);
         setEditingId(null);
@@ -150,6 +177,29 @@ export default function SaleExpensePage() {
         });
         return rows.reverse(); 
     }, [entries]);
+
+    // Get all unique "YYYY-MM" from the transactions
+    const availableMonths = useMemo(() => {
+        const months = new Set<string>();
+        entries.forEach(e => {
+            const d = new Date(e.date);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            months.add(`${yyyy}-${mm}`);
+        });
+        return Array.from(months).sort().reverse(); // Newest first
+    }, [entries]);
+
+    // Filter rows based on selected month (running balance remains accurate)
+    const displayedRows = useMemo(() => {
+        if (selectedMonth === 'All') return calculatedRows;
+        
+        return calculatedRows.filter(row => {
+            const d = new Date(row.date);
+            const rowMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return rowMonth === selectedMonth;
+        });
+    }, [calculatedRows, selectedMonth]);
 
     const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none placeholder:text-gray-400";
     const labelClass = "block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider";
@@ -235,6 +285,35 @@ export default function SaleExpensePage() {
                     </form>
                 </div>
 
+                {/* --- FILTER & BULK ACTIONS --- */}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-gray-500" />
+                        <span className="text-sm font-semibold text-gray-700">Filter Ledger by Month:</span>
+                        <select 
+                            value={selectedMonth} 
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 cursor-pointer outline-none"
+                        >
+                            <option value="All">All Transactions</option>
+                            {availableMonths.map(month => (
+                                <option key={month} value={month}>
+                                    {new Date(`${month}-01`).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {selectedMonth !== 'All' && displayedRows.length > 0 && (
+                        <button 
+                            onClick={handleDeleteMonth}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete {new Date(`${selectedMonth}-01`).toLocaleString('default', { month: 'short', year: 'numeric' })} Data
+                        </button>
+                    )}
+                </div>
+
                 {/* --- MODERN TABLE --- */}
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -264,12 +343,12 @@ export default function SaleExpensePage() {
                             <tbody className="divide-y divide-gray-100">
                                 {loading ? (
                                      <tr><td colSpan={18} className="text-center py-12 text-gray-500 flex justify-center items-center gap-2"><Loader2 className="animate-spin"/> Loading data...</td></tr>
-                                ) : calculatedRows.length === 0 ? (
-                                    <tr><td colSpan={18} className="text-center py-12 text-gray-400">No transactions recorded yet.</td></tr>
+                                ) : displayedRows.length === 0 ? (
+                                    <tr><td colSpan={18} className="text-center py-12 text-gray-400">No transactions found for {selectedMonth === 'All' ? 'all time' : selectedMonth}.</td></tr>
                                 ) : (
-                                    calculatedRows.map((entry, idx) => (
+                                    displayedRows.map((entry, idx) => (
                                     <tr key={entry.id} className={`hover:bg-blue-50/50 transition-colors group ${editingId === entry.id ? 'bg-amber-50' : ''}`}>
-                                        <td className="px-4 py-3 text-gray-500">{calculatedRows.length - idx}</td>
+                                        <td className="px-4 py-3 text-gray-500">{calculatedRows.length - calculatedRows.indexOf(entry)}</td>
                                         <td className="px-4 py-3 font-medium text-gray-700 whitespace-nowrap">{new Date(entry.date).toLocaleDateString('en-GB')}</td>
                                         <td className="px-4 py-3 font-medium text-gray-800">{entry.particulars}</td>
                                         
