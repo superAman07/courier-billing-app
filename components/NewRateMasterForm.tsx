@@ -26,10 +26,17 @@ type SectorRate = {
     doxAdd250g?: number;
     doxUpto500g?: number;
     doxAdd500g?: number;
+    doxUpto1kg?: number;
+    doxPerKg?: number;
     premiumUpto250g?: number;
     premiumAdd250g?: number;
     premiumUpto500g?: number;
     premiumAdd500g?: number;
+    expressUpto100g?: number;
+    expressUpto250g?: number;
+    expressAdd250g?: number;
+    expressUpto500g?: number;
+    expressAdd500g?: number;
 };
 
 // const SECTORS = [
@@ -115,7 +122,7 @@ export default function NewRateMasterForm() {
         
         let newValue: string | number | undefined | null = value;
 
-        if (name.includes('Weight') || name.includes('Rate') || name.includes('dox') || name.includes('premium')) {
+        if (name.includes('Weight') || name.includes('Rate') || name.includes('dox') || name.includes('premium') || name.includes('express')) {
             newValue = value === '' ? null : parseFloat(value);
         }
 
@@ -372,6 +379,19 @@ export default function NewRateMasterForm() {
                                 {renderRateField('doxAdd250g', 'Add 250g')}
                                 {renderRateField('doxUpto500g', 'Upto 500g')}
                                 {renderRateField('doxAdd500g', 'Add 500g')}
+                                {renderRateField('doxUpto1kg', 'Upto 1KG')}
+                                {renderRateField('doxPerKg', 'Per KG')}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Non Dox Express</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                {renderRateField('expressUpto100g', 'Upto 100g')}
+                                {renderRateField('expressUpto250g', 'Upto 250g')}
+                                {renderRateField('expressAdd250g', 'Add 250g')}
+                                {renderRateField('expressUpto500g', 'Upto 500g')}
+                                {renderRateField('expressAdd500g', 'Add 500g')}
                             </div>
                         </div>
 

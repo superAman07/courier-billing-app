@@ -129,30 +129,32 @@ export async function POST(req: NextRequest) {
             }, { status: 404 });
         }
 
+        console.log('DEBUG:', {
+            mode,
+            isDox,
+            weightInKg: parseFloat(chargeWeight),
+            expressUpto500g: sectorRate.expressUpto500g,
+            expressAdd500g: sectorRate.expressAdd500g,
+            expressUpto250g: sectorRate.expressUpto250g,
+            expressUpto100g: sectorRate.expressUpto100g,
+            expressAdd250g: sectorRate.expressAdd250g,
+        });
+
         let frCharge = 0;
         const weightInKg = parseFloat(chargeWeight);
         const roundedWeight = Math.ceil(weightInKg);
 
-        if (mode === 'PREMIUM') {
-            // if (weightInKg <= 0.25) {
-            //     const rate250 = sectorRate.premiumUpto250g || 0;
-            //     const rate500 = sectorRate.premiumUpto500g || 0;
-            //     frCharge = rate250 > 0 ? rate250 : rate500;
-            // } else {
-            //     frCharge = calculateSlabRate(weightInKg, sectorRate.premiumUpto500g || 0, 0.5, sectorRate.premiumAdd500g || 0, 0.5);
-            // }
+                if (mode === 'PREMIUM') {
             if ((sectorRate.premiumAdd250g || 0) > 0) {
                 frCharge = calculateSlabRate(
                     weightInKg, 
-                    sectorRate.premiumUpto250g || 0, // Base Rate (e.g. 125)
-                    0.25,                            // Base Weight (250g)
-                    sectorRate.premiumAdd250g || 0,  // Add Rate (e.g. 40)
-                    0.25                             // Add Weight Increment (250g)
+                    sectorRate.premiumUpto250g || 0,
+                    0.25,                           
+                    sectorRate.premiumAdd250g || 0, 
+                    0.25                            
                 );
             } 
-            // Fallback: Check if "Add 500g" rate exists. Use 500g Slab Logic
             else if ((sectorRate.premiumAdd500g || 0) > 0) {
-                 // Handle specific small weight case for 500g slab users who have a specific 250g price
                  if (weightInKg <= 0.25 && (sectorRate.premiumUpto250g || 0) > 0) {
                     frCharge = sectorRate.premiumUpto250g || 0;
                  } else {
@@ -165,32 +167,43 @@ export async function POST(req: NextRequest) {
                     );
                  }
             }
-            // Fallback for flat rates or incomplete data (Use Upto 250 if tiny weight, else Upto 500)
             else {
                  if (weightInKg <= 0.25) frCharge = sectorRate.premiumUpto250g || 0;
                  if (frCharge === 0) frCharge = sectorRate.premiumUpto500g || 0;
             }
-        } else if (isDox) {
-            // if (weightInKg <= 0.1) {
-            //      const rate100 = sectorRate.doxUpto100g || 0;
-            //      const rate250 = sectorRate.doxUpto250g || 0;
-            //      const rate500 = sectorRate.doxUpto500g || 0;
-
-            //      if (rate100 > 0) frCharge = rate100;
-            //      else if (rate250 > 0) frCharge = rate250;
-            //      else frCharge = rate500;
-            // } else if (weightInKg <= 0.25) {
-            //     const rate250 = sectorRate.doxUpto250g || 0;
-            //     const rate500 = sectorRate.doxUpto500g || 0;
-                
-            //     frCharge = rate250 > 0 ? rate250 : rate500;
-            // } else {
-            //     frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
-            // }
+        } 
+        // NEW: Non-Dox + Express → use express gram slabs
+        else if (!isDox && mode === 'EXPRESS') {
+            if (weightInKg <= 0.1 && (sectorRate.expressUpto100g || 0) > 0) {
+                frCharge = sectorRate.expressUpto100g || 0;
+            }
+            else if ((sectorRate.expressAdd250g || 0) > 0) {
+                frCharge = calculateSlabRate(
+                    weightInKg,
+                    sectorRate.expressUpto250g || 0,
+                    0.25,
+                    sectorRate.expressAdd250g || 0,
+                    0.25
+                );
+            }
+            else {
+                if (weightInKg <= 0.25 && (sectorRate.expressUpto250g || 0) > 0) {
+                    frCharge = sectorRate.expressUpto250g || 0;
+                } else {
+                    frCharge = calculateSlabRate(
+                        weightInKg,
+                        sectorRate.expressUpto500g || 0,
+                        0.5,
+                        sectorRate.expressAdd500g || 0,
+                        0.5
+                    );
+                }
+            }
+        }
+        else if (isDox) {
             if (weightInKg <= 0.1 && (sectorRate.doxUpto100g || 0) > 0) {
                  frCharge = sectorRate.doxUpto100g || 0;
             } 
-            // FIX: Check "Add 250g" rate availability for Dox logic priority
             else if ((sectorRate.doxAdd250g || 0) > 0) {
                  frCharge = calculateSlabRate(
                     weightInKg, 
@@ -200,12 +213,25 @@ export async function POST(req: NextRequest) {
                     0.25
                 );
             }
-            // Fallback to 500g logic
             else {
-                // Handle small weights explicitly if using 500g structure
                 if (weightInKg <= 0.25 && (sectorRate.doxUpto250g || 0) > 0) {
                     frCharge = sectorRate.doxUpto250g || 0;
-                } else {
+                }
+                // NEW: Per KG for weights > 1kg (only kicks in when doxPerKg is filled)
+                else if (weightInKg > 1 && (sectorRate.doxPerKg || 0) > 0) {
+                    if ((sectorRate.doxUpto1kg || 0) > 0) {
+                        // Base rate for first 1kg + per-kg for extra weight
+                        frCharge = sectorRate.doxUpto1kg! + (Math.ceil(weightInKg) - 1) * sectorRate.doxPerKg!;
+                    } else {
+                        // Pure per-kg if no Upto1kg base rate
+                        frCharge = Math.ceil(weightInKg) * sectorRate.doxPerKg!;
+                    }
+                }
+                // NEW: Upto 1kg flat rate
+                else if (weightInKg <= 1 && (sectorRate.doxUpto1kg || 0) > 0) {
+                    frCharge = sectorRate.doxUpto1kg || 0;
+                }
+                else {
                     frCharge = calculateSlabRate(
                         weightInKg, 
                         sectorRate.doxUpto500g || 0, 

@@ -53,7 +53,24 @@ function calculateSingleRate(sectorRate: any, weightInKg: number, isDox: boolean
             if (weightInKg <= 0.25) frCharge = sectorRate.premiumUpto250g || 0;
             if (frCharge === 0) frCharge = sectorRate.premiumUpto500g || 0;
         }
-    } else if (isDox) {
+    } 
+    // NEW: Non-Dox + Express → use express gram slabs
+    else if (!isDox && mode === 'EXPRESS') {
+        if (weightInKg <= 0.1 && (sectorRate.expressUpto100g || 0) > 0) {
+            frCharge = sectorRate.expressUpto100g || 0;
+        }
+        else if ((sectorRate.expressAdd250g || 0) > 0) {
+            frCharge = calculateSlabRate(weightInKg, sectorRate.expressUpto250g || 0, 0.25, sectorRate.expressAdd250g || 0, 0.25);
+        }
+        else {
+            if (weightInKg <= 0.25 && (sectorRate.expressUpto250g || 0) > 0) {
+                frCharge = sectorRate.expressUpto250g || 0;
+            } else {
+                frCharge = calculateSlabRate(weightInKg, sectorRate.expressUpto500g || 0, 0.5, sectorRate.expressAdd500g || 0, 0.5);
+            }
+        }
+    }
+    else if (isDox) {
         if (weightInKg <= 0.1 && (sectorRate.doxUpto100g || 0) > 0) {
             frCharge = sectorRate.doxUpto100g || 0;
         } else if ((sectorRate.doxAdd250g || 0) > 0) {
@@ -61,7 +78,20 @@ function calculateSingleRate(sectorRate: any, weightInKg: number, isDox: boolean
         } else {
             if (weightInKg <= 0.25 && (sectorRate.doxUpto250g || 0) > 0) {
                 frCharge = sectorRate.doxUpto250g || 0;
-            } else {
+            }
+            // NEW: Per KG for weights > 1kg
+            else if (weightInKg > 1 && (sectorRate.doxPerKg || 0) > 0) {
+                if ((sectorRate.doxUpto1kg || 0) > 0) {
+                    frCharge = sectorRate.doxUpto1kg + (Math.ceil(weightInKg) - 1) * sectorRate.doxPerKg;
+                } else {
+                    frCharge = Math.ceil(weightInKg) * sectorRate.doxPerKg;
+                }
+            }
+            // NEW: Upto 1kg flat rate
+            else if (weightInKg <= 1 && (sectorRate.doxUpto1kg || 0) > 0) {
+                frCharge = sectorRate.doxUpto1kg || 0;
+            }
+            else {
                 frCharge = calculateSlabRate(weightInKg, sectorRate.doxUpto500g || 0, 0.5, sectorRate.doxAdd500g || 0, 0.5);
             }
         }

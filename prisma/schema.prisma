@@ -198,7 +198,7 @@ model BookRateMaster {
 }
 
 model EmployeeSettings {
-  id        String   @id @default("global") 
+  id        String   @id @default("global")
   ratePerKm Float    @default(0)
   updatedAt DateTime @updatedAt
 }
@@ -229,19 +229,19 @@ model EmployeeMaster {
 }
 
 model EmployeeAttendance {
-  id            String    @id @default(cuid())
-  date          DateTime  @db.Date
-  status        String
-  checkIn       DateTime?
-  checkOut      DateTime?
-  totalHours    Float?
-  overtimeHours Float?
-  lateByMinutes Int?
-  fineAmount    Float?
-  advanceAmount Float?
-  travelDistance Float?   @default(0)
-  travelAmount   Float?   @default(0)
-  remarks       String?
+  id             String    @id @default(cuid())
+  date           DateTime  @db.Date
+  status         String
+  checkIn        DateTime?
+  checkOut       DateTime?
+  totalHours     Float?
+  overtimeHours  Float?
+  lateByMinutes  Int?
+  fineAmount     Float?
+  advanceAmount  Float?
+  travelDistance Float?    @default(0)
+  travelAmount   Float?    @default(0)
+  remarks        String?
 
   employee   EmployeeMaster @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String
@@ -555,26 +555,26 @@ model InvoiceCounter {
 
 model DailyLedger {
   id          String   @id @default(cuid())
-  date        DateTime @db.Date          // B
-  particulars String                     // C
+  date        DateTime @db.Date // B
+  particulars String // C
 
-  sale        Float?   @default(0)       // D - Sale
-  cashSale    Float?   @default(0)       // E - Cash Sale
-  codReceived Float?   @default(0)       // F - COD Received
-  digitalSale Float?   @default(0)       // G - PAYTM / ACCOUNT / GP SALE
-  salePending Float?   @default(0)       // H - Sale Pending Balance
+  sale        Float? @default(0) // D - Sale
+  cashSale    Float? @default(0) // E - Cash Sale
+  codReceived Float? @default(0) // F - COD Received
+  digitalSale Float? @default(0) // G - PAYTM / ACCOUNT / GP SALE
+  salePending Float? @default(0) // H - Sale Pending Balance
 
-  clientPayment Float? @default(0)       // I - Client Payment (Mon)
+  clientPayment Float? @default(0) // I - Client Payment (Mon)
 
-  expenseAmount    Float? @default(0)    // J - Exp Amt
-  expenseByDigital Float? @default(0)    // K - Exp By GP / Paytm / Account
-  employeeAdvance  Float? @default(0)    // L - Emp Advance
-  bankDeposit      Float? @default(0)    // M - Bank Deposit
-  
-  remarks     String?                    // Q - Remarks
+  expenseAmount    Float? @default(0) // J - Exp Amt
+  expenseByDigital Float? @default(0) // K - Exp By GP / Paytm / Account
+  employeeAdvance  Float? @default(0) // L - Emp Advance
+  bankDeposit      Float? @default(0) // M - Bank Deposit
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  remarks String? // Q - Remarks
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SectorRate {
@@ -607,6 +607,17 @@ model SectorRate {
   premiumAdd250g  Float?
   premiumUpto500g Float?
   premiumAdd500g  Float?
+
+  // Non-Dox Express gram slabs
+  expressUpto100g Float?
+  expressUpto250g Float?
+  expressAdd250g  Float?
+  expressUpto500g Float?
+  expressAdd500g  Float?
+
+  // Dox extended slabs
+  doxUpto1kg Float?
+  doxPerKg   Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
