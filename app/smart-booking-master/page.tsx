@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import BookingImportPanel from "@/components/BookingImportPanel";
 import { toast } from "sonner";
 import axios from "axios";
@@ -132,9 +132,16 @@ export default function SmartBookingMasterPage() {
     const [isAutoMappingCustomers, setIsAutoMappingCustomers] = useState(false);
     const [isCalculatingRates, setIsCalculatingRates] = useState(false);
 
-    const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+    // const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
     const [showCBVDiagnostics, setShowCBVDiagnostics] = useState(false);
     const [hasCalcRatesRun, setHasCalcRatesRun] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState(0);
+    const cancelImportRef = useRef(false);
+
+    const handleCancelImport = () => {
+        cancelImportRef.current = true;
+    };
 
     const toggleSelection = (index: number) => {
         const newSelection = new Set(selectedIndices);
@@ -310,92 +317,7 @@ export default function SmartBookingMasterPage() {
             toast.warning(`No matching customers found in Master.`);
         }
     };
-
-    // const handleAutoCalculateRates = async () => {
-    //     const visibleRows = paginatedRows;
-
-    //     // Filter rows that are ready for calculation:
-    //     // Must have: Customer ID, Pincode, Charge Weight, Mode
-    //     const rowsToCalc = visibleRows.filter(r => 
-    //         r.customerId && 
-    //         r.pin && 
-    //         parseFloat(r.chargeWeight) > 0 &&
-    //         r.mode
-    //     );
-
-    //     if (rowsToCalc.length === 0) {
-    //         toast.info("No rows ready for calculation (Check missing Customers, Pincodes, or Weights).");
-    //         return;
-    //     }
-
-    //     setIsCalculatingRates(true);
-    //     toast.info(`Calculating rates for ${rowsToCalc.length} rows...`);
-
-    //     // Process in small batches to ensure server stability
-    //     const BATCH_SIZE = 5;
-    //     const delayedRows = [...tableRows];
-    //     let successCount = 0;
-    //     let failCount = 0;
-
-    //     // Helper for batches
-    //     for (let i = 0; i < rowsToCalc.length; i += BATCH_SIZE) {
-    //         const batch = rowsToCalc.slice(i, i + BATCH_SIZE);
-            
-    //         await Promise.all(batch.map(async (row) => {
-    //             const idx = row.__origIndex;
-    //             try {
-    //                 const { data } = await axios.post('/api/calculate-rate', {
-    //                     customerId: row.customerId,
-    //                     destinationPincode: row.pin,
-    //                     chargeWeight: row.chargeWeight,
-    //                     isDox: row.dsrNdxPaper === 'D',
-    //                     mode: row.mode,
-    //                     invoiceValue: row.invoiceValue,
-    //                     state: row.state,
-    //                     city: row.location
-    //                 });
-
-    //                 // Update the row with fetched rates
-    //                 delayedRows[idx] = {
-    //                     ...delayedRows[idx],
-    //                     frCharge: data.frCharge.toFixed(2),
-    //                     waybillSurcharge: data.waybillSurcharge.toFixed(2),
-    //                     otherExp: data.otherExp.toFixed(2),
-    //                     serviceProvider: data.serviceProvider || delayedRows[idx].serviceProvider || "DTDC"
-    //                 };
-
-    //                 // Calculate Fuel Surcharge
-    //                 const frCharge = parseFloat(data.frCharge) || 0;
-    //                 const fuelPercent = delayedRows[idx]._fuelSurchargePercent || 0;
-                    
-    //                 if (frCharge > 0 && fuelPercent > 0) {
-    //                      delayedRows[idx].fuelSurcharge = ((frCharge * fuelPercent) / 100).toFixed(2);
-    //                 } else {
-    //                      delayedRows[idx].fuelSurcharge = "0.00";
-    //                 }
-
-    //                 // Final Totals (GST + CBV)
-    //                 // We call the local helper to ensure math consistency
-    //                 delayedRows[idx] = recalculateClientBilling(delayedRows[idx]);
-    //                 successCount++;
-
-    //             } catch (error) {
-    //                 console.error(`Rate calc failed for ${row.awbNo}`);
-    //                 failCount++;
-    //             }
-    //         }));
-
-    //         // Update UI after every batch so user sees progress
-    //         setTableRows([...delayedRows]);
-    //         // Small pause to breathe
-    //         await new Promise(res => setTimeout(res, 200));
-    //     }
-
-    //     setIsCalculatingRates(false);
-    //     if (successCount > 0) toast.success(`Rates calculated for ${successCount} bookings.`);
-    //     if (failCount > 0) toast.warning(`${failCount} rows failed (Check Rate Master).`);
-    // };
-        const handleAutoCalculateRates = async () => {
+    const handleAutoCalculateRates = async () => {
         const visibleRows = filteredRows;
         
         const rowsToCalc = visibleRows.filter(r => 
@@ -711,7 +633,279 @@ export default function SmartBookingMasterPage() {
         R: "RAIL",
         O: "OTHER MODE"
     };
+    // const handleImport = async (rows: any[]) => {
+    //     setLoading(true);
+    //     toast.info("Processing imported file...");
+
+    //     let customerData: any[] = [];
+    //     try {
+    //         const { data } = await axios.get("/api/customers");
+    //         customerData = data;
+    //         setCustomers(data);
+    //     } catch {
+    //         toast.error("Failed to fetch customers");
+    //         setLoading(false);
+    //         return;
+    //     }
+
+    //     let existingBookings: any[] = [];
+    //     try {
+    //         const { data } = await axios.get("/api/booking-master");
+    //         existingBookings = data;
+    //     } catch {
+    //         toast.error("Failed to fetch existing bookings");
+    //     }
+    //     const awbMap = Object.fromEntries(existingBookings.map((b: any) => [String(b.awbNo), b]));
+
+    //     const mappedRows = rows.map((row, idx) => {
+    //         const mapped: any = { srNo: idx + 1 };
+
+    //         const importedCustomerCode = row['Customer Code'] || row['CustomerCode'];
+
+    //         if (importedCustomerCode) {
+    //             // Find matching customer
+    //             const matchingCustomer = customerData.find(
+    //                 (c: any) => c.customerCode?.toLowerCase() === importedCustomerCode.toString().trim().toLowerCase()
+    //             );
+
+    //             if (matchingCustomer) {
+    //                 // Auto-fill customer details
+    //                 mapped.customerCode = matchingCustomer.customerCode;
+    //                 mapped.customerId = matchingCustomer.id;
+    //                 mapped.customerName = matchingCustomer.customerName;
+    //                 mapped.childCustomer = matchingCustomer.childCustomer || matchingCustomer.customerName;
+    //                 mapped.customerAttendBy = "";
+    //                 mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
+    //                 mapped.senderDetail = matchingCustomer.customerName || "";
+    //                 mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
+    //                 mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "", matchingCustomer.state);
+    //                 mapped.address = matchingCustomer.address || "";
+    //             }
+    //         }
+
+    //         columns.forEach(col => {
+    //             if (col === "srNo") return;
+    //             const customerFields = ["customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
+    //             if (customerFields.includes(col)) {
+    //                 if (!mapped[col]) mapped[col] = "";
+    //                 return;
+    //             }
+
+    //             let importKey = Object.keys(row).find(k =>
+    //                 IMPORT_ALIASES[col]?.some(alias =>
+    //                     k.replace(/[\s_]/g, '').toLowerCase() === alias.replace(/[\s_]/g, '').toLowerCase()
+    //                 ) ||
+    //                 k.replace(/[\s_]/g, '').toLowerCase() === col.replace(/[\s_]/g, '').toLowerCase()
+    //             );
+
+    //             if (importKey) {
+    //                 if (col === "mode") {
+    //                     const rawMode = row[importKey]?.toString().toUpperCase();
+    //                     mapped[col] = MODE_MAP[rawMode] || rawMode;
+    //                 } else if (col === "dsrNdxPaper") {
+    //                     const rawValue = row[importKey]?.toString().trim().toUpperCase() || "";
+    //                     if (rawValue === 'D' || rawValue === 'N') {
+    //                         mapped[col] = rawValue;
+    //                     } else if (rawValue === 'DOCUMENT' || rawValue === 'DOX' || rawValue === 'DOC') {
+    //                         mapped[col] = 'D';
+    //                     } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX' || rawValue === 'NON-DOX' || rawValue === 'NDOX') {
+    //                         mapped[col] = 'N';
+    //                     } else {
+    //                         mapped[col] = rawValue || 'N';
+    //                     }
+    //                 } else if (col === "bookingDate" || col === "statusDate" || col === "dateOfDelivery") {
+    //                     mapped[col] = parseImportedDate(row[importKey]);
+    //                 } else if (col === "location") {
+    //                     const rawLocation = row[importKey];
+    //                     mapped[col] = extractCityName(rawLocation);
+    //                     console.log(`Location processed: "${rawLocation}" → "${mapped[col]}"`);
+    //                 } else {
+    //                     mapped[col] = row[importKey];
+    //                 }
+    //             } else {
+    //                 mapped[col] = "";
+    //             }
+    //         });
+    //         mapped.customerType = "CREDIT";
+
+    //         if (!mapped.dsrNdxPaper) {
+    //             mapped.dsrNdxPaper = "N";
+    //         }
+
+    //         if (mapped.location) {
+    //             const cityCode = getCityCode(mapped.location);
+    //             mapped.destinationCity = cityCode;
+
+    //             console.log(`Auto-mapped: Location "${mapped.location}" → Destination "${mapped.destinationCity}"`);
+    //         } else if (mapped.destinationCity) {
+    //             const extractedCity = extractCityName(mapped.destinationCity);
+    //             mapped.location = extractedCity;
+    //             mapped.destinationCity = getCityCode(extractedCity);
+    //         }
+
+    //         const awbNo = mapped.awbNo?.toString();
+    //         if (awbNo && awbMap[awbNo]) {
+    //             const updatedRow = { ...awbMap[awbNo], ...mapped, _awbExists: true, _bookingId: awbMap[awbNo].id };
+    //             updatedRow.pendingDaysNotDelivered = calculatePendingDays(updatedRow.bookingDate, updatedRow.status);
+    //             updatedRow.todayDate = getCurrentDate();
+
+    //             const l = parseFloat(updatedRow.length) || 0;
+    //             const w = parseFloat(updatedRow.width) || 0;
+    //             const h = parseFloat(updatedRow.height) || 0;
+    //             if (l > 0 && w > 0 && h > 0) {
+    //                 const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+    //                 mapped.valumetric = volumetricValue;
+
+    //                 const actualWeight = parseFloat(mapped.actualWeight) || 0;
+    //                 const volumetricWeight = parseFloat(volumetricValue);
+    //                 if (volumetricWeight > actualWeight) {
+    //                     mapped.chargeWeight = volumetricValue;
+    //                 } else if (actualWeight > 0) {
+    //                     updatedRow.chargeWeight = updatedRow.actualWeight;
+    //                 }
+    //                 updatedRow.invoiceWt = Math.max(actualWeight, parseFloat(updatedRow.chargeWeight) || 0).toFixed(2);
+    //             } else {
+    //                 updatedRow.valumetric = "0.00";
+    //                 // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
+    //                 const actualWeight = parseFloat(updatedRow.actualWeight) || 0;
+    //                 const importedChargeWeight = parseFloat(updatedRow.chargeWeight) || 0;
+    //                 if (importedChargeWeight > 0 || actualWeight > 0) {
+    //                     updatedRow.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
+    //                     updatedRow.invoiceWt = updatedRow.chargeWeight;
+    //                 }
+    //             }
+    //             return updatedRow;
+    //         }
+    //         mapped.paymentStatus = "UNPAID";
+    //         mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
+    //         mapped.todayDate = getCurrentDate();
+
+    //         const l = parseFloat(mapped.length) || 0;
+    //         const w = parseFloat(mapped.width) || 0;
+    //         const h = parseFloat(mapped.height) || 0;
+    //         if (l > 0 && w > 0 && h > 0) {
+    //             const volumetricValue = ((l * w * h) / 5000).toFixed(2);
+    //             mapped.valumetric = volumetricValue;
+
+    //             const actualWeight = parseFloat(mapped.actualWeight) || 0;
+    //             const volumetricWeight = parseFloat(volumetricValue);
+    //             if (volumetricWeight > actualWeight) {
+    //                 mapped.chargeWeight = volumetricValue;
+    //             } else if (actualWeight > 0) {
+    //                 mapped.chargeWeight = actualWeight;
+    //             }
+    //             mapped.invoiceWt = Math.max(actualWeight, parseFloat(mapped.chargeWeight) || 0).toFixed(2);
+    //         } else {
+    //             mapped.valumetric = "0.00";
+    //             // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
+    //             const actualWeight = parseFloat(mapped.actualWeight) || 0;
+    //             const importedChargeWeight = parseFloat(mapped.chargeWeight) || 0;
+    //             if (importedChargeWeight > 0 || actualWeight > 0) {
+    //                 mapped.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
+    //                 mapped.invoiceWt = mapped.chargeWeight;
+    //             }
+    //         }
+
+    //         return { ...mapped, _awbExists: false };
+    //     });
+
+    //     // --- Batched Auto-Calculate Rates during Import ---
+    //     let calculatedRows = [...mappedRows];
+    //     const rowsToCalc = mappedRows.filter(r => 
+    //         r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
+    //     );
+
+    //     if (rowsToCalc.length > 0) {
+    //         try {
+    //             toast.info(`Auto-calculating rates for ${rowsToCalc.length} rows...`);
+    //             // 1. Prepare items
+    //             const items = rowsToCalc.map(row => ({
+    //                 customerId: row.customerId,
+    //                 destinationPincode: row.pin,
+    //                 chargeWeight: row.chargeWeight,
+    //                 isDox: row.dsrNdxPaper === 'D',
+    //                 mode: row.mode,
+    //                 invoiceValue: row.invoiceValue,
+    //                 state: row.state,
+    //                 city: row.location
+    //             }));
+
+    //             // 2. Batch Calculation (50 at a time)
+    //             const BATCH_SIZE = 50;
+    //             for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    //                 const batchItems = items.slice(i, i + BATCH_SIZE);
+    //                 const { data } = await axios.post('/api/calculate-rate/batch', { items: batchItems });
+                    
+    //                 for (const result of data.results) {
+    //                     const origRow = rowsToCalc[i + result.index];
+    //                     const idx = calculatedRows.findIndex(r => r.srNo === origRow.srNo);
+                        
+    //                     if (idx !== -1 && result.success) {
+    //                         calculatedRows[idx] = {
+    //                             ...calculatedRows[idx],
+    //                             frCharge: result.frCharge.toFixed(2),
+    //                             waybillSurcharge: result.waybillSurcharge.toFixed(2),
+    //                             otherExp: result.otherExp.toFixed(2),
+    //                             serviceProvider: result.serviceProvider || calculatedRows[idx].serviceProvider || "DTDC"
+    //                         };
+
+    //                         const frCharge = parseFloat(result.frCharge) || 0;
+    //                         const fuelPercent = calculatedRows[idx]._fuelSurchargePercent || 0;
+    //                         calculatedRows[idx].fuelSurcharge = (frCharge > 0 && fuelPercent > 0)
+    //                             ? ((frCharge * fuelPercent) / 100).toFixed(2)
+    //                             : "0.00";
+
+    //                         calculatedRows[idx] = recalculateClientBilling(calculatedRows[idx]);
+    //                     }
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("Auto-calculate during import failed:", error);
+    //             toast.error("Auto-calculation failed, saving without rates.");
+    //         }
+    //     }
+
+    //     try {
+    //         toast.info(`Saving ${mappedRows.length} bookings to database...`);
+    //         const totalRows = mappedRows.length;
+    //         setImportProgress({ current: 0, total: totalRows });
+
+    //         const rowsForApi = mappedRows.map(r => ({
+    //             ...r,
+    //             pin: r.pin ? String(r.pin) : "", 
+    //             customerCode: r.customerCode ? String(r.customerCode) : "",
+    //             chargeWeight: parseFloat(r.chargeWeight) || 0,
+    //             actualWeight: parseFloat(r.actualWeight) || 0,
+    //             pcs: parseInt(r.pcs as string) || 1,
+    //             invoiceValue: parseFloat(r.invoiceValue) || 0
+    //         }));
+
+    //         const BATCH_SIZE = 50; 
+    //         for (let i = 0; i < totalRows; i += BATCH_SIZE) {
+    //             const batch = rowsForApi.slice(i, i + BATCH_SIZE);
+    //             await axios.post('/api/booking-master/bulk-create', batch);
+                
+    //             setImportProgress(prev => ({ 
+    //                 ...prev, 
+    //                 current: Math.min(i + BATCH_SIZE, totalRows) 
+    //             }));
+    //         }
+
+    //         // const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsForApi);
+    //         toast.success("Imported and saved! Review the rows below.");
+            
+    //         const rowsForDisplay = mappedRows.map((r, i) => ({
+    //             ...r,
+    //             _awbExists: true,
+    //             srNo: i + 1,
+    //             pin: r.pin ? String(r.pin) : ""
+    //         }));
+            
+    //         setTableRows(rowsForDisplay); 
     const handleImport = async (rows: any[]) => {
+        setIsImporting(true);
+        setImportProgress(0);
+        cancelImportRef.current = false;
         setLoading(true);
         toast.info("Processing imported file...");
 
@@ -723,6 +917,7 @@ export default function SmartBookingMasterPage() {
         } catch {
             toast.error("Failed to fetch customers");
             setLoading(false);
+            setIsImporting(false);
             return;
         }
 
@@ -735,316 +930,142 @@ export default function SmartBookingMasterPage() {
         }
         const awbMap = Object.fromEntries(existingBookings.map((b: any) => [String(b.awbNo), b]));
 
-        const mappedRows = rows.map((row, idx) => {
-            const mapped: any = { srNo: idx + 1 };
+        const mappedRows: any[] = [];
+        const CHUNK_SIZE = 500;
 
-            const importedCustomerCode = row['Customer Code'] || row['CustomerCode'];
-
-            if (importedCustomerCode) {
-                // Find matching customer
-                const matchingCustomer = customerData.find(
-                    (c: any) => c.customerCode?.toLowerCase() === importedCustomerCode.toString().trim().toLowerCase()
-                );
-
-                if (matchingCustomer) {
-                    // Auto-fill customer details
-                    mapped.customerCode = matchingCustomer.customerCode;
-                    mapped.customerId = matchingCustomer.id;
-                    mapped.customerName = matchingCustomer.customerName;
-                    mapped.childCustomer = matchingCustomer.childCustomer || matchingCustomer.customerName;
-                    mapped.customerAttendBy = "";
-                    mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
-                    mapped.senderDetail = matchingCustomer.customerName || "";
-                    mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
-                    mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "", matchingCustomer.state);
-                    mapped.address = matchingCustomer.address || "";
-                }
+        for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+            if (cancelImportRef.current) {
+                toast.error("Import cancelled by user.");
+                setIsImporting(false);
+                setLoading(false);
+                setImportProgress(0);
+                return; // Stop processing entirely
             }
 
-            columns.forEach(col => {
-                if (col === "srNo") return;
-                const customerFields = ["customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
-                if (customerFields.includes(col)) {
-                    if (!mapped[col]) mapped[col] = "";
-                    return;
+            const chunk = rows.slice(i, i + CHUNK_SIZE);
+            const processedChunk = chunk.map((row, chunkIdx) => {
+                const idx = i + chunkIdx;
+                const mapped: any = { srNo: idx + 1 };
+
+                const importedCustomerCode = row['Customer Code'] || row['CustomerCode'];
+
+                if (importedCustomerCode) {
+                    const matchingCustomer = customerData.find(
+                        (c: any) => c.customerCode?.toLowerCase() === importedCustomerCode.toString().trim().toLowerCase()
+                    );
+
+                    if (matchingCustomer) {
+                        mapped.customerCode = matchingCustomer.customerCode;
+                        mapped.customerId = matchingCustomer.id;
+                        mapped.customerName = matchingCustomer.customerName;
+                        mapped.childCustomer = matchingCustomer.childCustomer || matchingCustomer.customerName;
+                        mapped.customerAttendBy = "";
+                        mapped.senderContactNo = matchingCustomer.mobile || matchingCustomer.phone || "";
+                        mapped.senderDetail = matchingCustomer.customerName || "";
+                        mapped._fuelSurchargePercent = matchingCustomer.fuelSurchargePercent || 0;
+                        mapped._gstPercent = getGSTPercentage(matchingCustomer.pincode || "", matchingCustomer.state);
+                        mapped.address = matchingCustomer.address || "";
+                    }
                 }
 
-                let importKey = Object.keys(row).find(k =>
-                    IMPORT_ALIASES[col]?.some(alias =>
-                        k.replace(/[\s_]/g, '').toLowerCase() === alias.replace(/[\s_]/g, '').toLowerCase()
-                    ) ||
-                    k.replace(/[\s_]/g, '').toLowerCase() === col.replace(/[\s_]/g, '').toLowerCase()
-                );
+                columns.forEach(col => {
+                    if (col === "srNo") return;
+                    const customerFields = ["customerId", "customerName", "childCustomer", "fuelSurcharge", "receiverName"];
+                    if (customerFields.includes(col)) {
+                        if (!mapped[col]) mapped[col] = "";
+                        return;
+                    }
 
-                if (importKey) {
-                    if (col === "mode") {
-                        const rawMode = row[importKey]?.toString().toUpperCase();
-                        mapped[col] = MODE_MAP[rawMode] || rawMode;
-                    } else if (col === "dsrNdxPaper") {
-                        const rawValue = row[importKey]?.toString().trim().toUpperCase() || "";
-                        if (rawValue === 'D' || rawValue === 'N') {
-                            mapped[col] = rawValue;
-                        } else if (rawValue === 'DOCUMENT' || rawValue === 'DOX' || rawValue === 'DOC') {
-                            mapped[col] = 'D';
-                        } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX' || rawValue === 'NON-DOX' || rawValue === 'NDOX') {
-                            mapped[col] = 'N';
+                    let importKey = Object.keys(row).find(k =>
+                        IMPORT_ALIASES[col]?.some(alias =>
+                            k.replace(/[\s_]/g, '').toLowerCase() === alias.replace(/[\s_]/g, '').toLowerCase()
+                        ) ||
+                        k.replace(/[\s_]/g, '').toLowerCase() === col.replace(/[\s_]/g, '').toLowerCase()
+                    );
+
+                    if (importKey) {
+                        if (col === "mode") {
+                            const rawMode = row[importKey]?.toString().toUpperCase();
+                            mapped[col] = MODE_MAP[rawMode] || rawMode;
+                        } else if (col === "dsrNdxPaper") {
+                            const rawValue = row[importKey]?.toString().trim().toUpperCase() || "";
+                            if (rawValue === 'D' || rawValue === 'N') {
+                                mapped[col] = rawValue;
+                            } else if (rawValue === 'DOCUMENT' || rawValue === 'DOX' || rawValue === 'DOC') {
+                                mapped[col] = 'D';
+                            } else if (rawValue === 'PARCEL' || rawValue === 'NON DOX' || rawValue === 'NON-DOX' || rawValue === 'NDOX') {
+                                mapped[col] = 'N';
+                            } else {
+                                mapped[col] = rawValue || 'N';
+                            }
+                        } else if (col === "bookingDate" || col === "statusDate" || col === "dateOfDelivery") {
+                            mapped[col] = parseImportedDate(row[importKey]);
+                        } else if (col === "location") {
+                            const rawLocation = row[importKey];
+                            mapped[col] = extractCityName(rawLocation);
                         } else {
-                            mapped[col] = rawValue || 'N';
+                            mapped[col] = row[importKey];
                         }
-                    } else if (col === "bookingDate" || col === "statusDate" || col === "dateOfDelivery") {
-                        mapped[col] = parseImportedDate(row[importKey]);
-                    } else if (col === "location") {
-                        const rawLocation = row[importKey];
-                        mapped[col] = extractCityName(rawLocation);
-                        console.log(`Location processed: "${rawLocation}" → "${mapped[col]}"`);
                     } else {
-                        mapped[col] = row[importKey];
+                        mapped[col] = "";
                     }
-                } else {
-                    mapped[col] = "";
+                });
+                mapped.customerType = "CREDIT";
+
+                if (!mapped.dsrNdxPaper) {
+                    mapped.dsrNdxPaper = "N";
                 }
+
+                if (mapped.location) {
+                    const cityCode = getCityCode(mapped.location);
+                    mapped.destinationCity = cityCode;
+                } else if (mapped.destinationCity) {
+                    const extractedCity = extractCityName(mapped.destinationCity);
+                    mapped.location = extractedCity;
+                    mapped.destinationCity = getCityCode(extractedCity);
+                }
+
+                const awbNo = mapped.awbNo?.toString();
+                if (awbNo && awbMap[awbNo]) {
+                    mapped._awbExists = true;
+                    mapped._bookingId = awbMap[awbNo].id;
+                    mapped.status = awbMap[awbNo].status || 'BOOKED';
+                    mapped.statusDate = awbMap[awbNo].statusDate;
+                    mapped.delivered = awbMap[awbNo].delivered;
+                    mapped.dateOfDelivery = awbMap[awbNo].dateOfDelivery;
+                    mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
+                } else {
+                    mapped._awbExists = false;
+                    mapped.status = 'BOOKED';
+                    mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, 'BOOKED');
+                }
+
+                mapped.todayDate = getCurrentDate();
+                return mapped;
             });
-            mapped.customerType = "CREDIT";
 
-            if (!mapped.dsrNdxPaper) {
-                mapped.dsrNdxPaper = "N";
-            }
+            mappedRows.push(...processedChunk);
 
-            if (mapped.location) {
-                const cityCode = getCityCode(mapped.location);
-                mapped.destinationCity = cityCode;
+            // Update UI progress
+            setImportProgress(Math.floor(((i + chunk.length) / rows.length) * 100));
 
-                console.log(`Auto-mapped: Location "${mapped.location}" → Destination "${mapped.destinationCity}"`);
-            } else if (mapped.destinationCity) {
-                const extractedCity = extractCityName(mapped.destinationCity);
-                mapped.location = extractedCity;
-                mapped.destinationCity = getCityCode(extractedCity);
-            }
-
-            const awbNo = mapped.awbNo?.toString();
-            if (awbNo && awbMap[awbNo]) {
-                const updatedRow = { ...awbMap[awbNo], ...mapped, _awbExists: true, _bookingId: awbMap[awbNo].id };
-                updatedRow.pendingDaysNotDelivered = calculatePendingDays(updatedRow.bookingDate, updatedRow.status);
-                updatedRow.todayDate = getCurrentDate();
-
-                const l = parseFloat(updatedRow.length) || 0;
-                const w = parseFloat(updatedRow.width) || 0;
-                const h = parseFloat(updatedRow.height) || 0;
-                if (l > 0 && w > 0 && h > 0) {
-                    const volumetricValue = ((l * w * h) / 5000).toFixed(2);
-                    mapped.valumetric = volumetricValue;
-
-                    const actualWeight = parseFloat(mapped.actualWeight) || 0;
-                    const volumetricWeight = parseFloat(volumetricValue);
-                    if (volumetricWeight > actualWeight) {
-                        mapped.chargeWeight = volumetricValue;
-                    } else if (actualWeight > 0) {
-                        updatedRow.chargeWeight = updatedRow.actualWeight;
-                    }
-                    updatedRow.invoiceWt = Math.max(actualWeight, parseFloat(updatedRow.chargeWeight) || 0).toFixed(2);
-                } else {
-                    updatedRow.valumetric = "0.00";
-                    // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
-                    const actualWeight = parseFloat(updatedRow.actualWeight) || 0;
-                    const importedChargeWeight = parseFloat(updatedRow.chargeWeight) || 0;
-                    if (importedChargeWeight > 0 || actualWeight > 0) {
-                        updatedRow.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
-                        updatedRow.invoiceWt = updatedRow.chargeWeight;
-                    }
-                }
-                return updatedRow;
-            }
-            mapped.paymentStatus = "UNPAID";
-            mapped.pendingDaysNotDelivered = calculatePendingDays(mapped.bookingDate, mapped.status);
-            mapped.todayDate = getCurrentDate();
-
-            const l = parseFloat(mapped.length) || 0;
-            const w = parseFloat(mapped.width) || 0;
-            const h = parseFloat(mapped.height) || 0;
-            if (l > 0 && w > 0 && h > 0) {
-                const volumetricValue = ((l * w * h) / 5000).toFixed(2);
-                mapped.valumetric = volumetricValue;
-
-                const actualWeight = parseFloat(mapped.actualWeight) || 0;
-                const volumetricWeight = parseFloat(volumetricValue);
-                if (volumetricWeight > actualWeight) {
-                    mapped.chargeWeight = volumetricValue;
-                } else if (actualWeight > 0) {
-                    mapped.chargeWeight = actualWeight;
-                }
-                mapped.invoiceWt = Math.max(actualWeight, parseFloat(mapped.chargeWeight) || 0).toFixed(2);
-            } else {
-                mapped.valumetric = "0.00";
-                // Even without dimensions, compute invoiceWt from actualWeight & chargeWeight
-                const actualWeight = parseFloat(mapped.actualWeight) || 0;
-                const importedChargeWeight = parseFloat(mapped.chargeWeight) || 0;
-                if (importedChargeWeight > 0 || actualWeight > 0) {
-                    mapped.chargeWeight = Math.max(actualWeight, importedChargeWeight).toFixed(2);
-                    mapped.invoiceWt = mapped.chargeWeight;
-                }
-            }
-
-            return { ...mapped, _awbExists: false };
-        });
-
-        // --- Batched Auto-Calculate Rates during Import ---
-        let calculatedRows = [...mappedRows];
-        const rowsToCalc = mappedRows.filter(r => 
-            r.customerId && r.pin && parseFloat(r.chargeWeight) > 0 && r.mode
-        );
-
-        if (rowsToCalc.length > 0) {
-            try {
-                toast.info(`Auto-calculating rates for ${rowsToCalc.length} rows...`);
-                // 1. Prepare items
-                const items = rowsToCalc.map(row => ({
-                    customerId: row.customerId,
-                    destinationPincode: row.pin,
-                    chargeWeight: row.chargeWeight,
-                    isDox: row.dsrNdxPaper === 'D',
-                    mode: row.mode,
-                    invoiceValue: row.invoiceValue,
-                    state: row.state,
-                    city: row.location
-                }));
-
-                // 2. Batch Calculation (50 at a time)
-                const BATCH_SIZE = 50;
-                for (let i = 0; i < items.length; i += BATCH_SIZE) {
-                    const batchItems = items.slice(i, i + BATCH_SIZE);
-                    const { data } = await axios.post('/api/calculate-rate/batch', { items: batchItems });
-                    
-                    for (const result of data.results) {
-                        const origRow = rowsToCalc[i + result.index];
-                        const idx = calculatedRows.findIndex(r => r.srNo === origRow.srNo);
-                        
-                        if (idx !== -1 && result.success) {
-                            calculatedRows[idx] = {
-                                ...calculatedRows[idx],
-                                frCharge: result.frCharge.toFixed(2),
-                                waybillSurcharge: result.waybillSurcharge.toFixed(2),
-                                otherExp: result.otherExp.toFixed(2),
-                                serviceProvider: result.serviceProvider || calculatedRows[idx].serviceProvider || "DTDC"
-                            };
-
-                            const frCharge = parseFloat(result.frCharge) || 0;
-                            const fuelPercent = calculatedRows[idx]._fuelSurchargePercent || 0;
-                            calculatedRows[idx].fuelSurcharge = (frCharge > 0 && fuelPercent > 0)
-                                ? ((frCharge * fuelPercent) / 100).toFixed(2)
-                                : "0.00";
-
-                            calculatedRows[idx] = recalculateClientBilling(calculatedRows[idx]);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Auto-calculate during import failed:", error);
-                toast.error("Auto-calculation failed, saving without rates.");
-            }
-        }
-        // --- End Batched Auto-Calculate ---
-
-        // const calculatedRows = await Promise.all(mappedRows.map(async (row) => {
-        //     // Check if we have enough info to calculate
-        //     if (row.customerId && row.pin && row.chargeWeight && row.mode) {
-        //         try {
-        //             const { data } = await axios.post('/api/calculate-rate', {
-        //                 customerId: row.customerId,
-        //                 destinationPincode: row.pin,
-        //                 chargeWeight: row.chargeWeight,
-        //                 isDox: row.dsrNdxPaper === 'D',
-        //                 mode: row.mode,
-        //                 invoiceValue: row.invoiceValue,
-        //                 state: row.state,
-        //             });
-
-        //             let updatedRow = {
-        //                 ...row,
-        //                 frCharge: data.frCharge.toFixed(2),
-        //                 waybillSurcharge: data.waybillSurcharge.toFixed(2),
-        //                 otherExp: data.otherExp.toFixed(2),
-        //                 serviceProvider: data.serviceProvider || "DTDC"
-        //             };
-
-        //             const frCharge = parseFloat(updatedRow.frCharge) || 0;
-        //             const fuelSurchargePercent = updatedRow._fuelSurchargePercent || 0;
-        //             updatedRow.fuelSurcharge = frCharge > 0 ? ((frCharge * fuelSurchargePercent) / 100).toFixed(2) : "0.00";
-
-        //             return recalculateClientBilling(updatedRow);
-        //         } catch (error) {
-        //             console.error(`Calculation failed for row ${row.srNo}`, error);
-        //             return row; // Return original row if calculation fails
-        //         }
-        //     }
-        //     return row; // Return original row if missing data
-        // }));
-
-        try {
-            toast.info(`Saving ${mappedRows.length} bookings to database...`);
-            const totalRows = mappedRows.length;
-            setImportProgress({ current: 0, total: totalRows });
-
-            const rowsForApi = mappedRows.map(r => ({
-                ...r,
-                pin: r.pin ? String(r.pin) : "", 
-                customerCode: r.customerCode ? String(r.customerCode) : "",
-                chargeWeight: parseFloat(r.chargeWeight) || 0,
-                actualWeight: parseFloat(r.actualWeight) || 0,
-                pcs: parseInt(r.pcs as string) || 1,
-                invoiceValue: parseFloat(r.invoiceValue) || 0
-            }));
-
-            const BATCH_SIZE = 50; 
-            for (let i = 0; i < totalRows; i += BATCH_SIZE) {
-                const batch = rowsForApi.slice(i, i + BATCH_SIZE);
-                await axios.post('/api/booking-master/bulk-create', batch);
-                
-                setImportProgress(prev => ({ 
-                    ...prev, 
-                    current: Math.min(i + BATCH_SIZE, totalRows) 
-                }));
-            }
-
-            // const { data: createResult } = await axios.post('/api/booking-master/bulk-create', rowsForApi);
-            toast.success("Imported and saved! Review the rows below.");
-            
-            const rowsForDisplay = mappedRows.map((r, i) => ({
-                ...r,
-                _awbExists: true,
-                srNo: i + 1,
-                pin: r.pin ? String(r.pin) : ""
-            }));
-            
-            setTableRows(rowsForDisplay); 
-
-        } catch (error: any) {
-            console.error("Bulk save failed:", error);
-            toast.error("Saved locally but DB sync failed. Please click Save All.");
-            setTableRows(mappedRows);
-        } finally {
-            setLoading(false);
-            setImportProgress({ current: 0, total: 0 });
+            // Yield to browser main thread so UI can update and cancel button can be clicked !!
+            await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        setLoading(false);
+        const rowsForDisplay = mappedRows.map((r: any, i: number) => ({
+            ...r,
+            _awbExists: true,
+            srNo: i + 1,
+            pin: r.pin ? String(r.pin) : ""
+        }));
 
-        // if (mappedRows.length > 0) {
-        //     try {
-        //         toast.info(`Saving/Updating ${mappedRows.length} bookings in the database...`);
-        //         const { data: createResult } = await axios.post('/api/booking-master/bulk-create', mappedRows); // Send all mappedRows
-        //         toast.success(createResult.message || `${createResult.count} bookings processed successfully.`);
-
-        //         await fetchUnassignedBookings();
-        //     } catch (error: any) {
-        //         console.error("Bulk booking creation/update failed:", error);
-        //         toast.error(error.response?.data?.error || "Failed to save/update bookings.");
-        //         setTableRows(mappedRows);
-        //     }
-        // } else {
-        //     toast.info("No data to import.");
-        // }
+        setTableRows(prev => [...prev, ...rowsForDisplay]);
+        setTotalPages(Math.ceil((tableRows.length + rowsForDisplay.length) / pageSize));
 
         setLoading(false);
+        setIsImporting(false);
+        setImportProgress(0);
 
         const extractionResults = mappedRows
             .filter(row => row.location)
@@ -1763,26 +1784,29 @@ export default function SmartBookingMasterPage() {
             <UploadStatusExcelButton onUploadComplete={fetchUnassignedBookings} />
             <BookingImportPanel onData={handleImport} />
 
-            {(loading || importProgress.total > 0) && (
-                <div className="flex flex-col items-center justify-center gap-2 text-blue-600 my-4 p-4 bg-blue-50 rounded-lg border border-blue-100 max-w-md mx-auto">
-                    <div className="flex items-center gap-3">
-                        <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                        <span className="font-semibold text-lg">
-                            {importProgress.total > 0 
-                                ? `Importing: ${importProgress.current} / ${importProgress.total}`
-                                : "Processing file..."}
-                        </span>
-                    </div>
-                    {importProgress.total > 0 && (
-                        <div className="w-full bg-blue-200 rounded-full h-2.5 mt-2">
+            {isImporting ? (
+                <div className="bg-purple-50 text-purple-800 p-4 rounded-lg shadow border border-purple-200 flex flex-col sm:flex-row items-center justify-between my-6 gap-4 animate-pulse">
+                    <div className="flex-1 w-full flex flex-col justify-center">
+                        <div className="flex justify-between items-end mb-2">
+                            <h4 className="font-semibold text-sm">Processing Excel File...</h4>
+                            <span className="text-xs font-bold bg-purple-200 text-purple-700 px-2 py-0.5 rounded-full">{importProgress}%</span>
+                        </div>
+                        <div className="w-full bg-purple-200/60 rounded-full h-2.5 overflow-hidden">
                             <div 
-                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-                                style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                                className="bg-purple-600 h-full rounded-full transition-all duration-200 ease-out" 
+                                style={{ width: `${importProgress}%` }}
                             ></div>
                         </div>
-                    )}
+                    </div>
+                    <button
+                        onClick={handleCancelImport}
+                        className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-5 py-2 rounded-lg shadow flex items-center justify-center gap-2 transition w-full sm:w-auto font-medium"
+                    >
+                        <X className="w-5 h-5" /> Cancel Import
+                    </button>
                 </div>
-            )}
+            ) : null}
+
 
             {tableRows.length === 0 && !loading && (
                 <div className="flex flex-col items-center justify-center mt-24">
