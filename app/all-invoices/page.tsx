@@ -316,7 +316,7 @@ function AllInvoicesContent() {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => handleViewInvoice(invoice.id)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                           title="View/Print"
                         >
                           <Eye className="w-4 h-4" />
@@ -324,7 +324,7 @@ function AllInvoicesContent() {
 
                         <button
                           onClick={() => handleDelete(invoice.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
