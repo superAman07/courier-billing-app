@@ -71,7 +71,9 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                 </p>
                 <p className="text-sm text-gray-700">Phone : {company?.phone || company?.mobile || '8853099924'}</p>
                 <p className="text-sm font-semibold text-black">
-                    GST No : {company?.gstNo || '09BLUPS9727E1Z7'}, {(company?.state || 'Uttar Pradesh').toUpperCase()}
+                    {invoice.customer?.gstNo ? (
+                        <>GST No : {company?.gstNo || '09BLUPS9727E1Z7'}, {(company?.state || 'Uttar Pradesh').toUpperCase()}</>
+                    ) : ''}
                 </p>
             </div>
 
@@ -114,10 +116,12 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                     <span className="font-semibold text-black">Phone :</span>
                     <span className="ml-4 text-gray-600">{invoice.customer?.phone || invoice.customer?.mobile || 'N/A'}</span>
                 </div>
-                <div className="mb-2">
-                    <span className="font-semibold text-black">GSTN No-</span>
-                    <span className="ml-4 text-gray-600">{invoice.customer?.gstNo || ''}</span>
-                </div>
+                {invoice.customer?.gstNo && invoice.customer.gstNo.length > 2 && (
+                    <div className="mb-2">
+                        <span className="font-semibold text-black">GSTN No-</span>
+                        <span className="ml-4 text-gray-600">{invoice.customer.gstNo}</span>
+                    </div>
+                )}
             </div>
 
             <div className="mb-6 overflow-x-auto">
@@ -201,7 +205,7 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                             <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">Taxable Value :</td>
                             <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{taxableValue.toFixed(2)}</td>
                         </tr>
-                        {isIntraState ? (
+                        {invoice.customer?.gstNo && isIntraState && (
                             <>
                                 <tr>
                                     <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">CGST {(gstRate / 2).toFixed(0)}%</td>
@@ -212,7 +216,8 @@ export default function InvoicePreview({ params }: { params: Promise<{ id: strin
                                     <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{(igstAmount / 2).toFixed(2)}</td>
                                 </tr>
                             </>
-                        ) : (
+                        )}
+                        {invoice.customer?.gstNo && !isIntraState && (
                             <tr>
                                 <td colSpan={colSpanValue} className="border border-black px-2 py-1 text-gray-600 text-right text-sm">IGST {gstRate.toFixed(0)}%</td>
                                 <td className="border border-black px-2 py-1 text-center text-gray-600 text-sm">{igstAmount.toFixed(2)}</td>

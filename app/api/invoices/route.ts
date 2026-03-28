@@ -43,7 +43,13 @@ export async function POST(req: NextRequest) {
     }
 
     const invoiceDate = new Date(invoiceDateStr);
-    const invoiceType = customerType === "CREDIT" ? "BookingMaster_CREDIT" : "BookingMaster_CASH";
+        const invoiceType = customerType === "CREDIT" ? "BookingMaster_CREDIT" : "BookingMaster_CASH";
+
+    // NEW: Fetch customer to check if they have a GST number
+    const customerRecord = await prisma.customerMaster.findUnique({
+      where: { id: customerId }
+    });
+    const hasGst = customerRecord?.gstNo && customerRecord.gstNo.trim().length >= 3;
 
     const bookings = await prisma.bookingMaster.findMany({
       where: { id: { in: bookingIds } },
@@ -62,8 +68,13 @@ export async function POST(req: NextRequest) {
       const creditAmount = Number(b.creditCustomerAmount || 0);
       const regularAmount = Number(b.regularCustomerAmount || 0);
 
-      const finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
-      const taxAmount = Number(b.gst || 0);
+      let finalBookingAmount = clientBillingValue + creditAmount + regularAmount;
+      let taxAmount = Number(b.gst || 0);
+
+      if (!hasGst && taxAmount > 0) {
+          finalBookingAmount -= taxAmount;
+          taxAmount = 0;
+      }
 
       grandTotal += finalBookingAmount;
       totalTax += taxAmount;
@@ -85,7 +96,7 @@ export async function POST(req: NextRequest) {
         waybillSurcharge: b.waybillSurcharge,
         otherExp: b.otherExp,
         fuelSurcharge: b.fuelSurcharge,
-        gst: b.gst,
+        gst: taxAmount,
         consignmentValue: b.invoiceValue,
         doxType: b.dsrNdxPaper === 'D' ? 'DOX' : 'NON-DOX',
         serviceType: b.mode,

@@ -181,10 +181,13 @@ export const generateCreditInvoiceExcel = async (invoice: any, company: any) => 
     worksheet.getCell('A4').alignment = centerAlign;
 
     worksheet.mergeCells('A5:J5');
-    worksheet.getCell('A5').value = `GST No : ${company.gstNo || '09BLUPS9727E1Z7'}, ${(company.state || 'Uttar Pradesh').toUpperCase()}`;
+    if (invoice.customer?.gstNo) {
+        worksheet.getCell('A5').value = `GST No : ${company.gstNo || '09BLUPS9727E1Z7'}, ${(company.state || 'Uttar Pradesh').toUpperCase()}`;
+    } else {
+        worksheet.getCell('A5').value = '';
+    }
     worksheet.getCell('A5').alignment = centerAlign;
     worksheet.getCell('A5').font = { ...boldFont, size: 10 };
-
     worksheet.addRow([]);
 
     // --- 2. INVOICE META & CUSTOMER (Split 50/50 approx) ---
@@ -225,10 +228,12 @@ export const generateCreditInvoiceExcel = async (invoice: any, company: any) => 
     worksheet.mergeCells(`F${metaStartRow + 2}:J${metaStartRow + 2}`);
     worksheet.getCell(`F${metaStartRow + 2}`).value = invoice.customer?.phone || invoice.customer?.mobile || 'N/A';
 
-    worksheet.getCell(`E${metaStartRow + 3}`).value = 'GSTN No-';
-    worksheet.getCell(`E${metaStartRow + 3}`).font = boldFont;
-    worksheet.mergeCells(`F${metaStartRow + 3}:J${metaStartRow + 3}`);
-    worksheet.getCell(`F${metaStartRow + 3}`).value = invoice.customer?.gstNo || '';
+    if (invoice.customer?.gstNo && invoice.customer.gstNo.length > 2) {
+        worksheet.getCell(`E${metaStartRow + 3}`).value = 'GSTN No-';
+        worksheet.getCell(`E${metaStartRow + 3}`).font = boldFont;
+        worksheet.mergeCells(`F${metaStartRow + 3}:J${metaStartRow + 3}`);
+        worksheet.getCell(`F${metaStartRow + 3}`).value = invoice.customer.gstNo;
+    }
 
     worksheet.addRow([]); // Spacer
 
@@ -358,11 +363,13 @@ export const generateCreditInvoiceExcel = async (invoice: any, company: any) => 
     addSummaryRow('Fuel Surcharge', fuelSurchargeTotal.toFixed(2));
     addSummaryRow('Taxable Value :', taxableValue.toFixed(2));
 
-    if (isIntraState) {
-        addSummaryRow(`CGST ${(gstRate / 2).toFixed(0)}%`, (igstAmount / 2).toFixed(2));
-        addSummaryRow(`SGST ${(gstRate / 2).toFixed(0)}%`, (igstAmount / 2).toFixed(2));
-    } else {
-        addSummaryRow(`IGST ${gstRate.toFixed(0)}%`, igstAmount.toFixed(2));
+    if (invoice.customer?.gstNo) {
+        if (isIntraState) {
+            addSummaryRow(`CGST ${(gstRate / 2).toFixed(0)}%`, (igstAmount / 2).toFixed(2));
+            addSummaryRow(`SGST ${(gstRate / 2).toFixed(0)}%`, (igstAmount / 2).toFixed(2));
+        } else {
+            addSummaryRow(`IGST ${gstRate.toFixed(0)}%`, igstAmount.toFixed(2));
+        }
     }
 
     addSummaryRow('Total :', totalAfterTax.toFixed(2), true);
